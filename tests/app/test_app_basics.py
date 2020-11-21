@@ -41,9 +41,9 @@ def test_inject_multiple() -> None:
     # Note that the argument names can be anything. We inject solely based
     # on the type annotation.
     async def main(oh: TaskGroup, hi: AsyncExitStack, there: Settings) -> None:
-        assert isinstance(oh, Settings)
-        assert isinstance(hi, TaskGroup)
-        assert isinstance(there, AsyncExitStack)
+        assert isinstance(there, Settings)
+        assert isinstance(oh, TaskGroup)
+        assert isinstance(hi, AsyncExitStack)
 
     App.launch(main)
 
