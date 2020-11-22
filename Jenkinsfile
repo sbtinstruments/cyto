@@ -17,14 +17,18 @@ pipeline {
                         sh 'poetry install'
                     }
                 }
-                stage('Lint') {
-                    steps {
-                        sh 'poetry run pylint cyto tests'
-                    }
-                }
-                stage('Check types') {
-                    steps {
-                        sh 'poetry run mypy .'
+                stage('Lint and check types') {
+                    parallel {
+                        stage('Lint') {
+                            steps {
+                                sh 'poetry run pylint cyto tests'
+                            }
+                        }
+                        stage('Check types') {
+                            steps {
+                                sh 'poetry run mypy .'
+                            }
+                        }
                     }
                 }
             }
