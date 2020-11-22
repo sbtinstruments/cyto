@@ -10,5 +10,10 @@ pipeline {
                 sh 'python3 -m tox'
             }
         }
+        post {
+            always {
+                junit 'junit-*.xml'
+            }
+        }
     }
 }
