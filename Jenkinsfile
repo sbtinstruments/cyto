@@ -1,6 +1,6 @@
 pipeline {
     agent any
-    stages {
+    parallel {
         stage('Test') {
             environment {
                 PYTEST_ARGS='--junitxml=junit-{envname}.xml'
@@ -9,18 +9,24 @@ pipeline {
                 sh 'python3 -m tox'
             }
         }
-        stage('Lint') {
-            steps {
-                sh 'poetry env use 3.8'
-                sh 'poetry install'
-                sh 'poetry run pylint cyto tests'
-            }
-        }
-        stage('Check types') {
-            steps {
-                sh 'poetry env use 3.8'
-                sh 'poetry install'
-                sh 'poetry run mypy .'
+        stage('In poetry virtualenv') {
+            stages {
+                stage('Install') {
+                    steps {
+                        sh 'poetry env use 3.8'
+                        sh 'poetry install'
+                    }
+                }
+                stage('Lint') {
+                    steps {
+                        sh 'poetry run pylint cyto tests'
+                    }
+                }
+                stage('Check types') {
+                    steps {
+                        sh 'poetry run mypy .'
+                    }
+                }
             }
         }
     }
