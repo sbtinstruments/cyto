@@ -21,6 +21,7 @@ pipeline {
                     steps {
                         sh 'poetry run pylint cyto tests'
                     }
+                }
                 stage('Type check') {
                     steps {
                         sh 'poetry run mypy .'
