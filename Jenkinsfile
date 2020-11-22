@@ -20,11 +20,13 @@ pipeline {
                             }
                         }
                         stage('Lint and check types') {
-                            script {
-                                parallel([
-                                    'Lint': { sh 'poetry run pylint cyto tests'},
-                                    'Check types': { sh 'poetry run mypy .'},
-                                ])
+                            steps {
+                                script {
+                                    parallel([
+                                        'Lint': { sh 'poetry run pylint cyto tests'},
+                                        'Check types': { sh 'poetry run mypy .'}
+                                    ])
+                                }
                             }
                         }
                     }
