@@ -12,12 +12,14 @@ pipeline {
         stage('Lint') {
             steps {
                 sh 'poetry install'
+                sh 'poetry env use 3.8'
                 sh 'poetry run pylint cyto tests'
             }
         }
         stage('Check types') {
             steps {
                 sh 'poetry install'
+                sh 'poetry env use 3.8'
                 sh 'poetry run mypy .'
             }
         }
