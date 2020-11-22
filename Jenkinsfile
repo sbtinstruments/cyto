@@ -1,6 +1,6 @@
 pipeline {
     agent any
-    parallel {
+    stages {
         stage('Test') {
             environment {
                 PYTEST_ARGS='--junitxml=junit-{envname}.xml'
