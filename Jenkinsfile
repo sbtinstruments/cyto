@@ -1,32 +1,36 @@
 pipeline {
     agent any
     stages {
-        stage('Test') {
-            environment {
-                PYTEST_ARGS='--junitxml=junit-{envname}.xml'
-            }
-            steps {
-                sh 'python3 -m tox'
-            }
-        }
-        stage('In poetry virtualenv') {
-            stages {
-                stage('Install') {
+        stage('All') {
+            parallel {
+                stage('Test') {
+                    environment {
+                        PYTEST_ARGS='--junitxml=junit-{envname}.xml'
+                    }
                     steps {
-                        sh 'poetry env use 3.8'
-                        sh 'poetry install'
+                        sh 'python3 -m tox'
                     }
                 }
-                stage('Lint and check types') {
-                    parallel {
-                        stage('Lint') {
+                stage('In poetry virtualenv') {
+                    stages {
+                        stage('Install') {
                             steps {
-                                sh 'poetry run pylint cyto tests'
+                                sh 'poetry env use 3.8'
+                                sh 'poetry install'
                             }
                         }
-                        stage('Check types') {
-                            steps {
-                                sh 'poetry run mypy .'
+                        stage('Lint and check types') {
+                            parallel {
+                                stage('Lint') {
+                                    steps {
+                                        sh 'poetry run pylint cyto tests'
+                                    }
+                                }
+                                stage('Check types') {
+                                    steps {
+                                        sh 'poetry run mypy .'
+                                    }
+                                }
                             }
                         }
                     }
