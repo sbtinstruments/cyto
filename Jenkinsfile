@@ -1,6 +1,5 @@
 pipeline {
     agent any
-
     stages {
         stage('Test') {
             environment {
@@ -10,10 +9,10 @@ pipeline {
                 sh 'python3 -m tox'
             }
         }
-        post {
-            always {
-                junit 'junit-*.xml'
-            }
+    }
+    post {
+        always {
+            junit 'junit-*.xml'
         }
     }
 }
