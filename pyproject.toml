@@ -37,7 +37,7 @@ requires =
 poetry_experimental_add_locked_dependencies = true
 poetry_add_dev_dependencies = true
 commands =
-    pytest
+    pytest {env:PYTEST_ARGS:}
 """
 
 [tool.black]
