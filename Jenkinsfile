@@ -53,6 +53,7 @@ pipeline {
                 POETRY_HTTP_BASIC_SBT_PASSWORD=credentials('pypiserver-password')
             }
             steps {
+                sh 'printenv'
                 sh 'poetry publish -r sbt'
             }
         }
