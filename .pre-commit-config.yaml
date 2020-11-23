@@ -1,29 +1,25 @@
 repos:
-  - repo: https://github.com/timothycrosley/isort
-    rev: 5.6.4
-    hooks:
-      - id: isort
-        language_version: python3.8
-        additional_dependencies:
-          - toml
-  - repo: https://github.com/psf/black
-    rev: stable
-    hooks:
-      - id: black
-        language_version: python3.8
-
-  # Run locally since pylint checks the imports
-  # See: https://pre-commit.com/#repository-local-hooks
-  # See: https://stackoverflow.com/a/61238571/554283
+  # Run locally inside Poetry's virtual environment.
+  # It's overkill to use pre-commit's virtual environment too.
   - repo: local
     hooks:
+    - id: isort
+      name: isort
+      entry: poetry run isort
+      language: system
+      types: [python]
+    - id: black
+      name: black
+      entry: poetry run black
+      language: system
+      types: [python]
     - id: pylint
       name: pylint
-      entry: pylint
+      entry: poetry run pylint
       language: system
       types: [python]
     - id: mypy
-      name: mypy
+      name: poetry run mypy
       entry: mypy
       language: system
       types: [python]
