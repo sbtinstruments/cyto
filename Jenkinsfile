@@ -14,6 +14,8 @@ pipeline {
             parallel {
                 stage('Test') {
                     environment {
+                        // The spinner interferes with Jenkins' output parsing.
+                        TOX_PARALLEL_NO_SPINNER=0
                         // Generate JUnit XML files that jenkins can parse in a
                         // later step (see [1]).
                         PYTEST_ARGS='--junitxml=junit-{envname}.xml'
@@ -23,6 +25,15 @@ pipeline {
                         // tox manages its own virtual environments. See the
                         // [tool.tox] section in pyproject.toml for details.
                         sh 'python3 -m tox --parallel'
+                        // Publish the HTML coverage report to 
+                        publishHTML target: [
+                            allowMissing: false,
+                            alwaysLinkToLastBuild: false,
+                            keepAll: true,
+                            reportDir: 'htmlcov',
+                            reportFiles: 'index.html',
+                            reportName: 'Test Coverage Report'
+                        ]
                     }
                 }
                 stage('Lint') {
