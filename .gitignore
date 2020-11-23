@@ -2,3 +2,4 @@
 .vscode
 .tox
 dist
+poetry.toml
