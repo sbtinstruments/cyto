@@ -64,7 +64,7 @@ commands = coverage erase
 [testenv:coverage]
 basepython = python3.8
 depends = py38,py39
-deps = coveragegi
+deps = coverage
 skip_install = true
 commands =
     coverage html --precision=2
