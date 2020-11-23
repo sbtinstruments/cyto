@@ -34,7 +34,6 @@ enable = true
 
 [tool.taskipy.tasks]
 black = "black cyto tests"
-coverage = "pytest --cov=cyto --cov-fail-under=95"
 isort = "isort cyto tests"
 mypy = "mypy cyto tests"
 pre-commit = "pre-commit run --all-files"
@@ -68,7 +67,7 @@ deps = coverage
 skip_install = true
 commands =
     coverage html --precision=2
-    coverage report --precision=2 --fail-under=90
+    coverage report --precision=2 --fail-under=98
 """
 
 [tool.black]
