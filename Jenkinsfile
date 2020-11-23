@@ -54,7 +54,7 @@ pipeline {
             }
             steps {
                 sh 'printenv'
-                sh 'poetry publish -r sbt'
+                sh 'yes | poetry publish -r sbt'
             }
         }
     }
