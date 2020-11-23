@@ -49,21 +49,25 @@ requires =
     tox-poetry-dev-dependencies
 
 [testenv]
-poetry_experimental_add_locked_dependencies = true
-poetry_add_dev_dependencies = true
 depends =
     {py38,py39}: clean
     coverage: py38, py39
 commands =
     pytest --cov=cyto --cov-append --cov-report=term-missing {env:PYTEST_ARGS:}
 
+[testenv:{py38,py39}]
+poetry_experimental_add_locked_dependencies = true
+poetry_add_dev_dependencies = true
+
 [testenv:clean]
 basepython = python3.8
+deps = coverage
 skip_install = true
 commands = coverage erase
 
 [testenv:coverage]
 basepython = python3.8
+deps = coverage
 skip_install = true
 commands =
     coverage html --precision=2
