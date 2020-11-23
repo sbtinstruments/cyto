@@ -66,8 +66,8 @@ commands = coverage erase
 basepython = python3.8
 skip_install = true
 commands =
-    coverage html
-    coverage report --fail-under=80
+    coverage html --precision=2
+    coverage report --precision=2 --fail-under=98
 """
 
 [tool.black]

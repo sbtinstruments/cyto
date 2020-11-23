@@ -25,15 +25,6 @@ pipeline {
                         // tox manages its own virtual environments. See the
                         // [tool.tox] section in pyproject.toml for details.
                         sh 'python3 -m tox --parallel'
-                        // Publish the HTML coverage report to 
-                        publishHTML target: [
-                            allowMissing: false,
-                            alwaysLinkToLastBuild: false,
-                            keepAll: true,
-                            reportDir: 'htmlcov',
-                            reportFiles: 'index.html',
-                            reportName: 'Test Coverage Report'
-                        ]
                     }
                 }
                 stage('Lint') {
@@ -85,7 +76,17 @@ pipeline {
     }
     post {
         always {
+            // Parse JUnit XML files
             junit 'junit-*.xml'  // [1]
+            // Publish the HTML coverage report
+            publishHTML target: [
+                allowMissing: false,
+                alwaysLinkToLastBuild: false,
+                keepAll: true,
+                reportDir: 'htmlcov',
+                reportFiles: 'index.html',
+                reportName: 'Test Coverage Report'
+            ]
         }
     }
 }
