@@ -1,5 +1,7 @@
 *.pyc
 .vscode
 .tox
+.coverage
+htmlcov
 dist
 poetry.toml

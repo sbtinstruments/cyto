@@ -81,7 +81,8 @@ commit pushed to the remote repository.*
 
 The QA test tools are:
  * `tox` (for automation across Python versions)
- * `pytest` (the test framework)
+ * `pytest` (the test framework itself)
+ * `pytest-cov` (for test coverage percentage)
 
 Run the tests manually:
 
