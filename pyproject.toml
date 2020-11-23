@@ -1,4 +1,6 @@
 [build-system]
+# We can't use poetry-core, since there is a compatbility issue with
+# the poetry-dynamic-versioning plug-in and tox-poetry-dev-dependencies.
 build-backend = "poetry.masonry.api"
 requires = ["poetry>=1.0.0", "poetry-dynamic-versioning"]
 
