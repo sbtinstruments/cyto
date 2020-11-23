@@ -34,7 +34,7 @@ pipeline {
                             publishHTML target: [
                                 // Report may be missing if one of the tests fail
                                 allowMissing: true,
-                                alwaysLinkToLastBuild: false,
+                                alwaysLinkToLastBuild: true,
                                 keepAll: true,
                                 reportDir: 'htmlcov',
                                 reportFiles: 'index.html',
