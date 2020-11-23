@@ -17,7 +17,7 @@ pipeline {
                         // The spinner interferes with Jenkins' output parsing.
                         TOX_PARALLEL_NO_SPINNER=1
                         // Generate JUnit XML files that jenkins can parse in a
-                        // later step (see [1]).
+                        // post (see [1]).
                         PYTEST_ARGS='--junitxml=junit-{envname}.xml'
                     }
                     steps {
@@ -25,6 +25,21 @@ pipeline {
                         // tox manages its own virtual environments. See the
                         // [tool.tox] section in pyproject.toml for details.
                         sh 'python3 -m tox --parallel'
+                    }
+                    post {
+                        always {
+                            // Parse JUnit XML files
+                            junit 'junit-*.xml'  // [1]
+                            // Publish the HTML coverage report
+                            publishHTML target: [
+                                allowMissing: false,
+                                alwaysLinkToLastBuild: false,
+                                keepAll: true,
+                                reportDir: 'htmlcov',
+                                reportFiles: 'index.html',
+                                reportName: 'Test Coverage Report'
+                            ]
+                        }
                     }
                 }
                 stage('Lint') {
@@ -72,21 +87,6 @@ pipeline {
                 sh 'python3 -m twine check dist/*'
                 sh 'python3 -m twine upload --skip-existing dist/*'
             }
-        }
-    }
-    post {
-        always {
-            // Parse JUnit XML files
-            junit 'junit-*.xml'  // [1]
-            // Publish the HTML coverage report
-            publishHTML target: [
-                allowMissing: false,
-                alwaysLinkToLastBuild: false,
-                keepAll: true,
-                reportDir: 'htmlcov',
-                reportFiles: 'index.html',
-                reportName: 'Test Coverage Report'
-            ]
         }
     }
 }
