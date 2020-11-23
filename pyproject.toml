@@ -1,10 +1,14 @@
+[build-system]
+build-backend = "poetry.core.masonry.api"
+requires = ["poetry-core>=1.0.0", "poetry-dynamic-versioning"]
+
 [tool.poetry]
-authors = ["Frederik Peter Aalund <fpa@sbtinstruments.com>"]
-description = "SBT Instruments' framework for Python-based applications"
-license = "MIT"
-name = "cyto"
-readme = "README.md"
-version = "0.1.0"
+authors = ["Frederik Peter Aalund <fpa@sbtinstruments.com>"] 
+description = "SBT Instruments' framework for Python-based applications" 
+license = "MIT" 
+name = "cyto" 
+readme = "README.md" 
+version = "0.0.0" # Placeholder (we use the poetry-dynamic-versioning plug-in)
 
 [tool.poetry.dependencies]
 anyio = "^2.0.2"
@@ -22,9 +26,8 @@ pylint = "^2.6.0"
 pytest = "^6.1.2"
 tox = "^3.20.1"
 
-[build-system]
-build-backend = "poetry.core.masonry.api"
-requires = ["poetry-core>=1.0.0"]
+[tool.poetry-dynamic-versioning]
+enable = true
 
 [tool.tox]
 legacy_tox_ini = """
