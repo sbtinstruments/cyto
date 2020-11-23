@@ -1,4 +1,4 @@
-# Cyto
+# Cyto 🦠
 
 This is a work-in-progress replacement for `geist`.
 
