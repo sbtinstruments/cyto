@@ -28,29 +28,25 @@ pipeline {
                 stage('Lint') {
                     steps {
                         // This runs inside poetry's virtual environment.
-                        // Note that we lint both the "cyto" and "tests" directories.
-                        sh 'poetry run pylint cyto tests'
+                        sh 'poetry run task pylint'
                     }
                 }
                 stage('Check types') {
                     steps {
                         // This runs inside poetry's virtual environment.
-                        // Note that we check both the "cyto" and "tests" directories.
-                        sh 'poetry run mypy cyto tests'
+                        sh 'poetry run task mypy'
                     }
                 }
                 stage('Check formatting') {
                     steps {
                         // This runs inside poetry's virtual environment.
-                        // Note that we check both the "cyto" and "tests" directories.
-                        sh 'poetry run black --check cyto tests'
+                        sh 'poetry run task black --check'
                     }
                 }
                 stage('Check import order') {
                     steps {
                         // This runs inside poetry's virtual environment.
-                        // Note that we check both the "cyto" and "tests" directories.
-                        sh 'poetry run isort --check cyto tests'
+                        sh 'poetry run task isort --check'
                     }
                 }
             }

@@ -36,54 +36,56 @@ Do the following:
     ```shell
     poetry install
     ```
- 5. Optional: Run the basic QA tools (e.g., isort, black, pylint, mypy) automatically before each commit
+ 5. Optional: Run the QA basic tools (e.g., isort, black, pylint, mypy) automatically before each commit
     ```shell
     poetry run pre-commit install
     ```
 
 ### Quality Assurance (QA) Tools
 
-*All of the tools below automatically run in Jenkins for each
-commit pushed to the remote repository. If you installed the
-`pre-commit` hooks, all tools (except the tests) automatically
-run before each commit too.*
+#### QA Basic Tools
 
-You can always run the QA tools manually. This is useful if you
+*All QA basic tools automatically run in Jenkins for each commit pushed
+to the remote repository. If you installed the `pre-commit` hooks,
+all QA basic tools automatically run before each commit too.*
+
+The QA basic tools are:
+ * `isort` (for import ordering)
+ * `black` (for formatting)
+ * `pylint` (for linting)
+ * `mypy` (for type checking)
+
+You can run the QA basic tools manually. This is useful if you
 don't want to install the `pre-commit` hooks.
 
-Run `isort` (for import ordering) manually :
-
+Run the QA basic tools manually with:
 ```shell
-poetry run isort cyto tests
+poetry run task isort
+poetry run task black
+poetry run task pylint
+poetry run task mypy
 ```
 
-Run `black` (for formatting) manually :
+Run all the basic QA tools manually with a single command:
 
 ```shell
-poetry run black cyto tests
+poetry run task pre-commit
 ```
 
-Run `pylint` (for linting) manually :
+Note that this doesn't require you to install the `pre-commit` hooks.
 
-```shell
-poetry run pylint cyto tests
-```
+#### QA Test Tools
 
-Run `mypy` (for type checking) manually :
+*All of the tools below automatically run in Jenkins for each
+commit pushed to the remote repository.*
 
-```shell
-poetry run mypy cyto tests
-```
+The QA test tools are:
+ * `tox` (for automation across Python versions)
+ * `pytest` (the test framework)
 
-Run all the above manually (this doesn't require you to install the `pre-commit` hooks):
+Run the tests manually:
 
-```shell
-poetry run pre-commit run --all-files
-```
-
-Run `pytest` manually (for testing):
-
- 1. Install `tox` (for test automation across Python versions)
+ 1. Install `tox`
     ```shell
     python3 -m pip install tox
     ```
@@ -91,7 +93,9 @@ Run `pytest` manually (for testing):
     ```
     tox
     ```
-    From here, `tox` invokes `pytest` in a set of virtual environments.
+
+Note that `tox` invokes `pytest` in a set of virtual environments. Said
+virtual environments have nothing to do with poetry's virtual environment. Poetry and tox runs in isolation of each other.
 
 ### Visual Studio Code
 
@@ -122,5 +126,5 @@ poetry env list
 ```
 
 Lastly, you use the Visual Studio Code command
-`Python: Select Interpreter` to choose the interpreter inside
+`Python: Select Interpreter` and choose the interpreter inside
 poetry's currently active virtual environment.

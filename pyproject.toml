@@ -26,10 +26,17 @@ pre-commit = "^2.8.2"
 pyfakefs = "^4.2.1"
 pylint = "^2.6.0"
 pytest = "^6.1.2"
-tox = "^3.20.1"
+taskipy = "^1.4.0"
 
 [tool.poetry-dynamic-versioning]
 enable = true
+
+[tool.taskipy.tasks]
+black = "black cyto tests"
+isort = "isort cyto tests"
+mypy = "mypy cyto tests"
+pre-commit = "pre-commit run --all-files"
+pylint = "pylint cyto tests"
 
 [tool.tox]
 legacy_tox_ini = """
