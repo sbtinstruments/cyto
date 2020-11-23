@@ -46,6 +46,13 @@ pipeline {
                         sh 'poetry run black --check cyto tests'
                     }
                 }
+                stage('Check import order') {
+                    steps {
+                        // This runs inside poetry's virtual environment.
+                        // Note that we check both the "cyto" and "tests" directories.
+                        sh 'poetry run isort --check cyto tests'
+                    }
+                }
             }
         }
         stage('Build') {
