@@ -58,12 +58,15 @@ commands =
     pytest --cov=cyto --cov-append --cov-report=term-missing {env:PYTEST_ARGS:}
 
 [testenv:clean]
+basepython = python3.8
 skip_install = true
 commands = coverage erase
 
 [testenv:coverage]
+basepython = python3.8
 skip_install = true
 commands =
+    coverage html
     coverage report --fail-under=97
 """
 

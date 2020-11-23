@@ -7,7 +7,7 @@ This is a work-in-progress replacement for `geist`.
 
 ### Python Version
 
-Development requires Python 3.6 or later. Test your python version with:
+Development requires Python 3.8 or later. Test your python version with:
 ```shell
 python3 --version
 ```

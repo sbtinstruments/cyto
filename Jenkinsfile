@@ -15,7 +15,7 @@ pipeline {
                 stage('Test') {
                     environment {
                         // The spinner interferes with Jenkins' output parsing.
-                        TOX_PARALLEL_NO_SPINNER=0
+                        TOX_PARALLEL_NO_SPINNER=1
                         // Generate JUnit XML files that jenkins can parse in a
                         // later step (see [1]).
                         PYTEST_ARGS='--junitxml=junit-{envname}.xml'
