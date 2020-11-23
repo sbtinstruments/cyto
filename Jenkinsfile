@@ -32,11 +32,18 @@ pipeline {
                         sh 'poetry run pylint cyto tests'
                     }
                 }
-                stage('Type check') {
+                stage('Check types') {
                     steps {
                         // This runs inside poetry's virtual environment.
                         // Note that we check both the "cyto" and "tests" directories.
                         sh 'poetry run mypy cyto tests'
+                    }
+                }
+                stage('Check formatting') {
+                    steps {
+                        // This runs inside poetry's virtual environment.
+                        // Note that we check both the "cyto" and "tests" directories.
+                        sh 'poetry run black --check cyto tests'
                     }
                 }
             }
