@@ -3,7 +3,6 @@ pipeline {
     stages {
         stage('Install') {
             steps {
-                sh 'poetry config repositories.sbt http://192.168.1.11:8081'
                 // We use python 3.8 for now due to a bug in pylint.
                 // See https://github.com/PyCQA/pylint/issues/3882
                 sh 'poetry env use 3.8'
@@ -49,12 +48,16 @@ pipeline {
         }
         stage('Publish') {
             environment {
-                POETRY_HTTP_BASIC_SBT_USERNAME=credentials('pypiserver-username')
-                POETRY_HTTP_BASIC_SBT_PASSWORD=credentials('pypiserver-password')
+                TWINE_REPOSITORY_URL 'http://127.0.0.1:8081'
+                TWINE_USERNAME=credentials('pypiserver-username')
+                TWINE_PASSWORD=credentials('pypiserver-password')
             }
             steps {
-                sh 'printenv'
-                sh 'yes | poetry publish -r sbt'
+                // Note that we don't use `poetry publish`. It simply doesn't
+                // work for non-interactive use. We got "Prompt dismissed.." errors.
+                // Instead, we use twine for now.
+                sh 'python3 -m twine check dist/*'
+                sh 'python3 -m twine upload dist/*'
             }
         }
     }

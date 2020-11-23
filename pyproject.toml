@@ -3,6 +3,7 @@ authors = ["Frederik Peter Aalund <fpa@sbtinstruments.com>"]
 description = "SBT Instruments' framework for Python-based applications"
 license = "MIT"
 name = "cyto"
+readme = "README.md"
 version = "0.1.0"
 
 [tool.poetry.dependencies]
