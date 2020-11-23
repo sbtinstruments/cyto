@@ -19,19 +19,10 @@ pipeline {
                         PYTEST_ARGS='--junitxml=junit-{envname}.xml'
                     }
                     steps {
-                        script {
-                            def envs = ["py38", "py39"]
-                            def cmds = envs.collectEntries({ tox_env ->
-                                [tox_env, {
-                                    sh "python3 -m tox -vve $tox_env"
-                                }]
-                            })
-                            parallel(cmds)
-                        }
                         // Note that we don't do "poetry run tox". This is because
                         // tox manages its own virtual environments. See the
                         // [tool.tox] section in pyproject.toml for details.
-                        //sh 'python3 -m tox'
+                        sh 'python3 -m tox --parallel'
                     }
                 }
                 stage('Lint') {
