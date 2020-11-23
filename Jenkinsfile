@@ -57,7 +57,7 @@ pipeline {
                 // work for non-interactive use. We got "Prompt dismissed.." errors.
                 // Instead, we use twine for now.
                 sh 'python3 -m twine check dist/*'
-                sh 'python3 -m twine upload dist/*'
+                sh 'python3 -m twine upload --skip-existing dist/*'
             }
         }
     }
