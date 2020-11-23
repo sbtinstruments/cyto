@@ -20,26 +20,42 @@ pipeline {
                         // post (see [1]).
                         PYTEST_ARGS='--junitxml=junit-{envname}.xml'
                     }
-                    steps {
-                        // Note that we don't do "poetry run tox". This is because
-                        // tox manages its own virtual environments. See the
-                        // [tool.tox] section in pyproject.toml for details.
-                        sh 'python3 -m tox --parallel'
-                    }
-                    post {
-                        always {
-                            // Parse JUnit XML files
-                            junit 'junit-*.xml'  // [1]
-                            // Publish the HTML coverage report
-                            publishHTML target: [
-                                // Report may be missing if one of the tests fail
-                                allowMissing: true,
-                                alwaysLinkToLastBuild: true,
-                                keepAll: true,
-                                reportDir: 'htmlcov',
-                                reportFiles: 'index.html',
-                                reportName: 'Test Coverage Report'
-                            ]
+                    stages {
+                        stage('pytest') {
+                            steps {
+                                // Note that we don't do "poetry run tox". This is because
+                                // tox manages its own virtual environments. See the
+                                // [tool.tox] section in pyproject.toml for details.
+                                sh 'python3 -m tox --parallel -e clean,py38,py39'
+                            }
+                            post {
+                                always {
+                                    // Parse JUnit XML files
+                                    junit 'junit-*.xml'  // [1]
+                                }
+                            }
+                        }
+                        stage('coverage') {
+                            steps {
+                                // Note that we don't do "poetry run tox". This is because
+                                // tox manages its own virtual environments. See the
+                                // [tool.tox] section in pyproject.toml for details.
+                                sh 'python3 -m tox --parallel -e coverage'
+                            }
+                            post {
+                                always {
+                                    // Publish the HTML coverage report
+                                    publishHTML target: [
+                                        // Report may be missing if one of the tests fail
+                                        allowMissing: true,
+                                        alwaysLinkToLastBuild: true,
+                                        keepAll: true,
+                                        reportDir: 'htmlcov',
+                                        reportFiles: 'index.html',
+                                        reportName: 'Test Coverage Report'
+                                    ]
+                                }
+                            }
                         }
                     }
                 }
