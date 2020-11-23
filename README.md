@@ -4,6 +4,13 @@ This is a work-in-progress replacement for `geist`.
 
 ## Development
 
+Development requires Python 3.6 or later. If your `python3` doesn't point to `python3.6` or later, then the following steps won't work.
+Test this with:
+```shell
+> file `which python3`
+/usr/bin/python3: symbolic link to python3.6
+```
+
 Get the basic tooling:
 
  1. Clone this repository
