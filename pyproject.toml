@@ -26,6 +26,7 @@ pre-commit = "^2.8.2"
 pyfakefs = "^4.2.1"
 pylint = "^2.6.0"
 pytest = "^6.1.2"
+pytest-cov = "^2.10.1"
 taskipy = "^1.4.0"
 
 [tool.poetry-dynamic-versioning]
@@ -33,6 +34,7 @@ enable = true
 
 [tool.taskipy.tasks]
 black = "black cyto tests"
+coverage = "pytest --cov=cyto --cov-fail-under=95"
 isort = "isort cyto tests"
 mypy = "mypy cyto tests"
 pre-commit = "pre-commit run --all-files"
@@ -42,15 +44,27 @@ pylint = "pylint cyto tests"
 legacy_tox_ini = """
 [tox]
 isolated_build = true
-envlist = py38, py39
+envlist = clean,py38,py39,coverage
 requires =
     tox-poetry-dev-dependencies
 
 [testenv]
 poetry_experimental_add_locked_dependencies = true
 poetry_add_dev_dependencies = true
+depends =
+    {py38,py39}: clean
+    coverage: py38, py39
 commands =
-    pytest {env:PYTEST_ARGS:}
+    pytest --cov=cyto --cov-append --cov-report=term-missing {env:PYTEST_ARGS:}
+
+[testenv:clean]
+skip_install = true
+commands = coverage erase
+
+[testenv:coverage]
+skip_install = true
+commands =
+    coverage report --fail-under=97
 """
 
 [tool.black]
