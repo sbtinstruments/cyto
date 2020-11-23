@@ -95,8 +95,32 @@ Run `pytest` manually (for testing):
 
 ### Visual Studio Code
 
+#### Settings
+
 We have a default settings file that you can use via the following command:
 ```shell
 cp .vscode/settings.json.default .vscode/settings.json
 ```
 This is optional.
+
+#### Python Interpreter
+
+Hopefully, you used the local poetry virtual environment during
+installation (the `poetry config --local virtualenvs.in-project true` part). This way, Visual Studio Code automatically finds the
+Python interpreter within poetry's virtual environment.
+
+Alternatively, you can point Visual Studio Code to poetry's
+global virtual environments folder. Add the following entry
+to your `./vscode/settings.json` file:
+```json
+{ "python.venvPath": "~/.cache/pypoetry/virtualenvs" }
+```
+
+Then, you look for the poetry's currently active virtual environment:
+```shell
+poetry env list
+```
+
+Lastly, you use the Visual Studio Code command
+`Python: Select Interpreter` to choose the interpreter inside
+poetry's currently active virtual environment.
