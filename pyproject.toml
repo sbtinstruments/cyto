@@ -67,7 +67,7 @@ basepython = python3.8
 skip_install = true
 commands =
     coverage html
-    coverage report --fail-under=97
+    coverage report --fail-under=80
 """
 
 [tool.black]
