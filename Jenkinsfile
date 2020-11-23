@@ -48,6 +48,7 @@ pipeline {
         }
         stage('Publish') {
             environment {
+                // Just use the local pypiserver for now.
                 TWINE_REPOSITORY_URL='http://127.0.0.1:8081'
                 TWINE_USERNAME=credentials('pypiserver-username')
                 TWINE_PASSWORD=credentials('pypiserver-password')
