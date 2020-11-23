@@ -32,7 +32,8 @@ pipeline {
                             junit 'junit-*.xml'  // [1]
                             // Publish the HTML coverage report
                             publishHTML target: [
-                                allowMissing: false,
+                                // Report may be missing if one of the tests fail
+                                allowMissing: true,
                                 alwaysLinkToLastBuild: false,
                                 keepAll: true,
                                 reportDir: 'htmlcov',
