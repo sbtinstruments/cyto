@@ -42,7 +42,8 @@ async def _basic_factory(annotation: Type[Any]) -> Any:
 
 
 def inject(
-    *, extra_factory: Optional[Factory] = None,
+    *,
+    extra_factory: Optional[Factory] = None,
 ) -> Callable[[Func[ReturnT]], InjectedFunc[ReturnT]]:
     """Inject instances of the given function's argument types."""
 

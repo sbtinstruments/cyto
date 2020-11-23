@@ -108,7 +108,12 @@ def test_set_partial_with_toml(fs, partial_settings: Type[PartialSettings]) -> N
 
 def test_set_nested_with_kwargs(nested_settings: Type[NestedSettings]) -> None:
     s = nested_settings(
-        cake={"layers": [{"name": "ice cream", "thick": True}, {"name": "meringue"},]}
+        cake={
+            "layers": [
+                {"name": "ice cream", "thick": True},
+                {"name": "meringue"},
+            ]
+        }
     )
     assert s.cake.layers == [
         Layer(name="ice cream", thick=True),

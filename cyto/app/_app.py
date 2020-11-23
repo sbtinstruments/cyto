@@ -30,7 +30,9 @@ class App(ContextManager["App"]):
 
     @classmethod
     def launch(
-        cls, func: Func[ReturnT], settings_class: Optional[Type[Settings]] = None,
+        cls,
+        func: Func[ReturnT],
+        settings_class: Optional[Type[Settings]] = None,
     ) -> ReturnT:
         """Create app instance and run the given coroutine function."""
         # Set defaults for optional arguments
