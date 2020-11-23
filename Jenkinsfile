@@ -20,10 +20,10 @@ pipeline {
                     }
                     steps {
                         script {
-                            def envs = sh(returnStdout: true, script: "python3 -m tox -l").trim().split('\n')
+                            def envs = ["py38", "py39"]
                             def cmds = envs.collectEntries({ tox_env ->
                                 [tox_env, {
-                                    sh "python3 -m tox --parallel--safe-build -vve $tox_env"
+                                    sh "python3 -m tox -vve $tox_env"
                                 }]
                             })
                             parallel(cmds)
