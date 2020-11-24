@@ -67,7 +67,7 @@ deps = coverage
 skip_install = true
 commands =
     coverage html --precision=2
-    coverage report --precision=2 --fail-under=98
+    coverage report --precision=2 --fail-under=90
 """
 
 [tool.black]
