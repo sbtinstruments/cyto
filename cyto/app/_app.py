@@ -80,7 +80,7 @@ class App(ContextManager["App"]):
         self._stack.__exit__(exc_type, exc_value, traceback)
         # Log exit
         if exc_value is not None:
-            # We exitted due to a problem
+            # We exit due to a problem
             _LOGGER.error("Stopped due to error:", exc_info=exc_value)
         else:
             _LOGGER.info("Stopped")
