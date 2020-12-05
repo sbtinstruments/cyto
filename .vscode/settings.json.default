@@ -1,6 +1,9 @@
 {
     "python.formatting.provider": "black",
     "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+        "source.organizeImports": true
+    },
     "python.linting.enabled": true,
     "python.linting.lintOnSave": true,
     "python.linting.pylintEnabled": true,

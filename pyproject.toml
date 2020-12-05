@@ -89,13 +89,7 @@ line-length = 88
 target-version = ['py38']
 
 [tool.isort]
-# Replace with "profile = black" when we update to isort version 5
-ensure_newline_before_comments = true
-force_grid_wrap = 0
-include_trailing_comma = true
-line_length = 88
-multi_line_output = 3
-use_parentheses = true
+profile = 'black'
 
 [tool.pylint.master]
 max-args = '7'
@@ -110,16 +104,10 @@ ignore-imports = 'y'
 # Let 'black' do the formatting even though the 'black' style may
 # be borderline PEP8 compliant.
 # See: https://github.com/psf/black/issues/1178
-## wrong-import-order
-# pylint, black, and isort has a compatability issue:
-# https://github.com/PyCQA/pylint/issues/3722
-# When this issue is resolved, we can hopefully enable
-# wrong-import-order again.
 disable = '''
   invalid-name,
   missing-module-docstring,
   fixme,
   bad-continuation,
-  too-many-ancestors,
-  wrong-import-order
+  too-many-ancestors
 '''
