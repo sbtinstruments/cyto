@@ -100,9 +100,29 @@ max-line-length = '88'
 ignore-imports = 'y'
 
 [tool.pylint.'messages control']
+# Note that there is an ongoing discussion about, the current
+# pylint defaults:
+# https://github.com/PyCQA/pylint/issues/3512
+#
+# It's also interesting to note that the pylint authors disable
+# some checks for the official pylint repo:
+# https://github.com/PyCQA/pylint/blob/master/pylintrc#L56
+
+### IF YOU ENABLE A PYLINT CHECK THEN EXPLAIN WHY BELOW
+enable = '''
+'''
+
+### IF YOU DISABLE A PYLINT CHECK THEN EXPLAIN WHY BELOW
+#
+# fixme: We use "TODO: " to note areas that we can improve.
+# It's nice to have this directly in the code in a way that
+# we can easily search for.
+# Related to: https://github.com/PyCQA/pylint/issues/2874
+#
+# missing-module-docstring: Who reads these docstrings anyhow?
+# the pylint authors themselves disable this check in the pylint
+# repo.
 disable = '''
-  invalid-name,
-  missing-module-docstring,
   fixme,
-  too-many-ancestors
+  missing-module-docstring
 '''
