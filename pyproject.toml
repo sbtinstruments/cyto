@@ -129,7 +129,7 @@ enable = '''
 #     we can easily search for.
 #     Related to: https://github.com/PyCQA/pylint/issues/2874
 #
-# missing-module-docstring: Who reads these docstrings anyhow?
+# missing-module-docstring: Who reads module docstrings anyhow?
 #     the pylint authors themselves disable this check in the pylint
 #     repo.
 disable = '''
