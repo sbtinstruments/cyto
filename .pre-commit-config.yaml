@@ -19,7 +19,7 @@ repos:
       language: system
       types: [python]
     - id: mypy
-      name: poetry run mypy
-      entry: mypy
+      name: mypy
+      entry: poetry run mypy
       language: system
       types: [python]
