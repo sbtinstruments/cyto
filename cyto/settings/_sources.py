@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Callable, Dict, Optional
+from typing import Any, Callable, Dict
 
 import toml
 from pydantic import BaseSettings
@@ -26,8 +26,8 @@ class GlobSource:  # pylint: disable=too-few-public-methods
         else:
             self._update_func = dict.update
 
-    def __call__(self, _: BaseSettings) -> Dict[str, Optional[str]]:
-        env_vars: Dict[str, Optional[str]] = {}
+    def __call__(self, _: BaseSettings) -> Dict[str, Any]:
+        env_vars: Dict[str, Any] = {}
         for path in sorted(self._dir.glob(self._pattern)):
             self._update_func(env_vars, toml.load(path))
         return env_vars

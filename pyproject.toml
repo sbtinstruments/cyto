@@ -14,7 +14,7 @@ version = "0.0.0" # Placeholder (we use the poetry-dynamic-versioning plug-in)
 
 [tool.poetry.dependencies]
 anyio = "^2.0.2"
-pydantic = {git = "https://github.com/kozlek/pydantic.git", rev = "3d1be86e9f8d62a1566c96613500a9c19a9fd067"}
+pydantic = {git = "https://github.com/kozlek/pydantic.git", rev = "e8d65f67a0671e9086a599243fc6820a90b74635"}
 python = "^3.8"
 toml = "^0.10.2"
 

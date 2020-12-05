@@ -303,8 +303,8 @@ typing_extensions = ["typing-extensions (>=3.7.2)"]
 [package.source]
 type = "git"
 url = "https://github.com/kozlek/pydantic.git"
-reference = "3d1be86e9f8d62a1566c96613500a9c19a9fd067"
-resolved_reference = "3d1be86e9f8d62a1566c96613500a9c19a9fd067"
+reference = "e8d65f67a0671e9086a599243fc6820a90b74635"
+resolved_reference = "e8d65f67a0671e9086a599243fc6820a90b74635"
 
 [[package]]
 name = "pyfakefs"
@@ -471,7 +471,7 @@ python-versions = "*"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "51b72c947c5ca1eaa0eec2f3a37daa9fcdcab0d5e6359122acc7bce0756a5a7b"
+content-hash = "07ee1680aeb1735276f5771270c9db1c54298d2b843006c104de77fa487c280c"
 
 [metadata.files]
 anyio = [
