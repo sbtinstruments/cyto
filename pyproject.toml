@@ -100,14 +100,9 @@ max-line-length = '88'
 ignore-imports = 'y'
 
 [tool.pylint.'messages control']
-## bad-continuation
-# Let 'black' do the formatting even though the 'black' style may
-# be borderline PEP8 compliant.
-# See: https://github.com/psf/black/issues/1178
 disable = '''
   invalid-name,
   missing-module-docstring,
   fixme,
-  bad-continuation,
   too-many-ancestors
 '''
