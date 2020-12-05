@@ -81,17 +81,24 @@ target-version = ['py38']
 profile = 'black'
 
 [tool.pylint.master]
+# i,j,k: You can use this for an integer index in a loop.
 # fs: We use this in the tests to get a pyfakefs file system reference.
 #     Since pytest's dependency injection is name based, we have to use
 #     this exact argument name.
 # tg: You can use this for an `anyio.TaskGroup`.
-# i: You can use this for an integer index in a loop.
-good-names = 'fs, tg, i'
-max-args = '7'
-max-attributes = '12'
-max-line-length = '88'
+good-names = 'i,j,k,fs,tg' # Default is 'i,j,k,ex,Run,_'
+# Increase the default values a bit. Yes, this may hurt maintainability
+# ever so slightly but it increases the speed of development.
+max-args = '7' # Default is 5
+max-attributes = '12' # Default is 7
+# Match black's default max line length
+max-line-length = '88' # Default is 100
 
 [tool.pylint.similarities]
+# Imports are often duplicated. If two different files use a lot of
+# the same imports, there is just no way around it. Therefore, we
+# simply ignore import statements completely when we look for duplicate
+# code.
 ignore-imports = 'y'
 
 [tool.pylint.'messages control']
