@@ -40,10 +40,10 @@ def test_inject_stack() -> None:
 def test_inject_multiple() -> None:
     # Note that the argument names can be anything. We inject solely based
     # on the type annotation.
-    async def main(oh: TaskGroup, hi: AsyncExitStack, there: Settings) -> None:
-        assert isinstance(there, Settings)
-        assert isinstance(oh, TaskGroup)
-        assert isinstance(hi, AsyncExitStack)
+    async def main(apple: TaskGroup, banana: AsyncExitStack, grape: Settings) -> None:
+        assert isinstance(grape, Settings)
+        assert isinstance(apple, TaskGroup)
+        assert isinstance(banana, AsyncExitStack)
 
     App.launch(main)
 

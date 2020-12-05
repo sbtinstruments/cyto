@@ -64,10 +64,10 @@ def nested_settings() -> Type[NestedSettings]:
 
 
 def test_defaults(default_settings: Type[DefaultSettings]) -> None:
-    s = default_settings()
-    assert s.my_bool is False
-    assert s.my_int == 42
-    assert s.my_string == "Hello test suite"
+    settings = default_settings()
+    assert settings.my_bool is False
+    assert settings.my_int == 42
+    assert settings.my_string == "Hello test suite"
 
 
 def test_missing(partial_settings: Type[PartialSettings]) -> None:
@@ -80,10 +80,10 @@ def test_missing(partial_settings: Type[PartialSettings]) -> None:
 
 
 def test_set_partial_with_kwargs(partial_settings: Type[PartialSettings]) -> None:
-    s = partial_settings(my_int=44, my_string="string with spaces")
-    assert s.my_bool is False
-    assert s.my_int == 44
-    assert s.my_string == "string with spaces"
+    settings = partial_settings(my_int=44, my_string="string with spaces")
+    assert settings.my_bool is False
+    assert settings.my_int == 44
+    assert settings.my_string == "string with spaces"
 
 
 def test_set_partial_with_env(
@@ -91,23 +91,23 @@ def test_set_partial_with_env(
 ) -> None:
     monkeypatch.setenv("foobar_my_int", "99")
     monkeypatch.setenv("foobar_my_string", "string with spaces")
-    s = partial_settings()
-    assert s.my_bool is False
-    assert s.my_int == 99
-    assert s.my_string == "string with spaces"
+    settings = partial_settings()
+    assert settings.my_bool is False
+    assert settings.my_int == 99
+    assert settings.my_string == "string with spaces"
 
 
 def test_set_partial_with_toml(fs, partial_settings: Type[PartialSettings]) -> None:
     fs.create_file("/etc/foobar/first.toml", contents="my_int = -55")
     fs.create_file("./second.foobar.toml", contents='my_string = "string with spaces"')
-    s = partial_settings()
-    assert s.my_bool is False
-    assert s.my_int == -55
-    assert s.my_string == "string with spaces"
+    settings = partial_settings()
+    assert settings.my_bool is False
+    assert settings.my_int == -55
+    assert settings.my_string == "string with spaces"
 
 
 def test_set_nested_with_kwargs(nested_settings: Type[NestedSettings]) -> None:
-    s = nested_settings(
+    settings = nested_settings(
         cake={
             "layers": [
                 {"name": "ice cream", "thick": True},
@@ -115,11 +115,11 @@ def test_set_nested_with_kwargs(nested_settings: Type[NestedSettings]) -> None:
             ]
         }
     )
-    assert s.cake.layers == [
+    assert settings.cake.layers == [
         Layer(name="ice cream", thick=True),
         Layer(name="meringue", thick=False),
     ]
-    assert s.cake.num_candles == 9
+    assert settings.cake.num_candles == 9
 
 
 def test_set_nested_with_env(
@@ -134,12 +134,12 @@ def test_set_nested_with_env(
     }
     """
     monkeypatch.setenv("foobar_cake", value)
-    s = nested_settings()
-    assert s.cake.layers == [
+    settings = nested_settings()
+    assert settings.cake.layers == [
         Layer(name="ice cream", thick=True),
         Layer(name="meringue", thick=False),
     ]
-    assert s.cake.num_candles == 9
+    assert settings.cake.num_candles == 9
 
 
 def test_set_nested_with_toml(fs, nested_settings: Type[NestedSettings]) -> None:
@@ -155,9 +155,9 @@ def test_set_nested_with_toml(fs, nested_settings: Type[NestedSettings]) -> None
         name = "meringue"
     """
     fs.create_file("/etc/foobar/a.toml", contents=contents)
-    s = nested_settings()
-    assert s.cake.num_candles == 4
-    assert s.cake.layers == [
+    settings = nested_settings()
+    assert settings.cake.num_candles == 4
+    assert settings.cake.layers == [
         Layer(name="ice cream", thick=True),
         Layer(name="meringue", thick=False),
     ]
@@ -175,17 +175,17 @@ def test_set_nested_with_toml(fs, nested_settings: Type[NestedSettings]) -> None
         num_candles=2
     """
     fs.create_file("/etc/foobar/b.toml", contents=contents)
-    s = nested_settings()
+    settings = nested_settings()
     # As expected, the settings file now reflects the new `Cake` instance
-    assert s.cake.num_candles == 2
+    assert settings.cake.num_candles == 2
     # Note that we didn't specify any layers in the new `Cake` instance.
     # Still, the layers from `a.toml` are still there. This is because
     # we merge the `Cake` instances from `a.toml` and `b.toml` under the hood.
-    assert s.cake.layers == [
+    assert settings.cake.layers == [
         Layer(name="ice cream", thick=True),
         Layer(name="meringue", thick=False),
     ]
-    assert len(s.cake.layers) == 2
+    assert len(settings.cake.layers) == 2
 
     # There is no exception for lists. So, if we specify `layers`, we
     # override any existing entries.
@@ -196,36 +196,36 @@ def test_set_nested_with_toml(fs, nested_settings: Type[NestedSettings]) -> None
         name = "lemon curd"
     """
     fs.create_file("/etc/foobar/c.toml", contents=contents)
-    s = nested_settings()
+    settings = nested_settings()
     # We still see the untouched remnants from `a.toml`
-    assert s.cake.num_candles == 2
+    assert settings.cake.num_candles == 2
     # The layers themselves, however, are gone. The new list instance from
     # `c.toml` overrides any existing entries.
-    assert s.cake.layers == [Layer(name="lemon curd", thick=False)]
+    assert settings.cake.layers == [Layer(name="lemon curd", thick=False)]
 
 
 def test_etc_precedence(fs, default_settings: Type[DefaultSettings]) -> None:
     fs.create_file("/etc/foobar/0.toml", contents="my_int = 0")
     fs.create_file("/etc/foobar/1.toml", contents="my_int = 1")
     fs.create_file("/etc/foobar/2.toml", contents="my_int = 2")
-    s = default_settings()
-    assert s.my_int == 2
+    settings = default_settings()
+    assert settings.my_int == 2
     # Remove a file to make the other files take precedence
     fs.remove_object("/etc/foobar/2.toml")
-    s = default_settings()
-    assert s.my_int == 1
+    settings = default_settings()
+    assert settings.my_int == 1
     # Remove all files to go back to the default
     fs.remove_object("/etc/foobar/1.toml")
     fs.remove_object("/etc/foobar/0.toml")
-    s = default_settings()
-    assert s.my_int == 42
+    settings = default_settings()
+    assert settings.my_int == 42
 
 
 def test_etc_vs_cwd_precedence(fs, default_settings: Type[DefaultSettings]) -> None:
     fs.create_file("/etc/foobar/a.toml", contents="my_int = 1")
     fs.create_file("./a.foobar.toml", contents="my_int = 2")
-    s = default_settings()
-    assert s.my_int == 2
+    settings = default_settings()
+    assert settings.my_int == 2
 
 
 def test_cwd_vs_env_precedence(
@@ -233,13 +233,13 @@ def test_cwd_vs_env_precedence(
 ) -> None:
     fs.create_file("./a.foobar.toml", contents="my_int = 2")
     monkeypatch.setenv("foobar_my_int", "3")
-    s = default_settings()
-    assert s.my_int == 3
+    settings = default_settings()
+    assert settings.my_int == 3
 
 
 def test_env_vs_kwarg_precedence(
     monkeypatch, default_settings: Type[DefaultSettings]
 ) -> None:
     monkeypatch.setenv("foobar_my_int", "3")
-    s = default_settings(my_int=4)
-    assert s.my_int == 4
+    settings = default_settings(my_int=4)
+    assert settings.my_int == 4
