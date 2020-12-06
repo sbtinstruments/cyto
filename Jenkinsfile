@@ -3,6 +3,12 @@ pipeline {
     stages {
         stage('Install') {
             steps {
+                // Use a local poetry virtual environment. E.g., inside a
+                // .venv folder in the workspace itself. This way, Jenkins
+                // can clear poetry's virtual environment before each build.
+                // E.g., with the "wipe out repository" or "clean before
+                // checkout" option.
+                sh 'poetry config --local virtualenvs.in-project true'
                 // We use python 3.8 for now due to a bug in pylint.
                 // See https://github.com/PyCQA/pylint/issues/3882
                 sh 'poetry env use 3.8'
@@ -16,7 +22,7 @@ pipeline {
                     environment {
                         // The spinner interferes with Jenkins' output parsing.
                         TOX_PARALLEL_NO_SPINNER=1
-                        // Generate JUnit XML files that jenkins can parse in a
+                        // Generate JUnit XML files that Jenkins can parse in a
                         // post (see [1]).
                         PYTEST_ARGS='--junitxml=junit-{envname}.xml'
                     }
