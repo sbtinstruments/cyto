@@ -31,6 +31,7 @@ taskipy = "^1.4.0"
 # We only use rope to give Visual Studio Code users a better
 # experience out-of-the-box. For, e.g., refactoring.
 # In other words, rope is not part of the QA tooling itself.
+pydocstyle = "^5.1.1"
 rope = "^0.18.0"
 
 [tool.poetry-dynamic-versioning]
@@ -121,10 +122,13 @@ enable = '''
 #     we can easily search for.
 #     Related to: https://github.com/PyCQA/pylint/issues/2874
 #
-# missing-module-docstring: Who reads module docstrings anyhow?
-#     the pylint authors themselves disable this check in the pylint
-#     repo.
+# missing-module-docstring,
+# missing-class-docstring,
+# missing-function-docstring: pydocstyle handles all this
+#     See: https://pylint.readthedocs.io/en/latest/faq.html#i-am-using-another-popular-linter-alongside-pylint-which-messages-should-i-disable-to-avoid-duplicates
 disable = '''
   fixme,
-  missing-module-docstring
+  missing-module-docstring,
+  missing-class-docstring,
+  missing-function-docstring,
 '''

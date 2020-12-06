@@ -21,17 +21,23 @@ ReturnT = TypeVar("ReturnT", covariant=True)
 Func = Callable[..., Coroutine[Any, Any, ReturnT]]
 
 
+# Note that we disable D102 for `Protocol`s since it's redundant documentation.
+# Similarly, we disable too-few-public-methods since it doens't make sense for
+# `Protocol`s. Hopefully, both pydocstyle and pylint will special-case `Protocol`s
+# soon enough.
+
+
 class InjectedFunc(Protocol[ReturnT]):  # pylint: disable=too-few-public-methods
     """`Func` after we apply `inject` to it."""
 
-    async def __call__(self) -> ReturnT:
+    async def __call__(self) -> ReturnT:  # noqa: D102
         ...
 
 
 class Factory(Protocol):  # pylint: disable=too-few-public-methods
     """Given a type, return an instance of said type."""
 
-    async def __call__(self, __annotation: Type[Any]) -> Any:
+    async def __call__(self, __annotation: Type[Any]) -> Any:  # noqa: D102
         ...
 
 

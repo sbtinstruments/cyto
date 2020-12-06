@@ -1,0 +1,7 @@
+[pydocstyle]
+# Disable all checks in this test directory. This is a work-around for
+# an issue with Visual Studio Code:
+#     https://github.com/microsoft/vscode-python/issues/3396
+# Note that the vscode-python authors closed the issue Nov 19, 2018.
+# They never actually solved the underlying problem.
+select = ""

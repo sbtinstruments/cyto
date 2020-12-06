@@ -25,7 +25,7 @@ class App(ContextManager["App"]):
 
     @property
     def settings(self) -> Settings:
-        """Return the application settings."""
+        """Application settings."""
         return self._settings
 
     @classmethod

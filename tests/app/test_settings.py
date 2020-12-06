@@ -17,7 +17,7 @@ from cyto.settings import autofill
 
 class Layer(BaseModel):
     name: str
-    think: bool = False
+    thick: bool = False
 
 
 class Cake(BaseModel):
@@ -41,7 +41,7 @@ class NestedSettings(BaseSettings):
     store_is_open: bool = True
     cake: Cake = Cake(
         layers=[
-            Layer(name="brownie", think=True),
+            Layer(name="brownie", thick=True),
             Layer(name="cream"),
             Layer(name="glaze"),
         ]

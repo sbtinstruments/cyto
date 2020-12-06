@@ -21,5 +21,5 @@ class Settings(BaseSettings):
     foreground: bool = False
     data_directory: Path
 
-    class Config:  # pylint: disable=missing-class-docstring,too-few-public-methods
+    class Config:  # pylint: disable=too-few-public-methods
         allow_mutation = False

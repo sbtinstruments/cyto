@@ -1,0 +1,9 @@
+[pydocstyle]
+# D104: Missing docstring in public package (e.g., in __init__.py)
+# D105: Magic methods such as __enter__ and __exit__
+# D106: Missing docstring in public nested class. This one is more
+#       trouble than it's worth. Pydantic, for instance, use nested
+#       nested `Config` classes. This results in a lot of false
+#       positives.
+# D107: __init__ method
+add_ignore = D104,D105,D106,D107
