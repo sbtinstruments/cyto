@@ -1,8 +1,15 @@
 [build-system]
 # We can't use poetry-core, since there is a compatibility issue with
-# the poetry-dynamic-versioning plug-in and tox-poetry-dev-dependencies.
+# the poetry-dynamic-versioning plug-in when run inside tox.
 build-backend = "poetry.masonry.api"
-requires = ["poetry>=1.0.0", "poetry-dynamic-versioning"]
+# We use specific versions of dunamai and poetry-dynamic-versioning
+# due to a bug in recent versions that raises "RuntimeError: Unable
+# to detect version control system" when run through tox.
+requires = [
+  "poetry>=1.0.0",
+  "dunamai==1.4.1",
+  "poetry-dynamic-versioning==0.11.0",
+]
 
 [tool.poetry]
 authors = ["Frederik Peter Aalund <fpa@sbtinstruments.com>"] 
@@ -50,25 +57,28 @@ legacy_tox_ini = """
 isolated_build = true
 envlist = clean,py38,py39,coverage
 requires =
-    tox-poetry-dev-dependencies
+    tox-poetry-installer[poetry] == 0.6.0
+
+[testenv]
+require_locked_deps = true
+locked_deps =
+    pytest
+    pytest-cov
+    pyfakefs
 
 [testenv:{py38,py39}]
 depends = clean
-poetry_experimental_add_locked_dependencies = true
-poetry_add_dev_dependencies = true
 commands =
     pytest --cov=cyto --cov-append --cov-report=term-missing {env:PYTEST_ARGS:}
 
 [testenv:clean]
 basepython = python3.8
-deps = coverage
 skip_install = true
 commands = coverage erase
 
 [testenv:coverage]
 basepython = python3.8
 depends = py38,py39
-deps = coverage
 skip_install = true
 commands =
     coverage html --precision=2
