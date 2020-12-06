@@ -29,7 +29,7 @@ pytest = "^6.1.2"
 pytest-cov = "^2.10.1"
 taskipy = "^1.4.0"
 # We only use rope to give Visual Studio Code users a better
-# experience out-of-the-box. For, e.g., refactoring.
+# out-of-the-box experience. For, e.g., refactoring.
 # In other words, rope is not part of the QA tooling itself.
 pydocstyle = "^5.1.1"
 rope = "^0.18.0"
