@@ -1,9 +1,19 @@
 [pydocstyle]
-# D104: Missing docstring in public package (e.g., in __init__.py)
-# D105: Magic methods such as __enter__ and __exit__
-# D106: Missing docstring in public nested class. This one is more
-#       trouble than it's worth. Pydantic, for instance, use nested
-#       nested `Config` classes. This results in a lot of false
+# D100: Missing docstring in public module.
+# D104: Missing docstring in public package (e.g., in `__init__.py`)
+#       We never use module and package docstrings anyhow. We just read
+#       the documentation for the classes and functions.
+#       
+# D105: Missing docstring in magic method (e.g., `__enter__` and `__exit__`)
+#       Most of these methods are self-explanatory. Do write a docstring
+#       if your magic method does something "unexpected".
+#
+# D106: Missing docstring in public nested class.
+#       This one is more trouble than it's worth. Pydantic, for instance,
+#       use nested `Config` classes. This results in a lot of false
 #       positives.
-# D107: __init__ method
-add_ignore = D104,D105,D106,D107
+#
+# D107: Missing docstring in __init__ method
+#       The docstring for the class itself is enough on its own.
+
+add_ignore = D100,D104,D105,D106,D107
