@@ -23,7 +23,7 @@ pipeline {
                         // The spinner interferes with Jenkins' output parsing.
                         TOX_PARALLEL_NO_SPINNER=1
                         // Generate JUnit XML files that Jenkins can parse in a
-                        // post (see [1]).
+                        // post section (see [1]).
                         PYTEST_ARGS='--junitxml=junit-{envname}.xml'
                     }
                     stages {
