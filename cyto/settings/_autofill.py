@@ -11,7 +11,9 @@ SettingsT = TypeVar("SettingsT", bound=BaseSettings)
 
 
 def autofill(
-    name: str, *, extra_sources: Iterable[SettingsSourceCallable] = tuple()
+    name: str,
+    *,
+    extra_sources: Iterable[SettingsSourceCallable] = tuple(),
 ) -> Callable[[Type[SettingsT]], Type[SettingsT]]:
     """Fill in the blanks based on setting files, env vars, etc."""
 

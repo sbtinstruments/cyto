@@ -83,7 +83,7 @@ def test_custom_settings(argv: Argv) -> None:
     async def main(settings: FooBarSettings) -> None:
         assert settings.is_meringue_burnt is False
 
-    App.launch(main, FooBarSettings)
+    App.launch(main)
 
 
 def test_cli(argv: Argv) -> None:
@@ -159,3 +159,10 @@ def test_tasks_raises(argv: Argv) -> None:
     with pytest.raises(RuntimeError) as excinfo:
         App.launch(main)
     assert str(failing_task) == str(excinfo.value)
+
+
+def test_custom_app_name(argv: Argv) -> None:
+    async def appster(app: App) -> None:
+        assert app.name == "appster"
+
+    App.launch(appster)
