@@ -11,7 +11,6 @@ SettingsT = TypeVar("SettingsT", bound=BaseSettings)
 
 def autofill(name: str) -> Callable[[Type[SettingsT]], Type[SettingsT]]:
     """Fill in the blanks based on setting files, env vars, etc."""
-    # TODO: Figure out name dynamically
     extra_sources = (_app_computed_settings(name),)
     return base_autofill(name, extra_sources=extra_sources)
 
