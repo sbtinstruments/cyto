@@ -1,5 +1,10 @@
 # pylint: disable=missing-function-docstring,missing-class-docstring
 
+# pytest fixtures may have effects just by their mere precense. E.g., the
+# `Argv` fixture that clears all arguments per default. Since this is the case,
+# the "unused argument" warning is moot.
+# pylint: disable=unused-argument
+
 from contextlib import AsyncExitStack
 
 import pytest
@@ -8,36 +13,38 @@ from anyio.abc import TaskGroup
 
 from cyto.app import App, Settings
 
+from .conftest import Argv
 
-def test_inject_nothing() -> None:
+
+def test_inject_nothing(argv: Argv) -> None:
     async def main() -> None:
         pass
 
     App.launch(main)
 
 
-def test_injection_settings() -> None:
+def test_injection_settings(argv: Argv) -> None:
     async def main(settings: Settings) -> None:
         assert isinstance(settings, Settings)
 
     App.launch(main)
 
 
-def test_inject_task_group() -> None:
+def test_inject_task_group(argv: Argv) -> None:
     async def main(tg: TaskGroup) -> None:
         assert isinstance(tg, TaskGroup)
 
     App.launch(main)
 
 
-def test_inject_stack() -> None:
+def test_inject_stack(argv: Argv) -> None:
     async def main(stack: AsyncExitStack) -> None:
         assert isinstance(stack, AsyncExitStack)
 
     App.launch(main)
 
 
-def test_inject_multiple() -> None:
+def test_inject_multiple(argv: Argv) -> None:
     # Note that the argument names can be anything. We inject solely based
     # on the type annotation.
     async def main(apple: TaskGroup, banana: AsyncExitStack, grape: Settings) -> None:
@@ -48,7 +55,7 @@ def test_inject_multiple() -> None:
     App.launch(main)
 
 
-def test_inject_missing_anno() -> None:
+def test_inject_missing_anno(argv: Argv) -> None:
     # We purposedly omit the annotation, hence the "type: ignore" comment
     # Likewise, we purposedly don't use the argument for anything. We just
     # want to test the inject semantics.
@@ -59,7 +66,7 @@ def test_inject_missing_anno() -> None:
         App.launch(main)
 
 
-def test_inject_unknown_anno() -> None:
+def test_inject_unknown_anno(argv: Argv) -> None:
     # Note that we inject arguments based on the type annotation and not
     # the argument name.
     async def main(stack: int) -> None:  # pylint: disable=unused-argument
@@ -69,7 +76,7 @@ def test_inject_unknown_anno() -> None:
         App.launch(main)
 
 
-def test_custom_settings() -> None:
+def test_custom_settings(argv: Argv) -> None:
     class FooBarSettings(Settings):
         is_meringue_burnt: bool = False
 
@@ -79,7 +86,29 @@ def test_custom_settings() -> None:
     App.launch(main, FooBarSettings)
 
 
-def test_returns() -> None:
+def test_cli(argv: Argv) -> None:
+    class FooBarSettings(Settings):
+        cream_and_sugar: bool
+        roast_level: int = 3
+
+    argv.append(
+        "--cream-and-sugar",
+        "--debug",
+        "--foreground",
+        "--roast-level",
+        42,
+    )
+
+    async def main(settings: FooBarSettings) -> None:
+        assert settings.cream_and_sugar is True
+        assert settings.debug is True
+        assert settings.background is False
+        assert settings.roast_level == 42
+
+    App.launch(main, FooBarSettings)
+
+
+def test_returns(argv: Argv) -> None:
     async def main() -> int:
         await sleep(0.1)
         return 42
@@ -88,7 +117,7 @@ def test_returns() -> None:
     assert result == 42
 
 
-def test_raises() -> None:
+def test_raises(argv: Argv) -> None:
     async def main() -> None:
         await sleep(0.1)
         raise RuntimeError()
@@ -97,7 +126,7 @@ def test_raises() -> None:
         App.launch(main)
 
 
-def test_tasks() -> None:
+def test_tasks(argv: Argv) -> None:
     result = 0
     num_tasks = 5
 
@@ -114,7 +143,7 @@ def test_tasks() -> None:
     assert result == sum(range(num_tasks))
 
 
-def test_tasks_raises() -> None:
+def test_tasks_raises(argv: Argv) -> None:
     num_tasks = 5
     failing_task = 3
 

@@ -1,5 +1,10 @@
 # pylint: disable=missing-function-docstring,missing-class-docstring
 
+# pytest fixtures may have effects just by their mere precense. E.g., the
+# `Argv` fixture that clears all arguments per default. Since this is the case,
+# the "unused argument" warning is moot.
+# pylint: disable=unused-argument
+
 # pylint: disable=redefined-outer-name
 # Unfortunately, pylint matches fixtures based on argument names.
 # Therefore, redefinitions can't be avoided.
@@ -13,6 +18,8 @@ import pytest
 from pydantic import BaseModel, BaseSettings, ValidationError
 
 from cyto.settings import autofill
+
+from .conftest import Argv
 
 
 class Layer(BaseModel):
@@ -63,14 +70,20 @@ def nested_settings() -> Type[NestedSettings]:
     return autofill(name="foobar")(NestedSettings)
 
 
-def test_defaults(default_settings: Type[DefaultSettings]) -> None:
+def test_defaults(
+    default_settings: Type[DefaultSettings],
+    argv: Argv,
+) -> None:
     settings = default_settings()
     assert settings.my_bool is False
     assert settings.my_int == 42
     assert settings.my_string == "Hello test suite"
 
 
-def test_missing(partial_settings: Type[PartialSettings]) -> None:
+def test_missing(
+    partial_settings: Type[PartialSettings],
+    argv: Argv,
+) -> None:
     with pytest.raises(ValidationError) as exc_info:
         partial_settings()
     assert exc_info.value.errors() == [
@@ -79,7 +92,10 @@ def test_missing(partial_settings: Type[PartialSettings]) -> None:
     ]
 
 
-def test_set_partial_with_kwargs(partial_settings: Type[PartialSettings]) -> None:
+def test_set_partial_with_kwargs(
+    partial_settings: Type[PartialSettings],
+    argv: Argv,
+) -> None:
     settings = partial_settings(my_int=44, my_string="string with spaces")
     assert settings.my_bool is False
     assert settings.my_int == 44
@@ -87,7 +103,9 @@ def test_set_partial_with_kwargs(partial_settings: Type[PartialSettings]) -> Non
 
 
 def test_set_partial_with_env(
-    monkeypatch, partial_settings: Type[PartialSettings]
+    monkeypatch,
+    partial_settings: Type[PartialSettings],
+    argv: Argv,
 ) -> None:
     monkeypatch.setenv("foobar_my_int", "99")
     monkeypatch.setenv("foobar_my_string", "string with spaces")
@@ -97,7 +115,11 @@ def test_set_partial_with_env(
     assert settings.my_string == "string with spaces"
 
 
-def test_set_partial_with_toml(fs, partial_settings: Type[PartialSettings]) -> None:
+def test_set_partial_with_toml(
+    fs,
+    partial_settings: Type[PartialSettings],
+    argv: Argv,
+) -> None:
     fs.create_file("/etc/foobar/first.toml", contents="my_int = -55")
     fs.create_file("./second.foobar.toml", contents='my_string = "string with spaces"')
     settings = partial_settings()
@@ -106,7 +128,10 @@ def test_set_partial_with_toml(fs, partial_settings: Type[PartialSettings]) -> N
     assert settings.my_string == "string with spaces"
 
 
-def test_set_nested_with_kwargs(nested_settings: Type[NestedSettings]) -> None:
+def test_set_nested_with_kwargs(
+    nested_settings: Type[NestedSettings],
+    argv: Argv,
+) -> None:
     settings = nested_settings(
         cake={
             "layers": [
@@ -123,7 +148,9 @@ def test_set_nested_with_kwargs(nested_settings: Type[NestedSettings]) -> None:
 
 
 def test_set_nested_with_env(
-    monkeypatch, nested_settings: Type[NestedSettings]
+    monkeypatch,
+    nested_settings: Type[NestedSettings],
+    argv: Argv,
 ) -> None:
     value = """
     {
@@ -142,7 +169,11 @@ def test_set_nested_with_env(
     assert settings.cake.num_candles == 9
 
 
-def test_set_nested_with_toml(fs, nested_settings: Type[NestedSettings]) -> None:
+def test_set_nested_with_toml(
+    fs,
+    nested_settings: Type[NestedSettings],
+    argv: Argv,
+) -> None:
     contents = """
         [cake]
         num_candles = 4
@@ -204,7 +235,11 @@ def test_set_nested_with_toml(fs, nested_settings: Type[NestedSettings]) -> None
     assert settings.cake.layers == [Layer(name="lemon curd", thick=False)]
 
 
-def test_etc_precedence(fs, default_settings: Type[DefaultSettings]) -> None:
+def test_etc_precedence(
+    fs,
+    default_settings: Type[DefaultSettings],
+    argv: Argv,
+) -> None:
     fs.create_file("/etc/foobar/0.toml", contents="my_int = 0")
     fs.create_file("/etc/foobar/1.toml", contents="my_int = 1")
     fs.create_file("/etc/foobar/2.toml", contents="my_int = 2")
@@ -221,7 +256,11 @@ def test_etc_precedence(fs, default_settings: Type[DefaultSettings]) -> None:
     assert settings.my_int == 42
 
 
-def test_etc_vs_cwd_precedence(fs, default_settings: Type[DefaultSettings]) -> None:
+def test_etc_vs_cwd_precedence(
+    fs,
+    default_settings: Type[DefaultSettings],
+    argv: Argv,
+) -> None:
     fs.create_file("/etc/foobar/a.toml", contents="my_int = 1")
     fs.create_file("./a.foobar.toml", contents="my_int = 2")
     settings = default_settings()
@@ -229,7 +268,10 @@ def test_etc_vs_cwd_precedence(fs, default_settings: Type[DefaultSettings]) -> N
 
 
 def test_cwd_vs_env_precedence(
-    fs, monkeypatch, default_settings: Type[DefaultSettings]
+    fs,
+    monkeypatch,
+    default_settings: Type[DefaultSettings],
+    argv: Argv,
 ) -> None:
     fs.create_file("./a.foobar.toml", contents="my_int = 2")
     monkeypatch.setenv("foobar_my_int", "3")
@@ -238,7 +280,9 @@ def test_cwd_vs_env_precedence(
 
 
 def test_env_vs_kwarg_precedence(
-    monkeypatch, default_settings: Type[DefaultSettings]
+    monkeypatch,
+    default_settings: Type[DefaultSettings],
+    argv: Argv,
 ) -> None:
     monkeypatch.setenv("foobar_my_int", "3")
     settings = default_settings(my_int=4)

@@ -28,7 +28,7 @@ class GlobSource:  # pylint: disable=too-few-public-methods
 
     def __call__(self, _: BaseSettings) -> Dict[str, Any]:
         """Return a dict with settings from the globbed files."""
-        env_vars: Dict[str, Any] = {}
+        result: Dict[str, Any] = {}
         for path in sorted(self._dir.glob(self._pattern)):
-            self._update_func(env_vars, toml.load(path))
-        return env_vars
+            self._update_func(result, toml.load(path))
+        return result

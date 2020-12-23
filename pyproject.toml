@@ -24,6 +24,7 @@ anyio = "^2.0.2"
 pydantic = {git = "https://github.com/kozlek/pydantic.git", rev = "e8d65f67a0671e9086a599243fc6820a90b74635"}
 python = "^3.8"
 toml = "^0.10.2"
+click = "^7.1.2"
 
 [tool.poetry.dev-dependencies]
 black = "^20.8b1"
