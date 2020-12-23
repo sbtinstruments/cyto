@@ -105,7 +105,7 @@ def test_cli(argv: Argv) -> None:
         assert settings.background is False
         assert settings.roast_level == 42
 
-    App.launch(main, FooBarSettings)
+    App.launch(main)
 
 
 def test_returns(argv: Argv) -> None:

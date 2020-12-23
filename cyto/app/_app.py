@@ -1,9 +1,10 @@
 from __future__ import annotations
 
+import inspect
 import logging
 from contextlib import ExitStack
 from types import TracebackType
-from typing import Any, ContextManager, Optional, Type, TypeVar
+from typing import Any, ContextManager, Optional, Type, TypeVar, cast
 
 from anyio import run
 
@@ -37,7 +38,7 @@ class App(ContextManager["App"]):
         """Create app instance and run the given coroutine function."""
         # Set defaults for optional arguments
         if settings_class is None:
-            settings_class = Settings
+            settings_class = get_settings_class(func)
         # Automatically fill in missing settings (e.g., from settings files)
         settings_class = autofill()(settings_class)
         # Create settings instance
@@ -84,3 +85,20 @@ class App(ContextManager["App"]):
             _LOGGER.error("Stopped due to error:", exc_info=exc_value)
         else:
             _LOGGER.info("Stopped")
+
+
+def get_settings_class(func: Func[ReturnT]) -> Type[Settings]:
+    """Try to get the settings class from the function signature."""
+    spec = inspect.getfullargspec(func)
+    for arg_name in spec.args:
+        try:
+            annotation = spec.annotations[arg_name]
+        except KeyError:
+            continue
+        if issubclass(annotation, Settings):
+            # Strangely, mypy can't infer that `annotation` has the right
+            # type from the `issubclass` call. We explicitly cast as a
+            # work-around to this.
+            return cast(Type[Settings], annotation)
+    # Default to the base settings class
+    return Settings
