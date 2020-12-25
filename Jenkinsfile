@@ -29,11 +29,16 @@ pipeline {
                     }
                     stages {
                         stage('pytest') {
+                            environment {
+                                // We skip the coverage step for now. We run this in
+                                // test environment later in its own stage.
+                                TOX_SKIP_ENV='coverage'
+                            }
                             steps {
                                 // Note that we don't do "poetry run tox". This is because
                                 // tox manages its own virtual environments. See the
                                 // [tool.tox] section in pyproject.toml for details.
-                                sh 'python3 -m tox --parallel -e clean,py38,py39'
+                                sh 'python3 -m tox --parallel'
                             }
                             post {
                                 always {
