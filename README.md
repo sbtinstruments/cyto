@@ -4,7 +4,6 @@ This is a work-in-progress replacement for `geist`.
 
 ## Development
 
-
 ### Python Version
 
 Development requires Python 3.8 or later. Test your python version with:
@@ -32,9 +31,10 @@ Do the following:
     poetry config --local virtualenvs.in-project true
     ```
     This integrates better with editors such as Visual Studio Code.
- 4. Create poetry's virtual environment and get all the dependencies
+ 4. Create poetry's virtual environment and get all dependencies
+ and all extra features.
     ```shell
-    poetry install
+    poetry install --extras all
     ```
  5. Optional: Run the QA basic tools (e.g., isort, black, pylint, mypy) automatically before each commit
     ```shell

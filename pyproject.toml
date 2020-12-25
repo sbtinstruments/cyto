@@ -20,11 +20,11 @@ readme = "README.md"
 version = "0.0.0" # Placeholder (we use the poetry-dynamic-versioning plug-in)
 
 [tool.poetry.dependencies]
-anyio = "^2.0.2"
-pydantic = {git = "https://github.com/kozlek/pydantic.git", rev = "e8d65f67a0671e9086a599243fc6820a90b74635"}
+anyio = {version = "^2.0.2", optional = true}
+click = {version = "^7.1.2", optional = true}
+pydantic = {git = "https://github.com/kozlek/pydantic.git", rev = "e8d65f67a0671e9086a599243fc6820a90b74635", optional = true}
 python = "^3.8"
-toml = "^0.10.2"
-click = "^7.1.2"
+toml = {version = "^0.10.2", optional = true}
 
 [tool.poetry.dev-dependencies]
 black = "^20.8b1"
@@ -42,6 +42,13 @@ taskipy = "^1.4.0"
 pydocstyle = "^5.1.1"
 rope = "^0.18.0"
 
+[tool.poetry.extras]
+"all" = ["anyio", "pydantic", "click", "toml"]
+"app" = ["anyio", "pydantic"]
+"settings" = ["pydantic"]
+"settings.sources.cli" = ["click"]
+"settings.sources.toml" = ["toml"]
+
 [tool.poetry-dynamic-versioning]
 enable = true
 
@@ -56,30 +63,52 @@ pylint = "pylint cyto tests"
 legacy_tox_ini = """
 [tox]
 isolated_build = true
-envlist = clean,py38,py39,coverage
+envlist = clean,py{38,39}-{app,app_cli,settings},coverage
 requires =
     tox-poetry-installer[poetry] == 0.6.0
 
 [testenv]
 require_locked_deps = true
 locked_deps =
+    # All tests requires the following dev-dependencies:
     pytest
     pytest-cov
-    pyfakefs
+    # Furthermore. some tests depend on specific pytest plug-ins:
+    settings: pyfakefs
+# Everything in cyto is an extra. No dependencies install per default.
+# Therefore, we must specify the extras that we need for each test.
+extras =
+    app: app
+    app_cli: app
+    app_cli: settings.sources.cli
+    settings: settings
+# We specify the test files that we run in each test environment.
+setenv =
+    app: PYTEST_TEST_PATHS = tests/app/test_app_basics.py
+    app_cli: PYTEST_TEST_PATHS = tests/app/test_app_cli.py
+    settings: PYTEST_TEST_PATHS = tests/settings/test_settings.py
+# For parallel mode, we ensure that tox runs the environments in the right order.
+depends =
+    # Run "clean" before all the actual tests
+    {app,app_cli,settings}: clean
+    # Run "coverage" after all the actual tests
+    coverage: py{38,39}-{app,app_cli,settings}
 
-[testenv:{py38,py39}]
-depends = clean
-commands =
-    pytest --cov=cyto --cov-append --cov-report=term-missing {env:PYTEST_ARGS:}
-
+# This is a dummy environment that clears the code coverage data
 [testenv:clean]
 basepython = python3.8
 skip_install = true
 commands = coverage erase
 
+# These are the actual test environments
+[testenv:py{38,39}-{app,app_cli,settings}]
+commands =
+    pytest --cov=cyto --cov-append --cov-report=term-missing \
+      {env:PYTEST_ARGS:} {env:PYTEST_TEST_PATHS}
+
+# This is a dummy environment that generates a code coverage report
 [testenv:coverage]
 basepython = python3.8
-depends = py38,py39
 skip_install = true
 commands =
     coverage html --precision=2

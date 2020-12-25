@@ -1,11 +1,22 @@
 from pathlib import Path
-from typing import Callable, Iterable, Tuple, Type, TypeVar
+from typing import Callable, Iterable, Optional, Tuple, Type, TypeVar
 
 from pydantic import BaseSettings
 from pydantic.env_settings import SettingsSourceCallable
 
-from ._cli import cli_settings
-from ._sources import GlobSource
+from .sources.glob import GlobSource, Loader
+
+toml_load: Optional[Loader]
+try:
+    from toml import load as toml_load
+except ImportError:
+    toml_load = None
+
+cli_settings: Optional[Callable[[str], SettingsSourceCallable]]
+try:
+    from .sources.cli import cli_settings
+except ImportError:
+    cli_settings = None
 
 SettingsT = TypeVar("SettingsT", bound=BaseSettings)
 
@@ -33,15 +44,48 @@ def autofill(
                     env_settings: SettingsSourceCallable,
                     file_secret_settings: SettingsSourceCallable,
                 ) -> Tuple[SettingsSourceCallable, ...]:
-                    return (
-                        init_settings,
-                        cli_settings(name),
+                    """Apply setting sources with custom precedence."""
+                    sources = [
+                        # First (highest precedence), settings given via the constructor
+                        # itself directly within Python. E.g.:
+                        #   settings = Settings(debug=True, background=True)
+                        init_settings
+                    ]
+                    if cli_settings is not None:
+                        # Second, CLI settings (if you enable this extra). E.g.:
+                        #   $ ./appster --debug --background
+                        sources.append(cli_settings(name))
+                    sources += [
+                        # Third, settings from environment variables. E.g.:
+                        #   $ APPSTER_DEBUG=y APPSTER_BACKGROUND=y ./appster
                         env_settings,
+                        # Fourth, settings from secret files. E.g., files in
+                        #   /var/run/database_password
+                        #   /var/run/backend_ip_address
                         file_secret_settings,
-                        GlobSource(Path("./"), f"*.{name}.toml"),
-                        GlobSource(Path(f"/etc/{name}"), "*.toml"),
-                        *extra_sources,
-                    )
+                    ]
+                    if toml_load is not None:
+                        sources += [
+                            # Fifth, setting files from the current directory. E.g.:
+                            #   ./dev-credentials.appster.toml
+                            #   ./z10-relocate-db.appster.toml
+                            #   ./z99-disable-ssl.appster.toml
+                            # Note that we apply multiple setting files in alphanumeric
+                            # order.
+                            GlobSource(Path("./"), f"*.{name}.toml", toml_load),
+                            # Sixth, setting files from the system's settings
+                            # directory. E.g.:
+                            #   /etc/appster/base-settings.toml
+                            #   /etc/appster/z10-relocate-db.toml
+                            #   /etc/appster/z99-disable-ssl.toml
+                            # Note that we apply multiple setting files in alphanumeric
+                            # order.
+                            GlobSource(Path(f"/etc/{name}"), "*.toml", toml_load),
+                        ]
+                    # Seventh (lowest precedence), you can specify additional setting
+                    # sources.
+                    sources += extra_sources
+                    return tuple(sources)
 
         # Mark the class so that we know that it is decorated
         _Wrapper.__autofill__ = True

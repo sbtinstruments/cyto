@@ -19,7 +19,7 @@ from pydantic import BaseModel, BaseSettings, ValidationError
 
 from cyto.settings import autofill
 
-from .conftest import Argv
+from ..conftest import Argv
 
 
 class Layer(BaseModel):

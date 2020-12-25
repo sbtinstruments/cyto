@@ -13,7 +13,7 @@ from anyio.abc import TaskGroup
 
 from cyto.app import App, Settings
 
-from .conftest import Argv
+from ..conftest import Argv
 
 
 def test_inject_nothing(argv: Argv) -> None:
@@ -82,28 +82,6 @@ def test_custom_settings(argv: Argv) -> None:
 
     async def main(settings: FooBarSettings) -> None:
         assert settings.is_meringue_burnt is False
-
-    App.launch(main)
-
-
-def test_cli(argv: Argv) -> None:
-    class FooBarSettings(Settings):
-        cream_and_sugar: bool
-        roast_level: int = 3
-
-    argv.append(
-        "--cream-and-sugar",
-        "--debug",
-        "--foreground",
-        "--roast-level",
-        42,
-    )
-
-    async def main(settings: FooBarSettings) -> None:
-        assert settings.cream_and_sugar is True
-        assert settings.debug is True
-        assert settings.background is False
-        assert settings.roast_level == 42
 
     App.launch(main)
 
