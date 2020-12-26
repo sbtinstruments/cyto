@@ -1,3 +1,4 @@
+from json import loads as json_loads
 from pathlib import Path
 from typing import Callable, Iterable, Optional, Tuple, Type, TypeVar
 
@@ -6,11 +7,11 @@ from pydantic.env_settings import SettingsSourceCallable
 
 from .sources.glob import GlobSource, Loader
 
-toml_load: Optional[Loader]
+toml_loads: Optional[Loader]
 try:
-    from toml import load as toml_load
+    from toml import loads as toml_loads
 except ImportError:
-    toml_load = None
+    toml_loads = None
 
 cli_settings: Optional[Callable[[str], SettingsSourceCallable]]
 try:
@@ -64,7 +65,7 @@ def autofill(
                         #   /var/run/backend_ip_address
                         file_secret_settings,
                     ]
-                    if toml_load is not None:
+                    if toml_loads is not None:
                         sources += [
                             # Fifth, setting files from the current directory. E.g.:
                             #   ./dev-credentials.appster.toml
@@ -72,7 +73,11 @@ def autofill(
                             #   ./z99-disable-ssl.appster.toml
                             # Note that we apply multiple setting files in alphanumeric
                             # order.
-                            GlobSource(Path("./"), f"*.{name}.toml", toml_load),
+                            # Note that TOML files have higher precedence than
+                            # JSON files. We may change this in the future. Don't rely
+                            # on this behaviour
+                            GlobSource(Path("./"), f"*.{name}.toml", toml_loads),
+                            GlobSource(Path("./"), f"*.{name}.json", json_loads),
                             # Sixth, setting files from the system's settings
                             # directory. E.g.:
                             #   /etc/appster/base-settings.toml
@@ -80,7 +85,11 @@ def autofill(
                             #   /etc/appster/z99-disable-ssl.toml
                             # Note that we apply multiple setting files in alphanumeric
                             # order.
-                            GlobSource(Path(f"/etc/{name}"), "*.toml", toml_load),
+                            # Note that TOML files have higher precedence than
+                            # JSON files. We may change this in the future. Don't rely
+                            # on this behaviour
+                            GlobSource(Path(f"/etc/{name}"), "*.toml", toml_loads),
+                            GlobSource(Path(f"/etc/{name}"), "*.json", json_loads),
                         ]
                     # Seventh (lowest precedence), you can specify additional setting
                     # sources.

@@ -14,9 +14,9 @@ from ....basic import deep_update as dict_deep_update
 
 
 class Loader(Protocol):  # pylint: disable=too-few-public-methods
-    """Given a settings file path, return a settings dict with the file content."""
+    """Given raw file content, return a settings dict."""
 
-    def __call__(self, __file: Path) -> MutableMapping[str, Any]:  # noqa: D102
+    def __call__(self, __data: str) -> MutableMapping[str, Any]:  # noqa: D102
         ...
 
 
@@ -44,5 +44,12 @@ class GlobSource:  # pylint: disable=too-few-public-methods
         """Return a dict with settings from the globbed files."""
         result: Dict[str, Any] = {}
         for path in sorted(self._dir.glob(self._pattern)):
-            self._update_func(result, dict(self._loader(path)))
+            with path.open("r") as settings_file:
+                # For now, we simply load everything into memory up front.
+                # Settings files are usually small, so this shouldn't be
+                # a problem in practice. In turn, it makes it easier to
+                # support different loaders.
+                data = settings_file.read()
+            settings = dict(self._loader(data))
+            self._update_func(result, settings)
         return result

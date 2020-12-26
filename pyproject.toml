@@ -63,7 +63,7 @@ pylint = "pylint cyto tests"
 legacy_tox_ini = """
 [tox]
 isolated_build = true
-envlist = clean,py{38,39}-{app,app_cli,settings,settings_precedence,settings_source_toml},coverage
+envlist = clean,py{38,39}-{app,app_cli,settings,settings_source_toml},coverage
 requires =
     tox-poetry-installer[poetry] == 0.6.0
 
@@ -74,7 +74,7 @@ locked_deps =
     pytest
     pytest-cov
     # Furthermore. some tests depend on specific pytest plug-ins:
-    settings_precedence: pyfakefs
+    settings: pyfakefs
     settings_source_toml: pyfakefs
 # Everything in cyto is an extra. No dependencies install per default.
 # Therefore, we must specify the extras that we need for each test.
@@ -83,23 +83,20 @@ extras =
     app_cli: app
     app_cli: settings.sources.cli
     settings: settings
-    settings_precedence: settings
-    settings_precedence: settings.sources.toml
     settings_source_toml: settings
     settings_source_toml: settings.sources.toml
 # We specify the test files that we run in each test environment.
 setenv =
     app: PYTEST_TEST_PATHS = tests/app/test_basics.py
     app_cli: PYTEST_TEST_PATHS = tests/app/test_cli.py
-    settings: PYTEST_TEST_PATHS = tests/settings/test_basics.py
-    settings_precedence: PYTEST_TEST_PATHS = tests/settings/test_precedence.py
+    settings: PYTEST_TEST_PATHS = tests/settings/test_basics.py tests/settings/test_precedence.py
     settings_source_toml: PYTEST_TEST_PATHS = tests/settings/test_source_toml.py
 # For parallel mode, we ensure that tox runs the environments in the right order.
 depends =
     # Run "clean" before all the actual tests
-    {app,app_cli,settings,settings_precedence,settings_source_toml}: clean
+    {app,app_cli,settings,settings_source_toml}: clean
     # Run "coverage" after all the actual tests
-    coverage: py{38,39}-{app,app_cli,settings,settings_precedence,settings_source_toml}
+    coverage: py{38,39}-{app,app_cli,settings,settings_source_toml}
 
 # This is a dummy environment that clears the code coverage data
 [testenv:clean]
@@ -108,7 +105,7 @@ skip_install = true
 commands = coverage erase
 
 # These are the actual test environments
-[testenv:py{38,39}-{app,app_cli,settings,settings_precedence,settings_source_toml}]
+[testenv:py{38,39}-{app,app_cli,settings,settings_source_toml}]
 commands =
     pytest --cov=cyto --cov-append --cov-report=term-missing \
       {env:PYTEST_ARGS:} {env:PYTEST_TEST_PATHS}
