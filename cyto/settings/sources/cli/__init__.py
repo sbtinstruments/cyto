@@ -1,6 +1,6 @@
 try:
-    from ._cli import cli_settings
+    from ._cli import CliExtras, cli_settings_source
 except ImportError as exc:
     from ...._extra import ExtraImportError
 
-    raise ExtraImportError("settings.sources.cli") from exc
+    raise ExtraImportError(__name__) from exc

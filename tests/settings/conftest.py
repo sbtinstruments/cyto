@@ -14,6 +14,7 @@ class Layer(BaseModel):
 class Cake(BaseModel):
     layers: List[Layer]
     num_candles: int = 9
+    price: int
 
 
 class DefaultSettings(BaseSettings):
@@ -35,7 +36,8 @@ class NestedSettings(BaseSettings):
             Layer(name="brownie", thick=True),
             Layer(name="cream"),
             Layer(name="glaze"),
-        ]
+        ],
+        price=23,
     )
 
 

@@ -89,7 +89,7 @@ extras =
 setenv =
     app: PYTEST_TEST_PATHS = tests/app/test_basics.py
     app_cli: PYTEST_TEST_PATHS = tests/app/test_cli.py
-    settings: PYTEST_TEST_PATHS = tests/settings/test_basics.py tests/settings/test_precedence.py
+    settings: PYTEST_TEST_PATHS = tests/settings/test_autofill.py tests/settings/test_precedence.py
     settings_source_toml: PYTEST_TEST_PATHS = tests/settings/test_source_toml.py
 # For parallel mode, we ensure that tox runs the environments in the right order.
 depends =

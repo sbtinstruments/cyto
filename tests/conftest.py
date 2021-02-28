@@ -10,6 +10,11 @@ class Argv:
         self._sys_argv_first = sys.argv[0]
         self.clear()
 
+    def assign(self, *args: Any) -> None:
+        """Clear existing arguments first and append the given ones."""
+        self.clear()
+        self.append(*args)
+
     def clear(self) -> None:
         self._argv = [self._sys_argv_first]
         self._update()
