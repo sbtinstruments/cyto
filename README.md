@@ -4,7 +4,7 @@
 
 Cyto lets you:
  * Create a [click](https://github.com/pallets/click) CLI from a [pydantic](https://github.com/kozlek/pydantic) model
- * Load [pydantic settings](https://pydantic-docs.helpmanual.io/usage/settings/) from [TOML](https://toml.io/en/) files
+ * Load [pydantic settings](https://pydantic-docs.helpmanual.io/usage/settings/) from [TOML](https://toml.io/en/) files [WIP]
  * [Daemonize](https://pagure.io/python-daemon/) your application [WIP]
 
 Cyto is the bridge between an oppinionated selection of Python tech.
@@ -18,7 +18,7 @@ Don't worry, Cyto is split into so-called *extra*s so you can select just the ex
 
 Here is the list of extras:
  * `settings.sources.cli`: Create a [click](https://github.com/pallets/click) CLI from a [pydantic](https://github.com/kozlek/pydantic) model
- * `settings.sources.toml`: Load [pydantic settings](https://pydantic-docs.helpmanual.io/usage/settings/) from [TOML](https://toml.io/en/) files
+ * `settings.sources.toml`: Load [pydantic settings](https://pydantic-docs.helpmanual.io/usage/settings/) from [TOML](https://toml.io/en/) files [WIP]
  * `app`: [WIP]
 
 ## Installation
