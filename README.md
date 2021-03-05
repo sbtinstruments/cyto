@@ -1,6 +1,53 @@
 # Cyto 🦠
 
-This is a work-in-progress replacement for `geist`.
+## Idiomatic boilerplate and glue code for Python
+
+Cyto lets you:
+ * Create a [click](https://github.com/pallets/click) CLI from a [pydantic](https://github.com/kozlek/pydantic) model
+ * Load [pydantic settings](https://pydantic-docs.helpmanual.io/usage/settings/) from [TOML](https://toml.io/en/) files
+ * [Daemonize](https://pagure.io/python-daemon/) your application [WIP]
+
+Cyto is the bridge between an oppinionated selection of Python tech.
+Cyto is everything you need to create a modern Python app.
+Cyto is the glue and boilerplate code that you no longer have to write yourself.
+
+## Only pay for what you use
+
+So you only want the click–pydantic integration but not the TOML loader?
+Don't worry, Cyto is split into so-called *extra*s so you can select just the extras that you want. In turn, Cyto only pulls in the dependencies for the selected extras. This is the "only pay for what you use" principle. In fact, Cyto has *zero* dependencies per default.
+
+Here is the list of extras:
+ * `settings.sources.cli`: Create a [click](https://github.com/pallets/click) CLI from a [pydantic](https://github.com/kozlek/pydantic) model
+ * `settings.sources.toml`: Load [pydantic settings](https://pydantic-docs.helpmanual.io/usage/settings/) from [TOML](https://toml.io/en/) files
+ * `app`: [WIP]
+
+## Installation
+
+Install Cyto along with *all* extras:
+
+```
+pip install cyto[all]
+```
+
+Similar for poetry:
+
+```
+poetry add cyto[all]
+```
+
+### Choose specific extras
+
+If you only want a specific extra, choose that when you install Cyto. E.g.:
+
+```
+pip install cyto[settings.sources.cli]
+```
+
+Similar for poetry:
+
+```
+poetry add cyto[settings.sources.cli]
+```
 
 ## Development
 
