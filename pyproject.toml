@@ -22,7 +22,7 @@ version = "0.0.0" # Placeholder (we use the poetry-dynamic-versioning plug-in)
 [tool.poetry.dependencies]
 anyio = {version = "^2.0.2", optional = true}
 click = {version = "^7.1.2", optional = true}
-pydantic = {git = "https://github.com/kozlek/pydantic.git", rev = "e8d65f67a0671e9086a599243fc6820a90b74635", optional = true}
+pydantic = {version = "^1.8.1", optional = true}
 python = "^3.8"
 toml = {version = "^0.10.2", optional = true}
 
