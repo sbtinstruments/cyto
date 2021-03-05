@@ -423,9 +423,9 @@ def _clickify_type(type_: type, extras: CliExtras) -> ClickParamType:
 
 
 def _clickify_default(default: Any, type_: type, extras: CliExtras) -> Any:
-    # pydantic fields use `Ellipsis` to denote "no default value". We convert
-    # this to `None` so that click understands it.
-    if default is Ellipsis:
+    # Pydantic uses both `None` and `Ellipsis` to denote "no default value".
+    # Click only understands `None`, so we return that.
+    if default in (None, Ellipsis):
         return None
     # Early out if the user explicitly forces the field type to JSON
     if extras.force_json:

@@ -97,6 +97,12 @@ class CustomCliSettings(BaseSettings):
         extra = "forbid"
 
 
+class NoDefaultSettings(BaseSettings):
+    flag: bool
+    numbers: List[int]
+    strings: Dict[str, str]
+
+
 class Bobby(BaseModel):
     tables: int = 2
 
@@ -129,6 +135,11 @@ def zoobar2000_settings() -> Type[Zoobar2000Settings]:
 @pytest.fixture
 def customcli_settings() -> Type[CustomCliSettings]:
     return autofill(name="customcli")(CustomCliSettings)
+
+
+@pytest.fixture
+def nodefault_settings() -> Type[NoDefaultSettings]:
+    return autofill(name="nodefault")(NoDefaultSettings)
 
 
 @pytest.fixture
@@ -421,6 +432,17 @@ def test_force_json(customcli_settings: CustomCliSettings, argv: Argv) -> None:
     argv.append("--numbers", "{}")
     with pytest.raises(ValidationError):
         settings = customcli_settings()
+
+
+def test_no_defaults(nodefault_settings: NoDefaultSettings, argv: Argv) -> None:
+    # Raises if we don't fill out the defaults
+    with pytest.raises(ValidationError):
+        nodefault_settings()
+    # Let's try to fill them out
+    argv.append("--flag")
+    argv.append("--numbers", 2, "--numbers", 3)
+    argv.append("--strings", '{"key": "value"}')
+    nodefault_settings()
 
 
 def test_precedence(
