@@ -24,83 +24,29 @@ from pydantic import BaseModel, BaseSettings, Field, ValidationError
 from cyto.settings import autofill
 from cyto.settings.sources.cli import CliExtras
 
-from ..conftest import Argv
-
-
-class Track(BaseModel):
-    title: str
-    is_remix: bool = False
-
-    class Config:
-        extra = "forbid"
-
-
-class Album(BaseModel):
-    author: str
-    title: str = "No title"
-    tracks: List[Track] = []
-
-
-class Selection(BaseModel):
-    name: str
-    tracks: List[Track] = []
-    albums: List[Album] = []
-    metadata: Dict[str, str] = {}
-
-
-class MyTunesSettings(BaseSettings):
-    theme: str
-    volume: int = 80
-    shuffle: bool = True
-    large_text: bool = Field(default=True, cli=CliExtras(disable_flag="small_text"))
-    translations: Dict[str, str] = {
-        "repeat": "repetir",
-        "shuffle": "barajar",
-    }
-
-
-class WinLampSettings(BaseSettings):
-    favourite_genres: List[str] = ["Classical", "Electronic"]
-    version_info: Tuple[str, int, int, int] = ("1.2.0", 1, 2, 0)
-
-
-class DotifySettings(BaseSettings):
-    featured_album: Album
-
-
-class Zoobar2000Settings(BaseSettings):
-    playlist: List[Track] = [
-        Track(title="Eine Kleine Nachtmusik"),
-        Track(title="Für Elise"),
-        Track(title="The Four Seasons"),
-    ]
-    user_favourites: Selection = Selection(
-        name="Your most played albums",
-        albums=[
-            Album(
-                author="Various Artists",
-                title="Kompakt: Total 20",
-                tracks=[
-                    Track(title="Calma Calma"),
-                    Track(title="White Becomes Black"),
-                    Track(title="Agita"),
-                ],
-            )
-        ],
-    )
+from ...conftest import Argv
+from ..conftest import (
+    Album,
+    DotifySettings,
+    MyTunesSettings,
+    NoDefaultSettings,
+    Track,
+    WinLampSettings,
+    Zoobar2000Settings,
+)
 
 
 class CustomCliSettings(BaseSettings):
+    large_text: bool = Field(default=True, cli=CliExtras(disable_flag="small_text"))
     numbers: List[int] = Field([1, 2, 3], cli=CliExtras(force_json=True))
 
     class Config:
         extra = "forbid"
 
 
-class NoDefaultSettings(BaseSettings):
-    flag: bool
-    numbers: List[int]
-    strings: Dict[str, str]
+@pytest.fixture
+def customcli_settings() -> Type[CustomCliSettings]:
+    return autofill(name="customcli")(CustomCliSettings)
 
 
 class Bobby(BaseModel):
@@ -110,36 +56,6 @@ class Bobby(BaseModel):
 class HackerSettings(BaseSettings):
     bobby__tables: int = 1
     bobby: Bobby = Bobby()
-
-
-@pytest.fixture
-def mytunes_settings() -> Type[MyTunesSettings]:
-    return autofill(name="mytunes")(MyTunesSettings)
-
-
-@pytest.fixture
-def winlamp_settings() -> Type[WinLampSettings]:
-    return autofill(name="winlamp")(WinLampSettings)
-
-
-@pytest.fixture
-def dotify_settings() -> Type[DotifySettings]:
-    return autofill(name="dotify")(DotifySettings)
-
-
-@pytest.fixture
-def zoobar2000_settings() -> Type[Zoobar2000Settings]:
-    return autofill(name="zoobar2000")(Zoobar2000Settings)
-
-
-@pytest.fixture
-def customcli_settings() -> Type[CustomCliSettings]:
-    return autofill(name="customcli")(CustomCliSettings)
-
-
-@pytest.fixture
-def nodefault_settings() -> Type[NoDefaultSettings]:
-    return autofill(name="nodefault")(NoDefaultSettings)
 
 
 @pytest.fixture
@@ -176,8 +92,6 @@ def test_basic_field(
     argv.append("--volume", 100)
     # Note the "no-" prefix to disable a boolean
     argv.append("--no-shuffle")
-    # We use the dedicated "disable flag" to switch of `large_text`
-    argv.append("--small-text")
     # English to Danish
     argv.append(
         "--translations",
@@ -190,7 +104,6 @@ def test_basic_field(
     settings = mytunes_settings()
     assert settings.volume == 100
     assert settings.shuffle is False
-    assert settings.large_text is False
     assert settings.translations == {
         "play": "spil",
         "back": "tilbage",
@@ -213,7 +126,7 @@ def test_basic_field(
 
 
 def test_model_field(
-    dotify_settings: Type[dotify_settings],
+    dotify_settings: Type[DotifySettings],
     argv: Argv,
 ) -> None:
     # The `featured_album` field exists but it's a model. You can't
@@ -410,8 +323,14 @@ def test_complex_hierarchy(
     assert settings.user_favourites.tracks == []
 
 
-def test_force_json(customcli_settings: CustomCliSettings, argv: Argv) -> None:
+def test_disable_flag(customcli_settings: CustomCliSettings, argv: Argv) -> None:
+    # We use the dedicated "disable flag" to switch of `large_text`
+    argv.append("--small-text")
+    settings = customcli_settings()
+    assert settings.large_text is False
 
+
+def test_force_json(customcli_settings: CustomCliSettings, argv: Argv) -> None:
     # Test that the default still works
     settings = customcli_settings()
     assert settings.numbers == [1, 2, 3]
