@@ -8,7 +8,7 @@ build-backend = "poetry.masonry.api"
 requires = [
   "poetry>=1.0.0",
   "dunamai==1.4.1",
-  "poetry-dynamic-versioning==0.11.0",
+  "poetry-dynamic-versioning==0.12.3",
 ]
 
 [tool.poetry]
@@ -17,6 +17,7 @@ description = "SBT Instruments' framework for Python-based applications"
 license = "MIT" 
 name = "cyto" 
 readme = "README.md" 
+repository = "https://github.com/sbtinstruments/cyto" 
 version = "0.0.0" # Placeholder (we use the poetry-dynamic-versioning plug-in)
 
 [tool.poetry.dependencies]
