@@ -1,5 +1,9 @@
 pipeline {
-    agent any
+    agent {
+        dockerfile {
+            filename 'Dockerfile.build'
+        }
+    }
     stages {
         stage('Install') {
             steps {
@@ -100,21 +104,6 @@ pipeline {
         stage('Build') {
             steps {
                 sh 'poetry build'
-            }
-        }
-        stage('Publish') {
-            environment {
-                // Just use the local pypiserver for now.
-                TWINE_REPOSITORY_URL='http://127.0.0.1:8081'
-                TWINE_USERNAME=credentials('pypiserver-username')
-                TWINE_PASSWORD=credentials('pypiserver-password')
-            }
-            steps {
-                // Note that we don't use `poetry publish`. It simply doesn't
-                // work for non-interactive use. We got "Prompt dismissed.." errors.
-                // Instead, we use twine for now.
-                sh 'python3 -m twine check dist/*'
-                sh 'python3 -m twine upload --skip-existing dist/*'
             }
         }
     }
