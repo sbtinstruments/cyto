@@ -11,7 +11,35 @@ ENV PYTHONFAULTHANDLER=1 \
 # System deps:
 RUN apt update
 RUN apt install -y curl
+
+# Make user
+#
+# Jenkins' default behaviour is to execute the docker image with
+# the 'jenkins' user and the corresponding group. E.g., Jenkins
+# will run docker with '-u 125:129' where 125 and 129 is the ID
+# of the 'jenkins' user and group, respectively. Unfortunately,
+# this will override any user specified in the Dockerfile.
+#
+# Vivado needs to create files and directories during its run. In
+# order to do so, it must have a valid user. If we do nothing,
+# the host machine's 'jenkins' user ID of 125 will be used.
+# Unfortunately, there isn't a user in the container that corresponds
+# to ID 125. This causes file/directory creation to fail.
+# 
+# We create a 'copy' of the 'jenkins' user in the container, so
+# that the host machine's 'jenkins' user will match on the ID.
+ARG JENKINS_UID=1000
+ARG JENKINS_GID=1000
+
+RUN groupadd --gid ${JENKINS_GID} jenkins
+RUN adduser --disabled-password --gecos '' \
+    --uid ${JENKINS_UID} \
+    --gid ${JENKINS_GID} \
+    jenkins
+USER jenkins
+ENV HOME /home/jenkins
+
 RUN curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python -
-ENV PATH="/root/.poetry/bin:$PATH"
+ENV PATH="/home/jenkins/.poetry/bin:$PATH"
 
 CMD ["bash"]
