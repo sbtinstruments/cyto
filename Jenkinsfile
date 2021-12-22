@@ -110,7 +110,7 @@ pipeline {
     post {
         failure {
             // Notify slack if anything went wrong
-            def msg = "`${env.JOB_NAME}` has failed CI:\n${env.BUILD_URL}" 
+            def msg = "`${env.JOB_NAME}` has failed CI:\n${env.BUILD_URL}"
             slackSend (color: '#FF9FA1', message: msg)
         }
     }
