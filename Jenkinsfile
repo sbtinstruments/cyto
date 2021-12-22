@@ -15,7 +15,7 @@ pipeline {
                 sh 'poetry config --local virtualenvs.in-project true'
                 // We use python 3.8 for now due to a bug in pylint.
                 // See https://github.com/PyCQA/pylint/issues/3882
-                sh 'poetry env use 3.8'
+                // sh 'poetry env use 3.8'
                 // Install all extras along with the dependencies in
                 // poetry's virtual environment.
                 sh 'poetry install --extras all'
