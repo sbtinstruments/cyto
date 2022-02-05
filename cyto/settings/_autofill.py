@@ -1,6 +1,6 @@
 from json import loads as json_loads
 from pathlib import Path
-from typing import Any, Callable, Dict, Iterable, Optional, Tuple, Type, TypeVar
+from typing import Any, Callable, Iterable, Optional, Type, TypeVar
 
 from pydantic import BaseSettings
 from pydantic.env_settings import SettingsSourceCallable
@@ -9,7 +9,7 @@ from .sources.glob import GlobSource, Loader
 
 toml_loads: Optional[Loader]
 try:
-    from toml import loads as toml_loads
+    from toml import loads as toml_loads  # type: ignore[no-redef]
 except ImportError:
     toml_loads = None
 
@@ -26,7 +26,7 @@ def autofill(
     name: str,
     *,
     extra_sources: Iterable[SettingsSourceCallable] = tuple(),
-    cli_settings: Optional[Dict[str, Any]] = None,
+    cli_settings: Optional[dict[str, Any]] = None,
 ) -> Callable[[Type[SettingsT]], Type[SettingsT]]:
     """Fill in the blanks based on setting files, env vars, etc."""
     if cli_settings is None:
@@ -47,7 +47,7 @@ def autofill(
                     init_settings: SettingsSourceCallable,
                     env_settings: SettingsSourceCallable,
                     file_secret_settings: SettingsSourceCallable,
-                ) -> Tuple[SettingsSourceCallable, ...]:
+                ) -> tuple[SettingsSourceCallable, ...]:
                     """Apply setting sources with custom precedence."""
                     sources = [
                         # First (highest precedence), settings given via the constructor

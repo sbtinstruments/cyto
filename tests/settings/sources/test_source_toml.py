@@ -12,17 +12,10 @@
 # type: ignore[no-untyped-def]
 # Hopefully, pytest changes soon so we don't need to ignore no-untyped-def anymore.
 # See https://github.com/pytest-dev/pytest/issues/7469
-from os import SEEK_CUR
 from typing import Type
 
 from ...conftest import Argv
-from ..conftest import (
-    Album,
-    MyTunesSettings,
-    Track,
-    WinLampSettings,
-    Zoobar2000Settings,
-)
+from ..conftest import Album, MyTunesSettings, Track, Zoobar2000Settings
 
 
 def test_set_basic_field(
@@ -31,10 +24,10 @@ def test_set_basic_field(
     argv: Argv,
 ) -> None:
     fs.create_file("/etc/mytunes/first.toml", contents='theme = "dark"')
-    fs.create_file("./second.mytunes.toml", contents="volume = 80")
+    fs.create_file("./second.mytunes.toml", contents="volume = 81")
     settings = mytunes_settings()
     assert settings.theme == "dark"
-    assert settings.volume == 80
+    assert settings.volume == 81
     # Other fields still at their defaults
     assert settings.shuffle is True
     assert settings.translations == {

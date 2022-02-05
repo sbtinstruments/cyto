@@ -1,4 +1,4 @@
-from typing import Dict, List, Tuple, Type
+from typing import Type
 
 import pytest
 from pydantic import BaseModel, BaseSettings
@@ -10,28 +10,28 @@ class Track(BaseModel):
     title: str
     is_remix: bool = False
 
-    class Config:
+    class Config:  # pylint: disable=too-few-public-methods
         extra = "forbid"
 
 
 class Album(BaseModel):
     author: str
     title: str = "No title"
-    tracks: List[Track] = []
+    tracks: list[Track] = []
 
 
 class Selection(BaseModel):
     name: str
-    tracks: List[Track] = []
-    albums: List[Album] = []
-    metadata: Dict[str, str] = {}
+    tracks: list[Track] = []
+    albums: list[Album] = []
+    metadata: dict[str, str] = {}
 
 
 class MyTunesSettings(BaseSettings):
     theme: str
     volume: int = 80
     shuffle: bool = True
-    translations: Dict[str, str] = {
+    translations: dict[str, str] = {
         "repeat": "repetir",
         "shuffle": "barajar",
     }
@@ -43,8 +43,8 @@ def mytunes_settings() -> Type[MyTunesSettings]:
 
 
 class WinLampSettings(BaseSettings):
-    favourite_genres: List[str] = ["Classical", "Electronic"]
-    version_info: Tuple[str, int, int, int] = ("1.2.0", 1, 2, 0)
+    favourite_genres: list[str] = ["Classical", "Electronic"]
+    version_info: tuple[str, int, int, int] = ("1.2.0", 1, 2, 0)
 
 
 @pytest.fixture
@@ -62,7 +62,7 @@ def dotify_settings() -> Type[DotifySettings]:
 
 
 class Zoobar2000Settings(BaseSettings):
-    playlist: List[Track] = [
+    playlist: list[Track] = [
         Track(title="Eine Kleine Nachtmusik"),
         Track(title="Für Elise"),
         Track(title="The Four Seasons"),
@@ -90,10 +90,64 @@ def zoobar2000_settings() -> Type[Zoobar2000Settings]:
 
 class NoDefaultSettings(BaseSettings):
     flag: bool
-    numbers: List[int]
-    strings: Dict[str, str]
+    numbers: list[int]
+    strings: dict[str, str]
 
 
 @pytest.fixture
 def nodefault_settings() -> Type[NoDefaultSettings]:
     return autofill(name="nodefault")(NoDefaultSettings)
+
+
+#################################################
+### TODO: Replace the classes below with the
+### classes above.
+#################################################
+class Layer(BaseModel):
+    name: str
+    thick: bool = False
+
+
+class Cake(BaseModel):
+    layers: list[Layer]
+    num_candles: int = 9
+    price: int
+
+
+class DefaultSettings(BaseSettings):
+    my_bool: bool = False
+    my_int: int = 42
+    my_string: str = "Hello test suite"
+
+
+class PartialSettings(BaseSettings):
+    my_bool: bool = False
+    my_int: int
+    my_string: str
+
+
+class NestedSettings(BaseSettings):
+    store_is_open: bool = True
+    cake: Cake = Cake(
+        layers=[
+            Layer(name="brownie", thick=True),
+            Layer(name="cream"),
+            Layer(name="glaze"),
+        ],
+        price=23,
+    )
+
+
+@pytest.fixture
+def default_settings() -> Type[DefaultSettings]:
+    return autofill(name="foobar")(DefaultSettings)
+
+
+@pytest.fixture
+def partial_settings() -> Type[PartialSettings]:
+    return autofill(name="foobar")(PartialSettings)
+
+
+@pytest.fixture
+def nested_settings() -> Type[NestedSettings]:
+    return autofill(name="foobar")(NestedSettings)

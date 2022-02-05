@@ -1,7 +1,7 @@
-from typing import Any, Dict
+from typing import Any
 
 
-def deep_update(dest: Dict[Any, Any], other: Dict[Any, Any]) -> None:
+def deep_update(dest: dict[Any, Any], other: dict[Any, Any]) -> None:
     """Update `dest` with the key/value pairs from `other`.
 
     Returns `None`. Note that we modify `dest` in place.

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Callable, Dict, MutableMapping, Protocol
+from typing import Any, Callable, MutableMapping, Protocol
 
 from pydantic import BaseSettings
 
@@ -40,9 +40,9 @@ class GlobSource:  # pylint: disable=too-few-public-methods
         else:
             self._update_func = dict.update
 
-    def __call__(self, _: BaseSettings) -> Dict[str, Any]:
+    def __call__(self, _: BaseSettings) -> dict[str, Any]:
         """Return a dict with settings from the globbed files."""
-        result: Dict[str, Any] = {}
+        result: dict[str, Any] = {}
         for path in sorted(self._dir.glob(self._pattern)):
             with path.open("r") as settings_file:
                 # For now, we simply load everything into memory up front.

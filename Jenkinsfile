@@ -7,15 +7,6 @@ pipeline {
     stages {
         stage('Install') {
             steps {
-                // Use a local poetry virtual environment. E.g., inside a
-                // .venv folder in the workspace itself. This way, Jenkins
-                // can clear poetry's virtual environment before each build.
-                // E.g., with the "wipe out repository" or "clean before
-                // checkout" option.
-                sh 'poetry config --local virtualenvs.in-project true'
-                // We use python 3.8 for now due to a bug in pylint.
-                // See https://github.com/PyCQA/pylint/issues/3882
-                // sh 'poetry env use 3.8'
                 // Install all extras along with the dependencies in
                 // poetry's virtual environment.
                 sh 'poetry install --extras all'
@@ -77,25 +68,21 @@ pipeline {
                 }
                 stage('Lint') {
                     steps {
-                        // This runs inside poetry's virtual environment.
                         sh 'poetry run task pylint'
                     }
                 }
                 stage('Check types') {
                     steps {
-                        // This runs inside poetry's virtual environment.
                         sh 'poetry run task mypy'
                     }
                 }
                 stage('Check formatting') {
                     steps {
-                        // This runs inside poetry's virtual environment.
                         sh 'poetry run task black --check'
                     }
                 }
                 stage('Check import order') {
                     steps {
-                        // This runs inside poetry's virtual environment.
                         sh 'poetry run task isort --check'
                     }
                 }

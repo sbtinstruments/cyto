@@ -75,7 +75,8 @@ def test_set_nested_with_kwargs(
             "layers": [
                 {"name": "ice cream", "thick": True},
                 {"name": "meringue"},
-            ]
+            ],
+            "price": 12,
         }
     )
     assert settings.cake.layers == [
@@ -95,7 +96,8 @@ def test_set_nested_with_env(
         "layers": [
             {"name": "ice cream", "thick": true},
             {"name": "meringue"}
-        ]
+        ],
+        "price": 12
     }
     """
     monkeypatch.setenv("foobar_cake", value)

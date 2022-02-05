@@ -15,7 +15,7 @@
 # type: ignore[no-untyped-def]
 # Hopefully, pytest changes soon so we don't need to ignore no-untyped-def anymore.
 # See https://github.com/pytest-dev/pytest/issues/7469
-from typing import Dict, List, Tuple, Type
+from typing import Type
 
 import click
 import pytest
@@ -38,7 +38,7 @@ from ..conftest import (
 
 class CustomCliSettings(BaseSettings):
     large_text: bool = Field(default=True, cli=CliExtras(disable_flag="small_text"))
-    numbers: List[int] = Field([1, 2, 3], cli=CliExtras(force_json=True))
+    numbers: list[int] = Field([1, 2, 3], cli=CliExtras(force_json=True))
 
     class Config:
         extra = "forbid"

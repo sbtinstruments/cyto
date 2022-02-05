@@ -1,4 +1,4 @@
-FROM python:3.9.5-slim-buster
+FROM python:3.9.10-slim-buster
 
 ENV PYTHONFAULTHANDLER=1 \
     PYTHONUNBUFFERED=1 \
@@ -12,22 +12,7 @@ ENV PYTHONFAULTHANDLER=1 \
 RUN apt update
 RUN apt install -y curl
 
-# Make user
-#
-# Jenkins' default behaviour is to execute the docker image with
-# the 'jenkins' user and the corresponding group. E.g., Jenkins
-# will run docker with '-u 125:129' where 125 and 129 is the ID
-# of the 'jenkins' user and group, respectively. Unfortunately,
-# this will override any user specified in the Dockerfile.
-#
-# Vivado needs to create files and directories during its run. In
-# order to do so, it must have a valid user. If we do nothing,
-# the host machine's 'jenkins' user ID of 125 will be used.
-# Unfortunately, there isn't a user in the container that corresponds
-# to ID 125. This causes file/directory creation to fail.
-# 
-# We create a 'copy' of the 'jenkins' user in the container, so
-# that the host machine's 'jenkins' user will match on the ID.
+# Make user for jenkins
 ARG JENKINS_UID=1000
 ARG JENKINS_GID=1000
 
@@ -39,7 +24,11 @@ RUN adduser --disabled-password --gecos '' \
 USER jenkins
 ENV HOME /home/jenkins
 
+# Install poetry
 RUN curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python -
 ENV PATH="/home/jenkins/.poetry/bin:$PATH"
+
+# Install tox
+RUN python3.9 -m pip install tox --user
 
 CMD ["bash"]
