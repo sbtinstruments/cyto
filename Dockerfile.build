@@ -1,9 +1,6 @@
-FROM python:3.9.5-slim-buster
+FROM python:3.9.10-slim-buster
 
-ARG YOUR_ENV
-
-ENV YOUR_ENV=${YOUR_ENV} \
-    PYTHONFAULTHANDLER=1 \
+ENV PYTHONFAULTHANDLER=1 \
     PYTHONUNBUFFERED=1 \
     PYTHONHASHSEED=random \
     PIP_NO_CACHE_DIR=off \
@@ -14,5 +11,24 @@ ENV YOUR_ENV=${YOUR_ENV} \
 # System deps:
 RUN apt update
 RUN apt install -y curl
+
+# Make user for jenkins
+ARG JENKINS_UID=1000
+ARG JENKINS_GID=1000
+
+RUN groupadd --gid ${JENKINS_GID} jenkins
+RUN adduser --disabled-password --gecos '' \
+    --uid ${JENKINS_UID} \
+    --gid ${JENKINS_GID} \
+    jenkins
+USER jenkins
+ENV HOME /home/jenkins
+
+# Install poetry
 RUN curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python -
-RUN source $HOME/.poetry/env
+ENV PATH="/home/jenkins/.poetry/bin:$PATH"
+
+# Install tox
+RUN python3.9 -m pip install tox --user
+
+CMD ["bash"]

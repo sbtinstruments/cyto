@@ -5,7 +5,7 @@
 # the "unused argument" warning is moot.
 # pylint: disable=unused-argument
 
-from pydantic.main import BaseModel
+from pydantic import BaseModel
 
 from cyto.app import App, Settings
 

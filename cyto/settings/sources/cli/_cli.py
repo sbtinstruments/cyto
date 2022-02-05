@@ -8,13 +8,10 @@ from typing import (
     Any,
     Container,
     DefaultDict,
-    Dict,
     Iterable,
-    List,
     Mapping,
     Optional,
     Sequence,
-    Tuple,
     Type,
     Union,
     get_args,
@@ -28,6 +25,8 @@ from pydantic.fields import ModelField
 from pydantic.types import Json, JsonWrapper
 from pydantic.utils import lenient_issubclass
 
+from .._api_models import CliExtras
+
 
 def cli_settings_source(
     name: str, *, delimiter: str = ".", internal_delimiter: str = "__"
@@ -39,7 +38,7 @@ def cli_settings_source(
             "is not a valid identifier."
         )
 
-    def _cli_settings_source(settings: BaseSettings) -> Dict[str, Any]:
+    def _cli_settings_source(settings: BaseSettings) -> dict[str, Any]:
         """Return settings from this process' CLI options.
 
         Limitations:
@@ -64,7 +63,7 @@ def cli_settings_source(
             }
 
         """
-        result: Dict[str, Any] = {}
+        result: dict[str, Any] = {}
 
         def _set_result(**kwargs: Any) -> None:
             nonlocal result
@@ -74,7 +73,7 @@ def cli_settings_source(
             # structure of dicts that we can use as a settings source.
             result = _kwargs_to_settings(kwargs, internal_delimiter)
 
-        params: List[click.Parameter] = list(
+        params: list[click.Parameter] = list(
             _to_options(settings, delimiter, internal_delimiter)
         )
         command = click.Command(name=name, callback=_set_result, params=params)
@@ -92,8 +91,8 @@ def cli_settings_source(
 
 
 def _kwargs_to_settings(
-    kwargs: Dict[str, Any], internal_delimiter: str
-) -> Dict[str, Any]:
+    kwargs: dict[str, Any], internal_delimiter: str
+) -> dict[str, Any]:
     """Convert flattened kwargs to a nested dict.
 
     Examples:
@@ -128,7 +127,7 @@ def _to_options(
     delimiter: str,
     internal_delimiter: str,
     *,
-    parent_path: Tuple[str, ...] = tuple(),
+    parent_path: tuple[str, ...] = tuple(),
 ) -> Iterable[click.Option]:
     """Convert `pydantic.BaseModel` to the equivalent `click.Option`s."""
     # Let's use an example to explain the code below as we go along.
@@ -180,7 +179,7 @@ def _to_options(
         #   3. `bool`
         #
         # Note that sometimes `outer_type_` isn't a type but an instance from the
-        # `typing` module. E.g., a `typing.List[int]` instance. Therefore, we use
+        # `typing` module. E.g., a `typing.list[int]` instance. Therefore, we use
         # the `lenient_issubclass` utility function instead of `issubclass`. The
         # latter doesn't accept non-types but the former does (hence the leniency).
         if lenient_issubclass(field.outer_type_, BaseModel):
@@ -246,7 +245,7 @@ class _ParamDecls:
         kebab_name: str,
         delimiter: str,
         internal_delimiter: str,
-        parent_path: Tuple[str, ...],
+        parent_path: tuple[str, ...],
         extras: CliExtras,
     ) -> _ParamDecls:
         # We use a delimiter (e.g., ".") to separate the names of nested models.
@@ -286,7 +285,7 @@ class _ParamDecls:
         )
         return cls(identifier, full_option_name)
 
-    def as_tuple(self) -> Tuple[str, str]:
+    def as_tuple(self) -> tuple[str, str]:
         return (self.identifier, self.name)
 
 
@@ -295,7 +294,7 @@ def _full_option_name(
     kebab_name: str,
     base_option_name: str,
     delimiter: str,
-    parent_path: Tuple[str, ...],
+    parent_path: tuple[str, ...],
     extras: CliExtras,
 ) -> str:
     full_option_name = f"--{base_option_name}"
@@ -320,7 +319,9 @@ class JsonType(click.ParamType):
 
     name = "json"
 
-    def convert(
+    # The `self.fail` call always raises. Pylint doesn't know this and complains
+    # about inconsistent return statements.
+    def convert(  # pylint: disable=inconsistent-return-statements
         self, value: str, param: Optional[click.Parameter], ctx: Optional[click.Context]
     ) -> Any:
         """Convert raw JSON string to a dict."""
@@ -389,33 +390,21 @@ class _Option(click.Option):
 
 
 SingleClickParamType = Union[type, click.ParamType]
-ClickParamType = Union[SingleClickParamType, Tuple[SingleClickParamType, ...]]
-
-
-class CliExtras(BaseModel):
-    """CLI-specific model settings."""
-
-    # Force click to parse the corresponding option as JSON
-    force_json: bool = False
-    # Use a custom "disable" flag. Only valid for boolean fields.
-    # Defaults to the "enable" name prefixed with "no-". E.g.: "debug" becomes
-    # "no-debug".
-    # Don't prefix the disable flag with "--".
-    disable_flag: Optional[str] = None
+ClickParamType = Union[SingleClickParamType, tuple[SingleClickParamType, ...]]
 
 
 def _clickify_type(type_: type, extras: CliExtras) -> ClickParamType:
     # Early out if the user explicitly forces the field type to JSON
     if extras.force_json:
         return JSON_TYPE
-    # E.g.: Json, Json[List[str]], etc.
+    # E.g.: Json, Json[list[str]], etc.
     if lenient_issubclass(type_, (Json, JsonWrapper)):
         # Return `str` since pydantic will parse the JSON in a later step
         return str
-    # E.g.: dict, Dict[str, Any], OrderedDict, etc.
+    # E.g.: dict, dict[str, Any], OrderedDict, etc.
     if _is_mapping(type_):
         return JSON_TYPE
-    # E.g.: list, FrozenSet[int], Tuple[int, ...], etc.
+    # E.g.: list, FrozenSet[int], tuple[int, ...], etc.
     if _is_container(type_):
         return _clickify_container_args(type_)
     # E.g.: int, str, float, etc.
@@ -466,12 +455,12 @@ def _get_multiple(type_: type, extras: CliExtras) -> bool:
     if _is_container(type_):
         args = _clickify_container_args(type_)
         # A non-composite type has a single argument.
-        # E.g., `List[int]`.
+        # E.g., `list[int]`.
         # A composite type has a tuple of arguments.
-        # E.g., `Tuple[str, int, int]`.
+        # E.g., `tuple[str, int, int]`.
         composite = isinstance(args, tuple)
         # We only allow the user to specify multiple values for non-composite types.
-        # E.g., for `list`, `Tuple[str, ...]`, `FrozenSet[int]`, etc.
+        # E.g., for `list`, `tuple[str, ...]`, `FrozenSet[int]`, etc.
         return not composite
     return False
 
@@ -506,8 +495,8 @@ def _clickify_container_args(
     type_: type,
 ) -> ClickParamType:
     assert _is_container(type_)
-    args: Tuple[Any, ...] = get_args(type_)
-    # Early out for untyped containers such as `tuple`, `List[Any]`, `frozenset`, etc.
+    args: tuple[Any, ...] = get_args(type_)
+    # Early out for untyped containers such as `tuple`, `list[Any]`, `frozenset`, etc.
     if len(args) == 0:
         # When we don't know the type, we choose `str`. It's tempting to choose `None`
         # but that invokes click's type-guessing logic. We don't want to do that since
@@ -516,16 +505,16 @@ def _clickify_container_args(
     # Early out for homogenous containers (contains items of a single type)
     if len(args) == 1:
         return _clickify_arg(args[0])
-    # Early out for homogenous tuples of indefinite length. E.g., `Tuple[int, ...]`.
+    # Early out for homogenous tuples of indefinite length. E.g., `tuple[int, ...]`.
     if len(args) == 2 and args[1] is Ellipsis:
         return _clickify_arg(args[0])
     # Last case is fixed-length containers (contains a fixed number of items of a
-    # given type). E.g., `Tuple[str, int, int]`.
+    # given type). E.g., `tuple[str, int, int]`.
     return tuple(_clickify_args(args))
 
 
 def _clickify_args(
-    args: Tuple[type, ...],
+    args: tuple[type, ...],
 ) -> Iterable[SingleClickParamType]:
     return (_clickify_arg(arg) for arg in args)
 
@@ -540,7 +529,7 @@ def _clickify_arg(arg: type) -> SingleClickParamType:
     return arg
 
 
-def _clickify_container_default(default: Any) -> Optional[Tuple[Any, ...]]:
+def _clickify_container_default(default: Any) -> Optional[tuple[Any, ...]]:
     assert issubclass(type(default), Sequence)
     return tuple(v.json() if isinstance(v, BaseModel) else v for v in default)
 

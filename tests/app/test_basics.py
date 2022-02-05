@@ -115,7 +115,7 @@ def test_tasks(argv: Argv) -> None:
 
     async def main(tg: TaskGroup) -> None:
         for i in range(num_tasks):
-            await tg.spawn(_sleep, i)
+            tg.start_soon(_sleep, i)
 
     App.launch(main)
     assert result == sum(range(num_tasks))
@@ -132,7 +132,7 @@ def test_tasks_raises(argv: Argv) -> None:
 
     async def main(tg: TaskGroup) -> None:
         for i in range(num_tasks):
-            await tg.spawn(_sleep, i)
+            tg.start_soon(_sleep, i)
 
     with pytest.raises(RuntimeError) as excinfo:
         App.launch(main)
