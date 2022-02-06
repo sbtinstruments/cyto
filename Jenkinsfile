@@ -43,6 +43,10 @@ pipeline {
                             }
                         }
                         stage('coverage') {
+                            environment {
+                                // Get total coverage for the badge
+                                TOTAL_COVERAGE=sh(script: 'poetry run coverage report | grep TOTAL | awk \'{print $4 "\\t"}\'', returnStdout: true).trim()
+                            }
                             steps {
                                 // Note that we don't do "poetry run tox". This is because
                                 // tox manages its own virtual environments. See the
@@ -61,6 +65,7 @@ pipeline {
                                         reportFiles: 'index.html',
                                         reportName: 'Test Coverage Report'
                                     ]
+                                    addShortText text: "Coverage: ${env.TOTAL_COVERAGE}"
                                 }
                             }
                         }
