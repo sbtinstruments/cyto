@@ -8,7 +8,7 @@ from pydantic import BaseSettings
 from ....basic import deep_update as dict_deep_update
 
 # Note that we disable D102 for `Protocol`s since it's redundant documentation.
-# Similarly, we disable too-few-public-methods since it doens't make sense for
+# Similarly, we disable too-few-public-methods since it doesn't make sense for
 # `Protocol`s. Hopefully, both pydocstyle and pylint will special-case `Protocol`s
 # soon enough.
 
