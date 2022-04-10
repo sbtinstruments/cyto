@@ -1,6 +1,6 @@
 # pylint: disable=missing-function-docstring,missing-class-docstring
 
-# pytest fixtures may have effects just by their mere precense. E.g., the
+# pytest fixtures may have effects just by their mere presence. E.g., the
 # `Argv` fixture that clears all arguments per default. Since this is the case,
 # the "unused argument" warning is moot.
 # pylint: disable=unused-argument
@@ -56,8 +56,8 @@ def test_inject_multiple(argv: Argv) -> None:
 
 
 def test_inject_missing_anno(argv: Argv) -> None:
-    # We purposedly omit the annotation, hence the "type: ignore" comment
-    # Likewise, we purposedly don't use the argument for anything. We just
+    # We purposely omit the annotation, hence the "type: ignore" comment
+    # Likewise, we purposely don't use the argument for anything. We just
     # want to test the inject semantics.
     async def main(stack) -> None:  # type: ignore[no-untyped-def] # pylint: disable=unused-argument
         pass

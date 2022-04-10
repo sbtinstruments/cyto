@@ -1,6 +1,6 @@
 # pylint: disable=missing-function-docstring,missing-class-docstring
 
-# pytest fixtures may have effects just by their mere precense. E.g., the
+# pytest fixtures may have effects just by their mere presence. E.g., the
 # `Argv` fixture that clears all arguments per default. Since this is the case,
 # the "unused argument" warning is moot.
 # pylint: disable=unused-argument

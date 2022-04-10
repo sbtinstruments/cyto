@@ -2,7 +2,7 @@ from typing import Any
 
 
 class ExtraError(Exception):
-    """Base exception for all extra-related erorrs."""
+    """Base exception for all extra-related errors."""
 
     def __init__(self, extra_name: str, *args: Any) -> None:
         super().__init__(*args)

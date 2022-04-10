@@ -502,10 +502,10 @@ def _clickify_container_args(
         # but that invokes click's type-guessing logic. We don't want to do that since
         # it often incorrectly guesses that we want a composite type when we don't. [2]
         return str
-    # Early out for homogenous containers (contains items of a single type)
+    # Early out for homogeneous containers (contains items of a single type)
     if len(args) == 1:
         return _clickify_arg(args[0])
-    # Early out for homogenous tuples of indefinite length. E.g., `tuple[int, ...]`.
+    # Early out for homogeneous tuples of indefinite length. E.g., `tuple[int, ...]`.
     if len(args) == 2 and args[1] is Ellipsis:
         return _clickify_arg(args[0])
     # Last case is fixed-length containers (contains a fixed number of items of a
