@@ -69,32 +69,37 @@ def autofill(
                         #   /var/run/backend_ip_address
                         file_secret_settings,
                     ]
+                    # Fifth, setting files from the current directory. E.g.:
+                    #   ./dev-credentials.appster.toml
+                    #   ./z10-relocate-db.appster.toml
+                    #   ./z99-disable-ssl.appster.toml
+                    # Note that we apply multiple setting files in alphanumeric
+                    # order.
+                    # Note that TOML files have higher precedence than
+                    # JSON files. We may change this in the future. Don't rely
+                    # on this behaviour
                     if toml_loads is not None:
-                        sources += [
-                            # Fifth, setting files from the current directory. E.g.:
-                            #   ./dev-credentials.appster.toml
-                            #   ./z10-relocate-db.appster.toml
-                            #   ./z99-disable-ssl.appster.toml
-                            # Note that we apply multiple setting files in alphanumeric
-                            # order.
-                            # Note that TOML files have higher precedence than
-                            # JSON files. We may change this in the future. Don't rely
-                            # on this behaviour
-                            GlobSource(Path("./"), f"*.{name}.toml", toml_loads),
-                            GlobSource(Path("./"), f"*.{name}.json", json_loads),
-                            # Sixth, setting files from the system's settings
-                            # directory. E.g.:
-                            #   /etc/appster/base-settings.toml
-                            #   /etc/appster/z10-relocate-db.toml
-                            #   /etc/appster/z99-disable-ssl.toml
-                            # Note that we apply multiple setting files in alphanumeric
-                            # order.
-                            # Note that TOML files have higher precedence than
-                            # JSON files. We may change this in the future. Don't rely
-                            # on this behaviour
-                            GlobSource(Path(f"/etc/{name}"), "*.toml", toml_loads),
-                            GlobSource(Path(f"/etc/{name}"), "*.json", json_loads),
-                        ]
+                        sources.append(
+                            GlobSource(Path("./"), f"*.{name}.toml", toml_loads)
+                        )
+                    sources.append(GlobSource(Path("./"), f"*.{name}.json", json_loads))
+                    # Sixth, setting files from the system's settings
+                    # directory. E.g.:
+                    #   /etc/appster/base-settings.toml
+                    #   /etc/appster/z10-relocate-db.toml
+                    #   /etc/appster/z99-disable-ssl.toml
+                    # Note that we apply multiple setting files in alphanumeric
+                    # order.
+                    # Note that TOML files have higher precedence than
+                    # JSON files. We may change this in the future. Don't rely
+                    # on this behaviour
+                    if toml_loads is not None:
+                        sources.append(
+                            GlobSource(Path(f"/etc/{name}"), "*.toml", toml_loads)
+                        )
+                    sources.append(
+                        GlobSource(Path(f"/etc/{name}"), "*.json", json_loads)
+                    )
                     # Seventh (lowest precedence), you can specify additional setting
                     # sources.
                     sources += extra_sources

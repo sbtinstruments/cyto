@@ -1,4 +1,4 @@
-FROM python:3.9.10-slim-buster
+FROM python:3.10.10-slim-buster
 
 ENV PYTHONFAULTHANDLER=1 \
     PYTHONUNBUFFERED=1 \
@@ -9,8 +9,7 @@ ENV PYTHONFAULTHANDLER=1 \
     POETRY_VERSION=1.1.12
 
 # System deps:
-RUN apt update
-RUN apt install -y curl
+RUN apt update && apt install -y curl
 
 # Make user for jenkins
 ARG JENKINS_UID=1000
@@ -24,11 +23,11 @@ RUN adduser --disabled-password --gecos '' \
 USER jenkins
 ENV HOME /home/jenkins
 
-# Install poetry
-RUN curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python -
-ENV PATH="/home/jenkins/.poetry/bin:$PATH"
+# Install poetry for modern python depency management
+RUN curl -sSL https://install.python-poetry.org | POETRY_VERSION=1.4.0 python3 -
+ENV PATH="$HOME/.local/bin:$PATH"
 
 # Install tox
-RUN python3.9 -m pip install tox --user
+RUN python3 -m pip install tox --user
 
 CMD ["bash"]
