@@ -1,6 +1,6 @@
 from json import loads as json_loads
 from pathlib import Path
-from typing import Any, Callable, Iterable, Optional, Type, TypeVar
+from typing import Any, Callable, Iterable, Optional, TypeVar
 
 from pydantic import BaseSettings
 from pydantic.env_settings import SettingsSourceCallable
@@ -27,12 +27,12 @@ def autofill(
     *,
     extra_sources: Iterable[SettingsSourceCallable] = tuple(),
     cli_settings: Optional[dict[str, Any]] = None,
-) -> Callable[[Type[SettingsT]], Type[SettingsT]]:
+) -> Callable[[type[SettingsT]], type[SettingsT]]:
     """Fill in the blanks based on setting files, env vars, etc."""
     if cli_settings is None:
         cli_settings = {}
 
-    def _autofill(base: Type[SettingsT]) -> Type[SettingsT]:
+    def _autofill(base: type[SettingsT]) -> type[SettingsT]:
         # Early out if the class already has this decoration
         if hasattr(base, "__autofill__"):
             return base

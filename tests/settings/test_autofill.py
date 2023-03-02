@@ -9,11 +9,9 @@
 # Unfortunately, pylint matches fixtures based on argument names.
 # Therefore, redefinitions can't be avoided.
 
-# type: ignore[no-untyped-def]
+# mypy: disable-error-code=no-untyped-def
 # Hopefully, pytest changes soon so we don't need to ignore no-untyped-def anymore.
 # See https://github.com/pytest-dev/pytest/issues/7469
-from typing import Type
-
 import pytest
 from pydantic import ValidationError
 
@@ -22,7 +20,7 @@ from .conftest import DefaultSettings, Layer, NestedSettings, PartialSettings
 
 
 def test_defaults(
-    default_settings: Type[DefaultSettings],
+    default_settings: type[DefaultSettings],
     argv: Argv,
 ) -> None:
     settings = default_settings()
@@ -32,7 +30,7 @@ def test_defaults(
 
 
 def test_missing(
-    partial_settings: Type[PartialSettings],
+    partial_settings: type[PartialSettings],
     argv: Argv,
 ) -> None:
     with pytest.raises(ValidationError) as exc_info:
@@ -44,7 +42,7 @@ def test_missing(
 
 
 def test_set_partial_with_kwargs(
-    partial_settings: Type[PartialSettings],
+    partial_settings: type[PartialSettings],
     argv: Argv,
 ) -> None:
     settings = partial_settings(my_int=44, my_string="string with spaces")
@@ -55,7 +53,7 @@ def test_set_partial_with_kwargs(
 
 def test_set_partial_with_env(
     monkeypatch,
-    partial_settings: Type[PartialSettings],
+    partial_settings: type[PartialSettings],
     argv: Argv,
 ) -> None:
     monkeypatch.setenv("foobar_my_int", "99")
@@ -67,7 +65,7 @@ def test_set_partial_with_env(
 
 
 def test_set_nested_with_kwargs(
-    nested_settings: Type[NestedSettings],
+    nested_settings: type[NestedSettings],
     argv: Argv,
 ) -> None:
     settings = nested_settings(
@@ -88,7 +86,7 @@ def test_set_nested_with_kwargs(
 
 def test_set_nested_with_env(
     monkeypatch,
-    nested_settings: Type[NestedSettings],
+    nested_settings: type[NestedSettings],
     argv: Argv,
 ) -> None:
     value = """

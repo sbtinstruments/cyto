@@ -1,5 +1,3 @@
-from typing import Type
-
 import pytest
 from pydantic import BaseModel, BaseSettings
 
@@ -38,7 +36,7 @@ class MyTunesSettings(BaseSettings):
 
 
 @pytest.fixture
-def mytunes_settings() -> Type[MyTunesSettings]:
+def mytunes_settings() -> type[MyTunesSettings]:
     return autofill(name="mytunes")(MyTunesSettings)
 
 
@@ -48,7 +46,7 @@ class WinLampSettings(BaseSettings):
 
 
 @pytest.fixture
-def winlamp_settings() -> Type[WinLampSettings]:
+def winlamp_settings() -> type[WinLampSettings]:
     return autofill(name="winlamp")(WinLampSettings)
 
 
@@ -57,7 +55,7 @@ class DotifySettings(BaseSettings):
 
 
 @pytest.fixture
-def dotify_settings() -> Type[DotifySettings]:
+def dotify_settings() -> type[DotifySettings]:
     return autofill(name="dotify")(DotifySettings)
 
 
@@ -84,7 +82,7 @@ class Zoobar2000Settings(BaseSettings):
 
 
 @pytest.fixture
-def zoobar2000_settings() -> Type[Zoobar2000Settings]:
+def zoobar2000_settings() -> type[Zoobar2000Settings]:
     return autofill(name="zoobar2000")(Zoobar2000Settings)
 
 
@@ -95,7 +93,7 @@ class NoDefaultSettings(BaseSettings):
 
 
 @pytest.fixture
-def nodefault_settings() -> Type[NoDefaultSettings]:
+def nodefault_settings() -> type[NoDefaultSettings]:
     return autofill(name="nodefault")(NoDefaultSettings)
 
 
@@ -139,15 +137,15 @@ class NestedSettings(BaseSettings):
 
 
 @pytest.fixture
-def default_settings() -> Type[DefaultSettings]:
+def default_settings() -> type[DefaultSettings]:
     return autofill(name="foobar")(DefaultSettings)
 
 
 @pytest.fixture
-def partial_settings() -> Type[PartialSettings]:
+def partial_settings() -> type[PartialSettings]:
     return autofill(name="foobar")(PartialSettings)
 
 
 @pytest.fixture
-def nested_settings() -> Type[NestedSettings]:
+def nested_settings() -> type[NestedSettings]:
     return autofill(name="foobar")(NestedSettings)

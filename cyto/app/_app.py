@@ -5,7 +5,7 @@ import logging
 from contextlib import ExitStack
 from pathlib import Path
 from types import TracebackType
-from typing import Any, ContextManager, Optional, Type, TypeVar, cast
+from typing import Any, ContextManager, Optional, TypeVar, cast
 
 from anyio import run
 
@@ -42,7 +42,7 @@ class App(ContextManager["App"]):
         func: Func[ReturnT],
         *,
         name: Optional[str] = None,
-        settings_class: Optional[Type[Settings]] = None,
+        settings_class: Optional[type[Settings]] = None,
     ) -> ReturnT:
         """Create app instance and run the given coroutine function."""
         # Set defaults for optional arguments
@@ -65,7 +65,7 @@ class App(ContextManager["App"]):
         # Run until the task completes (or the process receives a signal)
         return run(injected_func)
 
-    async def _factory(self, annotation: Type[Any]) -> Any:
+    async def _factory(self, annotation: type[Any]) -> Any:
         """Return instance based on the given annotation.
 
         We use this function for dependency injection.
@@ -87,7 +87,7 @@ class App(ContextManager["App"]):
 
     def __exit__(
         self,
-        exc_type: Optional[Type[BaseException]],
+        exc_type: Optional[type[BaseException]],
         exc_value: Optional[BaseException],
         traceback: Optional[TracebackType],
     ) -> None:
@@ -100,7 +100,7 @@ class App(ContextManager["App"]):
             _LOGGER.info("Stopped")
 
 
-def get_settings_class(func: Func[ReturnT]) -> Type[Settings]:
+def get_settings_class(func: Func[ReturnT]) -> type[Settings]:
     """Try to get the settings class from the function signature."""
     spec = inspect.getfullargspec(func)
     for arg_name in spec.args:
@@ -112,7 +112,7 @@ def get_settings_class(func: Func[ReturnT]) -> Type[Settings]:
             # Strangely, mypy can't infer that `annotation` has the right
             # type from the `issubclass` call. We explicitly cast as a
             # work-around to this.
-            return cast(Type[Settings], annotation)
+            return cast(type[Settings], annotation)
     # Default to the base settings class
     return Settings
 

@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any, Callable, Type, TypeVar
+from typing import Any, Callable, TypeVar
 
 from pydantic import BaseSettings, Extra, Field
 from pydantic.env_settings import SettingsSourceCallable
@@ -10,7 +10,7 @@ from ..settings.sources import CliExtras
 SettingsT = TypeVar("SettingsT", bound=BaseSettings)
 
 
-def autofill(name: str) -> Callable[[Type[SettingsT]], Type[SettingsT]]:
+def autofill(name: str) -> Callable[[type[SettingsT]], type[SettingsT]]:
     """Fill in the blanks based on setting files, env vars, etc."""
     extra_sources = (_app_computed_settings(name),)
     return base_autofill(name, extra_sources=extra_sources)

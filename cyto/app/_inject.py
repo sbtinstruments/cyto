@@ -9,16 +9,15 @@ from typing import (
     Coroutine,
     Optional,
     Protocol,
-    Type,
     TypeVar,
 )
 
 from anyio import create_task_group
 from anyio.abc import TaskGroup
 
-ReturnT = TypeVar("ReturnT", covariant=True)
+ReturnT_co = TypeVar("ReturnT_co", covariant=True)
 
-Func = Callable[..., Coroutine[Any, Any, ReturnT]]
+Func = Callable[..., Coroutine[Any, Any, ReturnT_co]]
 
 
 # Note that we disable D102 for `Protocol`s since it's redundant documentation.
@@ -27,21 +26,21 @@ Func = Callable[..., Coroutine[Any, Any, ReturnT]]
 # soon enough.
 
 
-class InjectedFunc(Protocol[ReturnT]):  # pylint: disable=too-few-public-methods
+class InjectedFunc(Protocol[ReturnT_co]):  # pylint: disable=too-few-public-methods
     """`Func` after we apply `inject` to it."""
 
-    async def __call__(self) -> ReturnT:  # noqa: D102
+    async def __call__(self) -> ReturnT_co:  # noqa: D102
         ...
 
 
 class Factory(Protocol):  # pylint: disable=too-few-public-methods
     """Given a type, return an instance of said type."""
 
-    async def __call__(self, __annotation: Type[Any]) -> Any:  # noqa: D102
+    async def __call__(self, __annotation: type[Any]) -> Any:  # noqa: D102
         ...
 
 
-async def _basic_factory(annotation: Type[Any]) -> Any:
+async def _basic_factory(annotation: type[Any]) -> Any:
     if issubclass(annotation, TaskGroup):
         return create_task_group()
     raise ValueError
@@ -50,12 +49,12 @@ async def _basic_factory(annotation: Type[Any]) -> Any:
 def inject(
     *,
     extra_factory: Optional[Factory] = None,
-) -> Callable[[Func[ReturnT]], InjectedFunc[ReturnT]]:
+) -> Callable[[Func[ReturnT_co]], InjectedFunc[ReturnT_co]]:
     """Inject instances of the given function's argument types."""
 
-    def _inject(coro: Func[ReturnT]) -> InjectedFunc[ReturnT]:
+    def _inject(coro: Func[ReturnT_co]) -> InjectedFunc[ReturnT_co]:
         @wraps(coro)
-        async def _wrapper() -> ReturnT:  # type: ignore[return]
+        async def _wrapper() -> ReturnT_co:  # type: ignore[return]
             spec = inspect.getfullargspec(coro)
             args: Any = []
             async with AsyncExitStack() as stack:
@@ -95,7 +94,7 @@ def inject(
 
 
 async def _get_arg(
-    annotation: Type[Any],
+    annotation: type[Any],
     stack: AsyncExitStack,
     extra_factory: Optional[Factory] = None,
 ) -> Any:

@@ -12,11 +12,9 @@
 # pylint: disable=too-few-public-methods
 # This warning doesn't make sense for the `Config` class on a `BaseModel`.
 
-# type: ignore[no-untyped-def]
+# mypy: disable-error-code=no-untyped-def
 # Hopefully, pytest changes soon so we don't need to ignore no-untyped-def anymore.
 # See https://github.com/pytest-dev/pytest/issues/7469
-from typing import Type
-
 import click
 import pytest
 from pydantic import BaseModel, BaseSettings, Field, ValidationError
@@ -45,7 +43,7 @@ class CustomCliSettings(BaseSettings):
 
 
 @pytest.fixture
-def customcli_settings() -> Type[CustomCliSettings]:
+def customcli_settings() -> type[CustomCliSettings]:
     return autofill(name="customcli")(CustomCliSettings)
 
 
@@ -59,12 +57,12 @@ class HackerSettings(BaseSettings):
 
 
 @pytest.fixture
-def hacker_settings() -> Type[HackerSettings]:
+def hacker_settings() -> type[HackerSettings]:
     return autofill(name="hacker")(HackerSettings)
 
 
 def test_basic_field(
-    mytunes_settings: Type[MyTunesSettings],
+    mytunes_settings: type[MyTunesSettings],
     argv: Argv,
 ) -> None:
     # It raises an exception when you forget a required field
@@ -126,7 +124,7 @@ def test_basic_field(
 
 
 def test_model_field(
-    dotify_settings: Type[DotifySettings],
+    dotify_settings: type[DotifySettings],
     argv: Argv,
 ) -> None:
     # The `featured_album` field exists but it's a model. You can't
@@ -148,7 +146,7 @@ def test_model_field(
 
 
 def test_list_field(
-    winlamp_settings: Type[WinLampSettings],
+    winlamp_settings: type[WinLampSettings],
     argv: Argv,
 ) -> None:
     # Let's see if the default settings are there
@@ -175,7 +173,7 @@ def test_list_field(
 
 
 def test_tuple_field(
-    winlamp_settings: Type[WinLampSettings],
+    winlamp_settings: type[WinLampSettings],
     argv: Argv,
 ) -> None:
     # Let's check the defaults
@@ -192,7 +190,7 @@ def test_tuple_field(
 
 
 def test_list_of_models(
-    zoobar2000_settings: Type[Zoobar2000Settings],
+    zoobar2000_settings: type[Zoobar2000Settings],
     argv: Argv,
 ) -> None:
     # Let's check (some of) the defaults
@@ -256,7 +254,7 @@ def test_list_of_models(
 
 
 def test_complex_hierarchy(
-    zoobar2000_settings: Type[Zoobar2000Settings],
+    zoobar2000_settings: type[Zoobar2000Settings],
     argv: Argv,
 ) -> None:
     # Let's try to change the defaults of a deep hierarchy of
@@ -323,14 +321,14 @@ def test_complex_hierarchy(
     assert settings.user_favourites.tracks == []
 
 
-def test_disable_flag(customcli_settings: CustomCliSettings, argv: Argv) -> None:
+def test_disable_flag(customcli_settings: type[CustomCliSettings], argv: Argv) -> None:
     # We use the dedicated "disable flag" to switch of `large_text`
     argv.append("--small-text")
     settings = customcli_settings()
     assert settings.large_text is False
 
 
-def test_force_json(customcli_settings: CustomCliSettings, argv: Argv) -> None:
+def test_force_json(customcli_settings: type[CustomCliSettings], argv: Argv) -> None:
     # Test that the default still works
     settings = customcli_settings()
     assert settings.numbers == [1, 2, 3]
@@ -353,7 +351,7 @@ def test_force_json(customcli_settings: CustomCliSettings, argv: Argv) -> None:
         settings = customcli_settings()
 
 
-def test_no_defaults(nodefault_settings: NoDefaultSettings, argv: Argv) -> None:
+def test_no_defaults(nodefault_settings: type[NoDefaultSettings], argv: Argv) -> None:
     # Raises if we don't fill out the defaults
     with pytest.raises(ValidationError):
         nodefault_settings()
@@ -366,7 +364,7 @@ def test_no_defaults(nodefault_settings: NoDefaultSettings, argv: Argv) -> None:
 
 def test_precedence(
     monkeypatch,
-    mytunes_settings: Type[MyTunesSettings],
+    mytunes_settings: type[MyTunesSettings],
     argv: Argv,
 ) -> None:
     # We set a setting via an environment variable
@@ -382,7 +380,7 @@ def test_precedence(
     assert settings.theme == "monokai"
 
 
-def test_edge_cases(argv: Argv, hacker_settings: HackerSettings) -> None:
+def test_edge_cases(argv: Argv, hacker_settings: type[HackerSettings]) -> None:
     # Fields such as `bobby__tables` conflict with the default
     # internal delimiter "__".
     with pytest.raises(ValueError):
@@ -422,7 +420,7 @@ def test_edge_cases(argv: Argv, hacker_settings: HackerSettings) -> None:
 
 
 def test_help(
-    zoobar2000_settings: Type[Zoobar2000Settings],
+    zoobar2000_settings: type[Zoobar2000Settings],
     argv: Argv,
 ) -> None:
     argv.append("--help")

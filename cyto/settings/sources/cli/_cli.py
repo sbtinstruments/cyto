@@ -12,7 +12,6 @@ from typing import (
     Mapping,
     Optional,
     Sequence,
-    Type,
     Union,
     get_args,
     get_origin,
@@ -123,7 +122,7 @@ def _kwargs_to_settings(
 
 
 def _to_options(
-    model: Union[BaseModel, Type[BaseModel]],
+    model: Union[BaseModel, type[BaseModel]],
     delimiter: str,
     internal_delimiter: str,
     *,
