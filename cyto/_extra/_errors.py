@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import Any
 
 
@@ -19,3 +21,23 @@ class ExtraImportError(ExtraError, ImportError):
             f'Try again with, e.g., "poetry install --extras {extra_name}"'
         )
         super().__init__(extra_name, msg)
+
+    @classmethod
+    def from_module_name(cls, module_name: str) -> ExtraImportError:
+        """Resolve "extra" name from the module name.
+
+        Usually, you call this function like:
+
+            try:
+                from ._my_local_module import MyFancyClass
+                from ._my_utils import do_the_thing
+            except ImportError as exc:
+                from .._extra import ExtraImportError
+
+                raise ExtraImportError.from_module_name(__name__) from exc
+
+        from with `__init__.py` or similar.
+        """
+        # We use `[1:]` to skip the `cyto` part
+        extra_name = "-".join(module_name.split(".")[1:])
+        return cls(extra_name)

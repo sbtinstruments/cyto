@@ -13,9 +13,14 @@ version = "0.0.0"                                                        # TODO:
 
 [tool.poetry.dependencies]
 python = "^3.10"
+# Make sure that all dependencies are optional!
+# This allows our users to opt-in via "extras".
 anyio = { version = "^3.6.2", optional = true }
 click = { version = "^8.1.3", optional = true }
+mergedeep = { version = "^1.3.4", optional = true }
+networkx = { version = "^3.0", optional = true }
 pydantic = { version = "^1.10.5", optional = true }
+redis = { version = "^4.5.1", optional = true }
 toml = { version = "^0.10.2", optional = true }
 
 [tool.poetry.group.dev.dependencies]
@@ -28,15 +33,20 @@ isort = "^5.12.0"
 mypy = "^1.0.1"
 pre-commit = "^3.1.1"
 pylint = "^2.16.2"
+pydocstyle = "^6.3.0"
 # We only use rope to give Visual Studio Code users a better
 # out-of-the-box experience. For, e.g., refactoring.
 # In other words, rope is not part of the QA tooling itself.
-pydocstyle = "^6.3.0"
 rope = "^1.7.0"
 
 [tool.poetry.extras]
-"all" = ["anyio", "pydantic", "click", "toml"]
+"all" = ["anyio", "click", "mergedeep", "networkx", "pydantic", "redis", "toml"]
 "app" = ["anyio", "pydantic"]
+"cytio" = ["anyio"]
+"cytio-tree" = ["anyio", "networkx", "pydantic"]
+"cytio-tree-outline-redis" = ["anyio", "networkx", "pydantic", "redis"]
+"factory" = ["pydantic"]
+"model" = ["pydantic", "mergedeep"]
 "settings" = ["pydantic"]
 "settings-sources-cli" = ["click"]
 "settings-sources-toml" = ["toml"]
@@ -129,9 +139,22 @@ plugins = ["pydantic.mypy"]
 warn_unused_ignores = false
 
 [[tool.mypy.overrides]]
-module = "toml.*"
+module = ["mergedeep"]
+# See https://github.com/clarketm/mergedeep/issues/2
 ignore_missing_imports = true
 
+[[tool.mypy.overrides]]
+module = "redis.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = ["networkx.*"]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+# TODO: Replace with tomllib from Python 3.11 
+module = "toml.*"
+ignore_missing_imports = true
 
 [tool.pylint.master]
 # i,j,k: You can use this for an integer index in a loop.

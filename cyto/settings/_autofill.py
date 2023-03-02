@@ -9,6 +9,7 @@ from .sources.glob import GlobSource, Loader
 
 toml_loads: Optional[Loader]
 try:
+    # TODO: Replace with tomllib from Python 3.11
     from toml import loads as toml_loads  # type: ignore[no-redef]
 except ImportError:
     toml_loads = None
