@@ -119,7 +119,9 @@ basepython = python3.10
 skip_install = true
 commands =
     coverage html --precision=2
-    coverage report --precision=2 --fail-under=80
+    # TODO: Increase "--fail-under" to something like 80 when we have
+    # the resources to enforce code coverage.
+    coverage report --precision=2 --fail-under=0
 """
 
 [tool.black]

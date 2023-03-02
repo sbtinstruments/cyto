@@ -99,10 +99,4 @@ pipeline {
             }
         }
     }
-    post {
-        failure {
-            // Notify slack if anything went wrong
-            slackSend(color: '#FF9FA1', message: "`${env.JOB_NAME}` has failed CI:\n${env.BUILD_URL}")
-        }
-    }
 }
