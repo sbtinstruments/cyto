@@ -4,9 +4,11 @@ from typing import AsyncIterator
 
 import anyio
 
-from ...broadcast import BroadcastValue
-from .._task_tree import TreeReceiveStream
-from ._outline import Outline
+from ...cytio.broadcast import BroadcastValue
+from ...cytio.tree import TreeReceiveStream
+from .._outline import Outline
+from .._project_database import project_db_to_trail
+from ._tree_to_project_db import tree_to_project_database
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -30,5 +32,7 @@ async def _tree_changes_to_outline(
 ) -> None:
     async with tree_change_stream:
         async for tree in tree_change_stream:
-            outline = Outline.from_tree(tree)
+            project_db = tree_to_project_database(tree)
+            trail = project_db_to_trail(project_db)
+            outline = Outline(trail=trail)
             outline_broadcast.set(outline)

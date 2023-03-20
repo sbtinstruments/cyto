@@ -3,12 +3,12 @@ from __future__ import annotations
 import inspect
 import logging
 from contextlib import ExitStack
-from pathlib import Path
 from types import TracebackType
 from typing import Any, ContextManager, Optional, TypeVar, cast
 
 from anyio import run
 
+from ..basic import get_app_name
 from ._inject import Func, inject
 from ._settings import Settings, autofill
 
@@ -115,36 +115,3 @@ def get_settings_class(func: Func[ReturnT]) -> type[Settings]:
             return cast(type[Settings], annotation)
     # Default to the base settings class
     return Settings
-
-
-def get_app_name(func: Func[ReturnT]) -> str:
-    """Get the name of the running application."""
-    # Use the function name itself if said name is descriptive
-    if func.__name__ not in ("main",) and not func.__name__.startswith("_"):
-        return func.__name__
-
-    # If the function name isn't desciptive, we query the main module
-    import __main__ as main  # pylint: disable=import-outside-toplevel
-
-    # Use the module name if the application runs a module
-    #
-    # `main` will look something like this:
-    #   main.__name__   : __main__
-    #   main.__package__: baxter
-    #   main.__file__   : /media/system/lib/python3.6/site-packages/baxter/__main__.py
-    if isinstance(main.__package__, str):
-        return main.__package__
-
-    # Use the file name if the application runs directly
-    #
-    # `main` will look something like this:
-    #   main.__name__   : __main__
-    #   main.__package__: None
-    #   main.__file__   : /media/system/bin/baxter
-    #
-    # Or, sometimes, like this:
-    #   main.__file__   : _appster.py
-    file_name = Path(main.__file__).stem  # Use the stem to avoid file extensions
-    # Remove leading and trailing underscores (if any).
-    # All in all, a file name like "_appster.py" becomes "appster".
-    return file_name.strip("_")

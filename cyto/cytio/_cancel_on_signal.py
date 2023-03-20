@@ -1,13 +1,19 @@
+import logging
 import signal
 from contextlib import asynccontextmanager
 from typing import AsyncIterator
 
 import anyio
 
+_LOGGER = logging.getLogger(__name__)
+
 
 @asynccontextmanager
 async def cancel_on_signal() -> AsyncIterator[None]:
-    """Enter cancel scope that cancels itself if we receive a signal."""
+    """Enter cancel scope that cancels itself if we receive a signal.
+
+    This overrides any existing signal handler.
+    """
     async with anyio.create_task_group() as tg:
         # Listen for signals for the duration of this context manager.
         # If we receive a signal, we call `tg.cancel_scope.canel`.
@@ -24,6 +30,10 @@ async def cancel_on_signal() -> AsyncIterator[None]:
 
 async def _cancel_on_signal(cancel_scope: anyio.CancelScope) -> None:
     """Cancel the given cancel scope if we receive a signal."""
-    with anyio.open_signal_receiver(signal.SIGTERM, signal.SIGINT) as signals:
-        async for _ in signals:
+    with anyio.open_signal_receiver(
+        signal.SIGTERM, signal.SIGINT  # , signal.SIGPIPE
+    ) as signals:
+        async for signal_no in signals:
+            signal_name = signal.Signals(signal_no).name
+            _LOGGER.debug("Received %s signal. Will cancel task group.", signal_name)
             cancel_scope.cancel()

@@ -7,21 +7,15 @@ from typing import Iterable, Iterator, Literal, Optional
 
 from pydantic import BaseModel, Field
 
-from ....model import FrozenModel
+from ....interval import time_interval
 
 SectionHint = Literal["may-end-early", "indeterminate-indicator"]
 
 
-# TODO: Consolidate this
-class TimeRange(FrozenModel):
-    begin_at: datetime
-    end_at: Optional[datetime]
-
-
 class _MutableSection(BaseModel):
-    name: Optional[str] = None
-    actual: TimeRange = Field(
-        default_factory=lambda: TimeRange(begin_at=datetime.now())
+    name: str
+    actual: time_interval.ClosedOpen = Field(
+        default_factory=lambda: time_interval.closed_open(lower=datetime.now())
     )
     planned_duration: Optional[timedelta] = None
     hints: set[SectionHint] = Field(default_factory=set)
@@ -29,15 +23,13 @@ class _MutableSection(BaseModel):
     active_child: Optional[_MutableSection] = None
 
     @property
-    def planned(self) -> TimeRange:
+    def planned(self) -> time_interval.ClosedOpen:
         assert self.actual is not None
-        begin_at = self.actual.begin_at
-        end_at = (
-            begin_at + self.planned_duration
-            if self.planned_duration is not None
-            else None
+        lower = self.actual.lower
+        upper = (
+            lower + self.planned_duration if self.planned_duration is not None else None
         )
-        return TimeRange(begin_at=begin_at, end_at=end_at)
+        return time_interval.closed_open(lower, upper)
 
     def innermost_active_child(self) -> _MutableSection:
         if self.active_child is not None:
@@ -78,5 +70,4 @@ class _MutableSection(BaseModel):
         exc_value: Optional[BaseException],
         traceback: Optional[TracebackType],
     ) -> None:
-        assert self.actual is not None
-        self.actual = self.actual.update(end_at=datetime.now())
+        self.actual = time_interval.closed_open(self.actual.lower, datetime.now())

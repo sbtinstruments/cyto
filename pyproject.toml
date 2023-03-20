@@ -22,6 +22,9 @@ networkx = { version = "^3.0", optional = true }
 pydantic = { version = "^1.10.5", optional = true }
 redis = { version = "^4.5.1", optional = true }
 toml = { version = "^0.10.2", optional = true }
+syslog-rfc5424-formatter = { version = "^1.2.3", optional = true }
+portion = { version = "^2.4.0", optional = true }
+tinydb = { version = "^4.7.1", optional = true }
 
 [tool.poetry.group.dev.dependencies]
 black = "^23.1.0"
@@ -33,6 +36,7 @@ isort = "^5.12.0"
 mypy = "^1.0.1"
 pre-commit = "^3.1.1"
 pylint = "^2.16.2"
+pylint-pydantic = "^0.1.8"
 pydocstyle = "^6.3.0"
 # We only use rope to give Visual Studio Code users a better
 # out-of-the-box experience. For, e.g., refactoring.
@@ -46,10 +50,13 @@ rope = "^1.7.0"
 "cytio-tree" = ["anyio", "networkx", "pydantic"]
 "cytio-tree-outline-redis" = ["anyio", "networkx", "pydantic", "redis"]
 "factory" = ["pydantic"]
-"model" = ["pydantic", "mergedeep"]
+"interval" = ["portion", "pydantic"]
+"logging-rfc5424" = ["syslog-rfc5424-formatter"]
+"model" = ["mergedeep", "pydantic"]
 "settings" = ["pydantic"]
 "settings-sources-cli" = ["click"]
 "settings-sources-toml" = ["toml"]
+"stout" = ["interval", "pydantic", "tinydb"]
 
 [tool.taskipy.tasks]
 black = "black cyto tests"
@@ -163,8 +170,9 @@ ignore_missing_imports = true
 # fs: We use this in the tests to get a pyfakefs file system reference.
 #     Since pytest's dependency injection is name based, we have to use
 #     this exact argument name.
+# io: You can use this for a `TextIO`, `BinaryIO`, etc
 # tg: You can use this for an `anyio.TaskGroup`.
-good-names = 'i,j,k,fs,tg' # Default is 'i,j,k,ex,Run,_'
+good-names = 'i,j,k,fs,io,tg' # Default is 'i,j,k,ex,Run,_'
 # Increase the default values a bit. Yes, this may hurt maintainability
 # ever so slightly but it increases the speed of development.
 max-args = '7'        # Default is 5
@@ -173,6 +181,7 @@ max-attributes = '12' # Default is 7
 max-line-length = '88' # Default is 100
 # Avoid `no-name-in-module` errors for pydantic
 extension-pkg-whitelist = 'pydantic'
+load-plugins = "pylint_pydantic"
 
 [tool.pylint.similarities]
 # Imports are often duplicated. If two different files use a lot of

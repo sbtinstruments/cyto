@@ -4,18 +4,19 @@ from typing import Iterator, Optional
 
 import redis.asyncio as redis
 
-from .....basic import distinct_until_changed
-from .._outline import OutlineReceiveStream
-from .._outline_summary import OutlineSummary, SummarySegment
+from ...basic import distinct_until_changed
+from .._outline import OutlineStream
+
+# from .._outline_summary import OutlineSummary, SummarySegment
 
 _LOGGER = logging.getLogger(__name__)
 
 
-async def outline_to_redis(receive_stream: OutlineReceiveStream) -> None:
-    async with redis.Redis() as client, receive_stream:
+async def outline_to_redis(outline_stream: OutlineStream) -> None:
+    async with redis.Redis() as client, outline_stream as outlines:
         # await client.delete("outline:inactive")
         summary: Optional[OutlineSummary] = None
-        async for outline in distinct_until_changed(receive_stream):
+        async for outline in distinct_until_changed(outlines):
             summary = OutlineSummary.from_outline(outline)
             # We recreate (delete and create) the stream because
             # the summary may change completely. A Redis stream is

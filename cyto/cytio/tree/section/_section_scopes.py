@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from contextlib import asynccontextmanager, contextmanager
+from contextlib import ExitStack, asynccontextmanager, contextmanager
 from datetime import timedelta
 from typing import AsyncIterator, Iterable, Iterator, Optional, Union
 
@@ -109,9 +109,19 @@ def section(
     name: str, *, hints: Optional[Iterable[SectionHint]] = None
 ) -> Iterator[None]:
     """Create a new section in the current task."""
-    task_section = instances().setdefault(_MutableSection())
-    current_section = task_section.innermost_active_child()
-    with current_section.child(name, hints=hints):
+    if hints is None:
+        hints = set()
+    try:
+        task_section = instances()[_MutableSection]
+        is_root_section = False
+    except KeyError:
+        task_section = _MutableSection(name=name, hints=hints)
+        instances().set(task_section)
+        is_root_section = True
+    with ExitStack() as stack:
+        if not is_root_section:
+            current_section = task_section.innermost_active_child()
+            stack.enter_context(current_section.child(name, hints=hints))
         instances().set(Section.from_mutable_section(task_section))
         yield
     instances().set(Section.from_mutable_section(task_section))
