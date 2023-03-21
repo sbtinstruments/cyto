@@ -8,8 +8,8 @@ from typing import Iterable, Iterator, Optional
 from ...basic import pairwise
 from ...cytio.tree import provide
 from ...interval import time_interval
+from .._project_database import Project, ProjectDatabase
 from .._trail import Trail, TrailSection
-from ._project_database import Project, ProjectDatabase
 from ._project_db_to_trail_config import ProjectDatabaseToTrailConfig
 
 _LOGGER = logging.getLogger(__name__)

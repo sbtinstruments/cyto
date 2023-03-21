@@ -3,7 +3,7 @@ try:
     from ._message import Message, MessageSeverity
     from ._outcome import Outcome
     from ._outline import Outline
-    from ._project_database import ProjectDatabase, ProjectDatabaseToTrailConfig
+    from ._project_database import Project, ProjectDatabase
     from ._stout import (
         OutcomeSwig,
         OutlineSwig,
