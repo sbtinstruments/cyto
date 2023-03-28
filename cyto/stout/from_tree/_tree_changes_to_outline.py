@@ -7,7 +7,7 @@ import anyio
 from ...cytio.broadcast import BroadcastValue
 from ...cytio.tree import TreeReceiveStream
 from .._outline import Outline
-from .._project_database import project_db_to_trail
+from ._project_db_to_trail import project_db_to_trail
 from ._tree_to_project_db import tree_to_project_database
 
 _LOGGER = logging.getLogger(__name__)

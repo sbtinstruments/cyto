@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from contextlib import contextmanager
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from types import TracebackType
 from typing import Iterable, Iterator, Literal, Optional
 
@@ -15,7 +15,9 @@ SectionHint = Literal["may-end-early", "indeterminate-indicator"]
 class _MutableSection(BaseModel):
     name: str
     actual: time_interval.ClosedOpen = Field(
-        default_factory=lambda: time_interval.closed_open(lower=datetime.now())
+        default_factory=lambda: time_interval.closed_open(
+            lower=datetime.now(timezone.utc)
+        )
     )
     planned_duration: Optional[timedelta] = None
     hints: set[SectionHint] = Field(default_factory=set)
@@ -70,4 +72,6 @@ class _MutableSection(BaseModel):
         exc_value: Optional[BaseException],
         traceback: Optional[TracebackType],
     ) -> None:
-        self.actual = time_interval.closed_open(self.actual.lower, datetime.now())
+        self.actual = time_interval.closed_open(
+            self.actual.lower, datetime.now(timezone.utc)
+        )

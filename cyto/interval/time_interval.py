@@ -1,5 +1,5 @@
 # Inspired by `portion`'s API but with types
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Any, overload
 
 from pydantic import root_validator
@@ -25,6 +25,13 @@ class ClosedOpenFin(FrozenModel):
         if lower > upper:
             raise ValueError('"lower" must come before "upper"')
         return values
+
+    def duration(self) -> timedelta:
+        """Return the time between lower and upper."""
+        return self.upper - self.lower
+
+    def __contains__(self, value: datetime) -> bool:
+        return self.lower <= value < self.upper
 
 
 ClosedOpen = ClosedOpenInf | ClosedOpenFin

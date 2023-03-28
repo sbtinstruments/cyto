@@ -1,1 +1,2 @@
+from ._outcome_to_stdout import outcome_to_stdout
 from ._outline_to_stdout import outline_to_stdout

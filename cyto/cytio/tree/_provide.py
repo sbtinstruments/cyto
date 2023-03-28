@@ -1,25 +1,23 @@
 from contextlib import contextmanager
-from inspect import Parameter
-from typing import Any, Iterator, Optional, TypeVar
+from typing import Any, Iterator, TypeVar
 
-from ...factory import FACTORY, ArgFactory
+from ...factory import FACTORY, CanNotProduce, ProductRegistry
 from ...model import FrozenModel
 from . import current_path, current_task
 
-T = TypeVar("T", bound=FrozenModel)
+T = TypeVar("T")
 
 
-def provide(type_: type[T], *, factory: Optional[ArgFactory] = None) -> T:
+def provide(type_: type[T], *, factory: ProductRegistry | None = None) -> T:
     """Get the instance of the given type for the current task path."""
     if factory is None:
-        factory = FACTORY.factory
+        factory = FACTORY
     try:
         value = current_path.get_model(type_)
     except KeyError:
-        param = Parameter("_anonymous", Parameter.KEYWORD_ONLY, annotation=type_)
         try:
-            value = factory(param)
-        except ValueError as exc:
+            value = factory.produce(annotation=type_)
+        except CanNotProduce as exc:
             raise RuntimeError(
                 f"No value for type '{type_.__name__}' for the current task and"
                 " no factory could produce it."

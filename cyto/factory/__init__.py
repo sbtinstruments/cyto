@@ -1,7 +1,12 @@
 try:
-    from ._arg_factory_group import ArgFactory
+    from ._cli_factory import cli_factory
     from ._global_factory import FACTORY
-    from ._parameter import Param, parameter_factory
+    from ._product_registry import (
+        CanNotProduce,
+        ProductFactory,
+        ProductRegistry,
+        ProductSpec,
+    )
 except ImportError as exc:
     from .._extra import ExtraImportError
 

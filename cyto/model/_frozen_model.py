@@ -39,7 +39,7 @@ class FrozenModel(BaseModel):
 
     class Config:  # pylint: disable=too-few-public-methods
         frozen = True
-        # `Èxtra.forbid` is not strictly necessary for immutability but it's a sound
+        # `Extra.forbid` is not strictly necessary for immutability but it's a sound
         # default. It adds another layer of "strictness" that we expect in the context
         # of immutability.
         extra = Extra.forbid

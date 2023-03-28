@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import datetime, timedelta, timezone
 from typing import Any, cast
 
 from pydantic import root_validator
@@ -15,6 +16,19 @@ class TrailSection(FrozenModel):
     name: str
     interval: time_interval.ClosedOpenFin
     hints: frozenset[str] = frozenset()
+
+    def remaining(self) -> timedelta:
+        """Return the remaining time of this section as of now.
+
+        Returns the entire duration of the interval if this section is in the future.
+        Returns zero if this section is in the past.
+        """
+        now = datetime.now(timezone.utc)
+        if now < self.interval.lower:
+            return timedelta()
+        if self.interval.upper <= now:
+            return self.interval.duration()
+        return self.interval.upper - now
 
 
 class Trail(FrozenModel):
@@ -34,3 +48,11 @@ class Trail(FrozenModel):
                     " without overlap"
                 )
         return values
+
+    def current_section(self) -> TrailSection | None:
+        """Return the section that corresponds to the current time (if any)."""
+        now = datetime.now(timezone.utc)
+        for section in self.sections:
+            if now in section.interval:
+                return section
+        return None

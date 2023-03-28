@@ -53,6 +53,7 @@ class _SwigBase(FrozenModel):
         Uses stdout per default. Assumes that this stream is still open.
         """
         if io is None:
+            assert isinstance(sys.stdout, TextIOBase)
             io = sys.stdout
         if append_newline is None:
             append_newline = True

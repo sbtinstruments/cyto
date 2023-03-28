@@ -36,9 +36,6 @@ def _project_db_to_trail_sections(db: ProjectDatabase) -> Iterator[TrailSection]
             if project.project_name in config.only_include
         )
 
-    projects = list(projects)
-    _LOGGER.debug(f"{projects=}")
-
     markers: list[_Marker] = []
     for project in projects:
         markers.extend(_markers(project))

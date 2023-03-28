@@ -94,7 +94,7 @@ def _filter_segments(
 ) -> Iterator[SummarySegment]:
     if filter_to_now is None:
         filter_to_now = False
-    now = datetime.now()
+    now = datetime.now()  # Note that this is a *naive* datetime object!
     for segment in segments:
         if filter_to_now and now < segment.end_at:
             continue

@@ -4,6 +4,7 @@ try:
     from ._outcome import Outcome
     from ._outline import Outline
     from ._project_database import Project, ProjectDatabase
+    from ._result_map import ResultMap
     from ._stout import (
         OutcomeSwig,
         OutlineSwig,

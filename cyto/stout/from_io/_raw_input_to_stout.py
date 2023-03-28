@@ -1,8 +1,11 @@
 import logging
+import os
 from io import TextIOBase
 from typing import AsyncIterable
 
+from anyio import IncompleteRead
 from anyio.abc import ByteReceiveStream
+from anyio.streams.buffered import BufferedByteReceiveStream
 from anyio.streams.text import TextReceiveStream
 from pydantic import parse_raw_as
 
@@ -18,7 +21,7 @@ RawInput = TextIOBase | AsyncIterable[str] | TextReceiveStream | ByteReceiveStre
 
 async def raw_input_to_stout(
     raw_input: RawInput,
-    line_limit: int | None = None,
+    line_limit: int | None = None,  # [bytes]
     ignore_empty_lines: bool | None = None,
 ) -> Stout:
     """Convert raw input (e.g., stream I/O) to STOUT (stream of swigs)."""
@@ -36,11 +39,12 @@ async def raw_input_to_stout(
         case TextIOBase():
             lines = io_to_async_iterable(raw_input, line_limit=line_limit)
         case ByteReceiveStream():
-            lines = TextReceiveStream(raw_input, "utf8")
+            lines = _byte_stream_to_lines(raw_input, line_limit=line_limit)
         case _:
             lines = raw_input
 
-    # Note that `line` includes the separator ("\n") at the end
+    # Note that `line` includes the separator ("\n") at the end (though *not*
+    # for our `_byte_stream_to_lines` helper).
     async for line in lines:
         if ignore_empty_lines and (not line or line.isspace()):
             continue
@@ -69,3 +73,20 @@ def _log_start_of_string_as_binary(line: str) -> None:
     first = line[:char_count]
     raw = first.encode("utf8")
     _LOGGER.info("The first %d characters of the line are: %s", char_count, raw)
+
+
+async def _byte_stream_to_lines(
+    byte_stream: ByteReceiveStream,
+    *,
+    line_limit: int,
+) -> AsyncIterable[str]:
+    buffered = BufferedByteReceiveStream(byte_stream)
+    delimiter = os.linesep.encode("utf8")
+
+    while True:
+        try:
+            # May raise `DelimiterNotFound` and `IncompleteRead`.
+            raw_line = await buffered.receive_until(delimiter, line_limit)
+        except IncompleteRead:
+            break
+        yield raw_line.decode("utf8")
