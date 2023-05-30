@@ -1,1 +1,12 @@
-from ._keynote import Item, Keynote, KeynoteSlide, Subset, TentativeItem, ValueType
+from ._keynote import (
+    ContentSlide,
+    FinalItem,
+    Keynote,
+    RawSlide,
+    SentinelSlide,
+    Slide,
+    Subset,
+    Tentative,
+    TentativeItem,
+    ValueType,
+)

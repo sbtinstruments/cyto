@@ -34,6 +34,6 @@ class AsyncContextStack(AsyncContextManager[T], Generic[T]):
         exc_type: type[BaseException] | None,
         exc_value: BaseException | None,
         traceback: TracebackType | None,
-    ) -> None:
+    ) -> bool | None:
         assert self._stack is not None
-        await self._stack.__aexit__(exc_type, exc_value, traceback)
+        return await self._stack.__aexit__(exc_type, exc_value, traceback)

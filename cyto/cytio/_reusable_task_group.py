@@ -148,9 +148,9 @@ class ReusableTaskGroup(AsyncContextManager["ReusableTaskGroup"]):
         exc_type: type[BaseException] | None,
         exc_value: BaseException | None,
         traceback: TracebackType | None,
-    ) -> None:
+    ) -> bool | None:
         assert self._tg is not None
         try:
-            await self._tg.__aexit__(exc_type, exc_value, traceback)
+            return await self._tg.__aexit__(exc_type, exc_value, traceback)
         finally:
             self._tg = None

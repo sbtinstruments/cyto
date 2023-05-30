@@ -1,13 +1,8 @@
 from __future__ import annotations
 
 import logging
-from collections import defaultdict
-from collections.abc import MutableMapping
 from contextlib import contextmanager
 from typing import Any, Iterator, TypeVar
-
-from anyio.streams.memory import MemoryObjectReceiveStream
-from pydantic import parse_obj_as, validate_arguments
 
 from ....model import FrozenModel
 from .._broadcast_value import BroadcastValue, MaybeValue, NoValue
@@ -28,9 +23,9 @@ class BroadcastModel(BroadcastValue[T]):
                 "You must initialize this broadcast before you can mutate it"
             )
         assert isinstance(self.latest_value, FrozenModel)
-        mutatable_value = self.latest_value.dict()
+        mutable_value = self.latest_value.dict()
         try:
-            yield mutatable_value
+            yield mutable_value
         finally:
-            new_value = type(self.latest_value)(**mutatable_value)
+            new_value = type(self.latest_value)(**mutable_value)
             self.set(new_value)

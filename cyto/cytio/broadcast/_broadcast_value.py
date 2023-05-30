@@ -103,10 +103,10 @@ class BroadcastValue(Generic[T]):
     def __enter__(self) -> BroadcastValue[T]:
         return self
 
-    def __exit__(
+    def __exit__(  # type: ignore[return]
         self,
         exc_type: Optional[type[BaseException]],
         exc_value: Optional[BaseException],
         traceback: Optional[TracebackType],
-    ) -> None:
+    ) -> bool | None:
         self.close()

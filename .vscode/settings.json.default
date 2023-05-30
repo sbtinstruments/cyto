@@ -5,7 +5,6 @@
         "source.organizeImports": true
     },
     "python.analysis.autoImportCompletions": true,
-    "python.analysis.autoImportUserSymbols": true,
     "python.linting.enabled": true,
     "python.linting.lintOnSave": true,
     "python.linting.pylintEnabled": true,

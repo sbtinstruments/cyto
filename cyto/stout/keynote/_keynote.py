@@ -1,20 +1,19 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
-from typing import Any, ClassVar, Iterator
+from typing import Any, ClassVar, Iterable, Iterator, Literal, get_args
 
-from pydantic import parse_obj_as, root_validator
+from pydantic import StrictFloat, StrictInt, parse_obj_as, root_validator
 
 from ...model import FrozenModel
 
-# Order matters here!
-#
-# Pydantic happily coerces `32.1` to an `int`. Therefore, we place
-# `float` before `int` here.
-ValueType = float | int | str
+ValueType = StrictInt | StrictFloat | str
+
+Finality = Literal["tentative", "final"]
 
 
 class TentativeItem(FrozenModel):
+    finality: Finality = "tentative"  # Never serialized. Just for run-time distinction.
     key: str
     value: ValueType
 
@@ -22,11 +21,13 @@ class TentativeItem(FrozenModel):
     def _validate(cls, values: dict[str, Any]) -> dict[str, Any]:
         # Early out if we get each field directly
         if "key" in values and "value" in values:
+            assert values.get("finality") in (None, "tentative")
             return values
         # Otherwise, we parse the raw dict
         key, value = _exactly_one_item(values)
         assert key.endswith("?")
         return {
+            "finality": "tentative",
             "key": key[:-1],
             "value": value,
         }
@@ -35,7 +36,8 @@ class TentativeItem(FrozenModel):
         return {f"{self.key}?": self.value}
 
 
-class Item(FrozenModel):
+class FinalItem(FrozenModel):
+    finality: Finality = "final"  # Never serialized. Just for run-time distinction.
     key: str
     value: ValueType
 
@@ -43,10 +45,12 @@ class Item(FrozenModel):
     def _validate(cls, values: dict[str, Any]) -> dict[str, Any]:
         # Early out if we get each field directly
         if "key" in values and "value" in values:
+            assert values.get("finality") in (None, "final")
             return values
         # Otherwise, we parse the raw dict
         key, value = _exactly_one_item(values)
         return {
+            "finality": "final",
             "key": key,
             "value": value,
         }
@@ -56,8 +60,8 @@ class Item(FrozenModel):
 
 
 class Subset(FrozenModel):
-    lhs: Item
-    rhs: Item
+    lhs: TentativeItem | FinalItem
+    rhs: TentativeItem | FinalItem
     delimiter: ClassVar[str] = " ⊆ "
 
     @root_validator(pre=True)
@@ -78,9 +82,17 @@ class Subset(FrozenModel):
         }
 
     def dict(self, **kwargs: Any) -> dict[str, Any]:
-        key = f"{self.lhs.key}{self.delimiter}{self.rhs.key}"
+        lhs_suffix = "?" if isinstance(self.lhs, TentativeItem) else ""
+        rhs_suffix = "?" if isinstance(self.rhs, TentativeItem) else ""
+        key = f"{self.lhs.key}{lhs_suffix}{self.delimiter}{self.rhs.key}{rhs_suffix}"
         value = f"{self.lhs.value}{self.delimiter}{self.rhs.value}"
         return {key: value}
+
+    @property
+    def finality(self) -> Finality:
+        if self.lhs.finality == "tentative" or self.rhs.finality == "tentative":
+            return "tentative"
+        return "final"
 
 
 def _exactly_one_item(values: dict[str, Any]) -> tuple[str, Any]:
@@ -96,18 +108,29 @@ def _exactly_one_item(values: dict[str, Any]) -> tuple[str, Any]:
     raise ValueError("There must not be more than one item in values")
 
 
+# Use this sentinel to indicate that the keynote is tentative (even though
+# it only contains "final" content). E.g., to denote that the you'll add
+# additional slides later.
+Tentative = Literal["TENTATIVE"]
+
+
 # Order matters here!
 #
 # Pydantic tries each type in this union in sequence. It returns the first
 # type that matches (read: the first value that we can coerce into the type).
-# Therefore, it is important that, e.g., `TentativeValue` comes before `Value`
-# because the former is stricter than the latter. Otherwise, we would never
-# get `TentativeValue` instances (because every value coerces to the lenient
-# `Value` type).
-KeynoteSlide = Subset | TentativeItem | Item
+# Therefore, it is important that, e.g., `TentativeItem` comes before
+# `FinalItem` because the former is stricter than the latter. Otherwise,
+# we would never get `TentativeItem` instances (because every value coerces
+# to the lenient `FinalItem` type).
+ContentSlide = Subset | TentativeItem | FinalItem
+SentinelSlide = Tentative
+Slide = ContentSlide | SentinelSlide
 
 
-class Keynote(FrozenModel, Sequence[KeynoteSlide]):
+RawSlide = dict[str, Any] | Tentative
+
+
+class Keynote(FrozenModel, Sequence[Slide]):
     """Sequence of keynote slides.
 
     Serializes to something like this:
@@ -115,17 +138,18 @@ class Keynote(FrozenModel, Sequence[KeynoteSlide]):
         [
             { "intact cells/ml ⊆ total particles/ml": "12 000 ⊆ 50 000" },
             { "flow_rate?": 32.1 },
-            { "ID": "A03" }
+            { "ID": "A03" },
+            "TENTATIVE"
         ]
 
     """
 
-    __root__: tuple[KeynoteSlide, ...] = tuple()
+    __root__: tuple[Slide, ...] = tuple()
 
-    def __getitem__(self, item: int) -> KeynoteSlide:
+    def __getitem__(self, item: int) -> Slide:
         return self.__root__[item]
 
-    def __iter__(self) -> Iterator[KeynoteSlide]:
+    def __iter__(self) -> Iterator[Slide]:
         return iter(self.__root__)
 
     def __len__(self) -> int:
@@ -136,11 +160,29 @@ class Keynote(FrozenModel, Sequence[KeynoteSlide]):
 
         Returns a copy. Does *not* mutate this instance.
         """
-        slide = parse_obj_as(KeynoteSlide, rhs)
+        slide = parse_obj_as(Slide, rhs)
         return Keynote(__root__=self.__root__ + (slide,))
 
-    def is_final(self) -> bool:
-        """Contains purely non-tentative items and at least one such item."""
-        return bool(self) and not any(
-            isinstance(slide, TentativeItem) for slide in self
+    @property
+    def finality(self) -> Finality:
+        """Return True if all content is final and there is no "TENTATIVE" slide.
+
+        Otherwise, return "tentative".
+
+        Note that an empty keynote is still "final".
+        """
+        all_content_is_final = all(
+            slide.finality == "final" for slide in self.content()
         )
+        no_tentative_sentinel = "TENTATIVE" not in self
+        if all_content_is_final and no_tentative_sentinel:
+            return "final"
+        return "tentative"
+
+    def content(self) -> Iterable[ContentSlide]:
+        """Return all content slides (e.g., no sentinel slides like "TENTATIVE")."""
+        return (slide for slide in self if isinstance(slide, get_args(ContentSlide)))
+
+    def final_content(self) -> Iterable[ContentSlide]:
+        """Return all "final" content slides (i.e., non-tentative slides)."""
+        return (slide for slide in self.content() if slide.finality == "final")

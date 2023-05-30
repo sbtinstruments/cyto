@@ -5,6 +5,7 @@ from pydantic import Field, constr
 from ..model import FrozenModel
 from ._message import Message
 from ._result_map import ResultMap
+from .keynote import Keynote
 
 Code = constr(regex="^[0-9]{4}$")
 
@@ -24,15 +25,27 @@ class Outcome(FrozenModel):
     # `Type[str]`. For now, we simply ignore the error.
     messages: dict[Code, Message] = Field(default_factory=dict)  # type: ignore
 
-    def result_is_final(self) -> bool:
-        """There is a result (of a known type) without tentative values."""
-        if not isinstance(self.result, ResultMap):
-            return False
-        return self.result.keynote.is_final()
+    def keynote(self) -> Keynote:
+        """Return the keynote of the result (if any).
 
-    def is_empty(self) -> bool:
-        """Is this outcome without result or messages."""
-        return self.result is None and not self.messages
+        Returns the empty keynote if there is no result.
+        """
+        if not isinstance(self.result, ResultMap):
+            return Keynote()
+        return self.result.keynote
+
+    def result_is_final(self) -> bool:
+        """There is a result (of a known type) in a final state (no further changes).
+
+        Returns False if there is not result. E.g., if the keynote is empty.
+        """
+        if keynote := self.keynote():
+            return keynote.finality == "final"
+        return False
+
+    def __bool__(self) -> bool:
+        """Is this outcome with either a result or messages."""
+        return bool(self.result) or bool(self.messages)
 
     def errors(self) -> Iterable[tuple[str, Message]]:
         """Return error messages (if any)."""

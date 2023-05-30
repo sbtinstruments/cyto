@@ -35,6 +35,13 @@ class ResultMap(FrozenModel, Mapping[str, Any]):
     def __len__(self) -> int:
         return len(self.__dict__)
 
+    def __bool__(self) -> bool:
+        """Has at least one item.
+
+        The empty keynote does not count.
+        """
+        return bool(self.keynote) or bool({key for key in self if key != "keynote"})
+
     class Config:
         # Act like a `dict[str, Any]`
         extra = Extra.allow

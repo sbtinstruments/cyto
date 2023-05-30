@@ -90,14 +90,15 @@ class App(ContextManager["App"]):
         exc_type: Optional[type[BaseException]],
         exc_value: Optional[BaseException],
         traceback: Optional[TracebackType],
-    ) -> None:
-        self._stack.__exit__(exc_type, exc_value, traceback)
+    ) -> bool | None:
+        suppress_exc = self._stack.__exit__(exc_type, exc_value, traceback)
         # Log exit
         if exc_value is not None:
             # We exit due to a problem
             _LOGGER.error("Stopped due to error:", exc_info=exc_value)
         else:
             _LOGGER.info("Stopped")
+        return suppress_exc
 
 
 def get_settings_class(func: Func[ReturnT]) -> type[Settings]:

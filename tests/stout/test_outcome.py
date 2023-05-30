@@ -1,5 +1,5 @@
 from cyto.stout import Outcome, ResultMap
-from cyto.stout.keynote import Item, Keynote, Subset, TentativeItem
+from cyto.stout.keynote import FinalItem, Keynote, Subset, TentativeItem
 
 
 def test_outcome_with_keynote() -> None:
@@ -20,8 +20,8 @@ def test_outcome_with_keynote() -> None:
     assert isinstance(outcome.result.keynote, Keynote)
     assert isinstance(outcome.result.keynote[0], Subset)
     assert isinstance(outcome.result.keynote[1], TentativeItem)
-    assert isinstance(outcome.result.keynote[2], Item)
-    assert isinstance(outcome.result.keynote[3], Item)
+    assert isinstance(outcome.result.keynote[2], FinalItem)
+    assert isinstance(outcome.result.keynote[3], FinalItem)
     assert outcome.result["my_fav_number"] == 3.14
 
 
@@ -45,3 +45,6 @@ def test_default_outcome() -> None:
     assert isinstance(outcome.result, ResultMap)
     assert isinstance(outcome.result.keynote, Keynote)
     assert not outcome.result.keynote, "keynote is empty"
+    assert not outcome.result, "result is empty"
+    assert not outcome.messages, "messages is empty"
+    assert not outcome, "outcome is empty"

@@ -4,11 +4,14 @@ import json
 import sys
 from collections import defaultdict
 from dataclasses import dataclass
+from datetime import timedelta
+from enum import Enum
 from typing import (
     Any,
     Container,
     DefaultDict,
     Iterable,
+    Literal,
     Mapping,
     Optional,
     Sequence,
@@ -21,10 +24,17 @@ import click
 from pydantic import BaseModel, BaseSettings
 from pydantic.env_settings import SettingsSourceCallable
 from pydantic.fields import ModelField
+from pydantic.json import pydantic_encoder
 from pydantic.types import Json, JsonWrapper
+from pydantic.typing import NoArgAnyCallable
 from pydantic.utils import lenient_issubclass
 
 from .._api_models import CliExtras
+
+try:
+    from rich_click import RichCommand as Command
+except ImportError:
+    Command = click.Command
 
 
 def cli_settings_source(
@@ -75,14 +85,14 @@ def cli_settings_source(
         params: list[click.Parameter] = list(
             _to_options(settings, delimiter, internal_delimiter)
         )
-        command = click.Command(name=name, callback=_set_result, params=params)
+        command = Command(name=name, callback=_set_result, params=params)
         # Per default, click calls `sys.exit` whenever the command is done.
         # We don't want this behaviour, so we disable it with `standalone_mode=False`.
-        code: Optional[int] = command.main(standalone_mode=False)
+        status_code: Optional[int] = command.main(standalone_mode=False)
         # If `code` is set, the user asked for help (e.g., via "--help").
         # In this case, we exit the application right away.
-        if code is not None:
-            sys.exit(code)
+        if status_code is not None:
+            sys.exit(status_code)
 
         return result
 
@@ -104,7 +114,7 @@ def _kwargs_to_settings(
 
         `{ "roast_level": 42, "preference": { "cream_and_sugar": True } }`
     """
-    result: DefaultDict[str, Any] = defaultdict(dict)
+    result: dict[str, Any] = {}
     for full_name, value in kwargs.items():
         # Skip unset values. E.g., for unspecified CLI options.
         if value is None:
@@ -115,10 +125,10 @@ def _kwargs_to_settings(
         # Create nested dicts corresponding to each of the parts
         dic = result
         for part in parts[:-1]:  # Skip the last part. It will hold the value itself.
-            dic = dic[part]
+            dic = dic.setdefault(part, {})
         # Assign the kwarg value to the innermost dict.
         dic[parts[-1]] = value
-    return dict(result)
+    return result
 
 
 def _to_options(
@@ -172,6 +182,9 @@ def _to_options(
         # errors if the check at [1] changes at some point in time.
         assert internal_delimiter not in kebab_name
 
+        # CLI-specific extras (settings)
+        extras = field.field_info.extra.get("cli", CliExtras())
+
         # `field.outer_type_` is the type:
         #   1. `int`
         #   2. `CoffeePreference`
@@ -181,7 +194,10 @@ def _to_options(
         # `typing` module. E.g., a `typing.list[int]` instance. Therefore, we use
         # the `lenient_issubclass` utility function instead of `issubclass`. The
         # latter doesn't accept non-types but the former does (hence the leniency).
-        if lenient_issubclass(field.outer_type_, BaseModel):
+        #
+        # Note that we do *not* recurse into the model if `force_json` is set. This
+        # way, the user can control the level recursion.
+        if lenient_issubclass(field.outer_type_, BaseModel) and not extras.force_json:
             # Recurse into nested models. E.g., the `CoffeePreference` model
             # from the `preference` field.
             yield from _to_options(
@@ -191,8 +207,6 @@ def _to_options(
                 parent_path=parent_path + (kebab_name,),
             )
             continue
-        # CLI-specific extras (settings)
-        extras = field.field_info.extra.get("cli", CliExtras())
         # If the field isn't a model itself, we call it a "simple" field.
         # E.g., the `roast_level` and `cream_and_sugar` fields. Note that
         # e.g., `typing.List` and `dict` are also simple fields.
@@ -370,11 +384,11 @@ class _Option(click.Option):
     def from_field(
         cls, field: ModelField, param_decls: _ParamDecls, extras: CliExtras
     ) -> _Option:
-        # This function is for simple fields. That is, non-model fields.
-        assert not lenient_issubclass(field.outer_type_, BaseModel)
         # Clickify the field's members
         type_ = _clickify_type(field.outer_type_, extras)
-        default = _clickify_default(field.default, field.outer_type_, extras)
+        default = _clickify_default(
+            field.default, field.default_factory, field.outer_type_, extras
+        )
         show_default = _get_show_default(field.default, field.outer_type_)
         multiple = _get_multiple(field.outer_type_, extras)
         # Return an option constructed from the clickified field members
@@ -406,22 +420,39 @@ def _clickify_type(type_: type, extras: CliExtras) -> ClickParamType:
     # E.g.: list, FrozenSet[int], tuple[int, ...], etc.
     if _is_container(type_):
         return _clickify_container_args(type_)
+    # `enum.Enum`
+    if lenient_issubclass(type_, Enum):
+        return _clickify_enum(type_)
+    # `typing.Literal`
+    if _is_literal(type_):
+        return _clickify_literal(type_)
+    # click does not support `datetime.timedelta`. We pass it on unprocessed.
+    if lenient_issubclass(type_, timedelta):
+        return click.UNPROCESSED
     # E.g.: int, str, float, etc.
     return type_
 
 
-def _clickify_default(default: Any, type_: type, extras: CliExtras) -> Any:
+def _clickify_default(
+    default: Any,
+    default_factory: NoArgAnyCallable | None,
+    type_: type,
+    extras: CliExtras,
+) -> Any:
+    # Call `default_factory` (if provided) to create a value for `default`.
+    if default_factory is not None and default is None:
+        default = default_factory()
     # Pydantic uses both `None` and `Ellipsis` to denote "no default value".
     # Click only understands `None`, so we return that.
     if default in (None, Ellipsis):
         return None
     # Early out if the user explicitly forces the field type to JSON
-    if extras.force_json:
-        return json.dumps(default)
-    if _is_mapping(type_):
-        return json.dumps(default)
+    if extras.force_json or _is_mapping(type_):
+        return json.dumps(default, default=pydantic_encoder)
     if _is_container(type_):
         return _clickify_container_default(default)
+    if isinstance(default, Enum):
+        return default.value
     return default
 
 
@@ -472,7 +503,7 @@ def _is_mapping(type_: type) -> bool:
     # Early out for non-typing objects
     if origin is None:
         return False
-    return issubclass(origin, Mapping)
+    return lenient_issubclass(origin, Mapping)
 
 
 def _is_container(type_: type) -> bool:
@@ -487,7 +518,19 @@ def _is_container(type_: type) -> bool:
     # Early out for non-typing objects
     if origin is None:
         return False
-    return issubclass(origin, Container)
+    return lenient_issubclass(origin, Container)
+
+
+def _is_literal(type_: type) -> bool:
+    return get_origin(type_) is Literal
+
+
+def _clickify_literal(literal: type) -> ClickParamType:
+    return click.Choice(get_args(literal))
+
+
+def _clickify_enum(enum: type[Enum]) -> ClickParamType:
+    return click.Choice(tuple(str(value.value) for value in enum.__members__.values()))
 
 
 def _clickify_container_args(

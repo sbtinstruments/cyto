@@ -101,5 +101,5 @@ class TaskTree(AbstractContextManager["TaskTree"]):
         exc_type: Optional[type[BaseException]],
         exc_value: Optional[BaseException],
         traceback: Optional[TracebackType],
-    ) -> None:
-        self._change_broadcast.__exit__(exc_type, exc_value, traceback)
+    ) -> bool | None:
+        return self._change_broadcast.__exit__(exc_type, exc_value, traceback)

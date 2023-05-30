@@ -66,12 +66,12 @@ class _MutableSection(BaseModel):
     def __enter__(self) -> _MutableSection:
         return self
 
-    def __exit__(
+    def __exit__(  # type: ignore[return]
         self,
         exc_type: Optional[type[BaseException]],
         exc_value: Optional[BaseException],
         traceback: Optional[TracebackType],
-    ) -> None:
+    ) -> bool | None:
         self.actual = time_interval.closed_open(
             self.actual.lower, datetime.now(timezone.utc)
         )

@@ -1,8 +1,9 @@
-import inspect
 import logging
 from contextlib import contextmanager
 from time import perf_counter
 from typing import Callable, Iterator
+
+from ._log_message import frames_to_log_message
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -25,7 +26,11 @@ def log_duration(
     if log_level is None:
         log_level = logging.DEBUG
     if log_message is None:
-        log_message = _frames_to_log_message(inspect.stack(context=0))
+        log_message = frames_to_log_message()
+        if log_message:
+            log_message += " took %.3f seconds"
+        else:
+            log_message += "Duration %.3f"
     begin = perf_counter()
     try:
         yield
@@ -37,21 +42,3 @@ def log_duration(
         end = perf_counter()
         elapsed = end - begin
         logger.log(log_level, log_message, elapsed)
-
-
-def _frames_to_log_message(frames: list[inspect.FrameInfo]) -> str:
-    try:
-        # Note that:
-        #
-        #  * Frame 0: Is for `log_duration` itself
-        #  * Frame 1: Is for `@contextmanager`
-        #  * Frame 2: Is the actual "caller" (where the `with log_duration`
-        #    statement is)
-        #
-        parent_frame = frames[2]
-    except IndexError:
-        return "Duration %.3f"
-    else:
-        func_name = parent_frame.function
-        func_line = parent_frame.lineno
-    return f"Code block (starting at line {func_line}) in {func_name} took %.3f seconds"
