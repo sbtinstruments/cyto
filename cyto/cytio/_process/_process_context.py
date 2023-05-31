@@ -2,11 +2,12 @@ from __future__ import annotations
 
 import logging
 import os
+from collections.abc import Callable, Coroutine, Sequence
 from contextlib import AsyncExitStack
 from functools import wraps
 from logging import Logger
 from subprocess import PIPE
-from typing import IO, Any, Callable, Coroutine, Generic, Sequence, TypeVar, Union
+from typing import IO, Any, Generic, TypeVar
 
 import anyio
 from anyio.abc import ByteReceiveStream, Process
@@ -31,11 +32,11 @@ class ProcessContext(TaskContext[T], Generic[T]):
 
     def __init__(
         self,
-        command: Union[str, bytes, Sequence[Union[str, bytes]]],
+        command: str | bytes | Sequence[str | bytes],
         *,
-        stdin: Union[int, IO[Any], None] = PIPE,
-        stdout: Union[int, IO[Any], Logger, None] = PIPE,
-        stderr: Union[int, IO[Any], Logger, None] = PIPE,
+        stdin: int | IO[Any] | None = PIPE,
+        stdout: int | IO[Any] | Logger | None = PIPE,
+        stderr: int | IO[Any] | Logger | None = PIPE,
         **kwargs: Any,
     ) -> None:
         super().__init__()
@@ -167,14 +168,8 @@ class ProcessContext(TaskContext[T], Generic[T]):
         await super()._aenter_stack(stack)
         assert self._tg is not None
 
-        if isinstance(self._stdout, Logger):
-            stdout = PIPE
-        else:
-            stdout = self._stdout
-        if isinstance(self._stderr, Logger):
-            stderr = PIPE
-        else:
-            stderr = self._stderr
+        stdout = PIPE if isinstance(self._stdout, Logger) else self._stdout
+        stderr = PIPE if isinstance(self._stderr, Logger) else self._stderr
 
         self._process = await stack.enter_async_context(
             open_process(

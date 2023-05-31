@@ -22,18 +22,18 @@ If the wrapped code is faster than the time limit, we wait until the time limit.
 from __future__ import annotations
 
 import logging
+from collections.abc import AsyncIterator, Callable, Iterator
 from contextlib import asynccontextmanager, contextmanager
 from datetime import timedelta
-from typing import AsyncIterator, Callable, Iterator, Union
 
 import anyio
 
-TimeFunc = Callable[[], Union[timedelta, None]]
+TimeFunc = Callable[[], timedelta | None]
 
 
 @contextmanager
 def warn_after(
-    time_limit: Union[float, timedelta, None, TimeFunc], *, logger: logging.Logger
+    time_limit: float | timedelta | None | TimeFunc, *, logger: logging.Logger
 ) -> Iterator[None]:
     begin_at = anyio.current_time()
     try:
@@ -48,12 +48,12 @@ def warn_after(
                 time_limit = time_limit.total_seconds()
             if elapsed >= time_limit:
                 delta = elapsed - time_limit
-                logger.warning(f"Exceeded the time limit with {delta:0.2f} seconds")
+                logger.warning("Exceeded the time limit with %0.2f seconds", delta)
 
 
 @asynccontextmanager
 async def wait_exactly(
-    time_limit: Union[float, timedelta], shield: bool = False
+    time_limit: float | timedelta, *, shield: bool = False
 ) -> AsyncIterator[None]:
     """Run for exactly `time_limit` seconds.
 
@@ -68,7 +68,7 @@ async def wait_exactly(
 
 
 @asynccontextmanager
-async def wait_if_faster(time_limit: Union[float, timedelta]) -> AsyncIterator[None]:
+async def wait_if_faster(time_limit: float | timedelta) -> AsyncIterator[None]:
     """Run for at least `time_limit` seconds.
 
     If the wrapped code is slower than `time_limit`, we wait until said code is done.

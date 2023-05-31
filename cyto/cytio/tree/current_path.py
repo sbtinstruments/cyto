@@ -1,40 +1,37 @@
 from __future__ import annotations
 
-from typing import Any, Iterable, Iterator, TypeVar
+from collections.abc import Iterable, Iterator
+from contextlib import suppress
+from typing import Any, TypeVar
 
-from ...model import FrozenModel
 from ._task_tree import InstanceMapping, Node, TaskTree
 from .current_tree import add_root_path
 
-T = TypeVar("T", bound=FrozenModel)
+T = TypeVar("T")
 
 
-def get_model(type_: type[T]) -> T:
+def get_first_instance(type_: type[T]) -> T:
+    """Get the first instance (if any) of the given type for the current task path.
+
+    Traverses the task path from the current task to the root task. Returns the first
+    instance of the given type.
+
+    Raises `LookupError` if there is no instance for the given type.
+    """
     tree, path_from_root_to_node = add_root_path()
     path_data = _path_data(tree, path_from_root_to_node)
     path_instances = _path_instances(path_data, type_)
-
-    model_stack = list(path_instances)
-    model_stack.reverse()
-
-    # TODO: Merge the models together.
-    # For now, we just return the innermost (closest to the current task)
-    # model.
-    try:
-        return model_stack.pop()
-    except IndexError as exc:
-        # HACK: For compatibility with `provide`. E.g., so that `get_model`
-        # raises the same exceptions as `CurrentTaskData.get`.
-        raise KeyError from exc
+    instances = list(path_instances)
+    for instance in reversed(instances):
+        return instance
+    raise LookupError
 
 
 def _path_instances(path_data: Iterable[dict[Any, Any]], type_: type[T]) -> Iterator[T]:
     for node_data in path_data:
         node_instances = InstanceMapping(node_data)
-        try:
+        with suppress(KeyError):
             yield node_instances[type_]
-        except KeyError:
-            pass
 
 
 def _path_data(tree: TaskTree, path: Iterable[Node]) -> Iterator[dict[Any, Any]]:

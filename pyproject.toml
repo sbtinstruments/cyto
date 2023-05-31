@@ -33,19 +33,13 @@ pyfakefs = "^5.1.0"
 pytest = "^7.2.1"
 pytest-cov = "^4.0.0"
 taskipy = "^1.10.3"
-isort = "^5.12.0"
 mypy = "^1.0.1"
 pre-commit = "^3.1.1"
 pylint = "^2.16.2"
 pylint-pydantic = "^0.1.8"
-pydocstyle = "^6.3.0"
-# We only use rope to give Visual Studio Code users a better
-# out-of-the-box experience. For, e.g., refactoring.
-# In other words, rope is not part of the QA tooling itself.
-rope = "^1.7.0"
+ruff = "^0.0.270"
 
 [tool.poetry.extras]
-"all" = ["anyio", "click", "mergedeep", "networkx", "pydantic", "redis", "toml"]
 "app" = ["anyio", "pydantic"]
 "cytio" = ["anyio"]
 "cytio-tree" = ["anyio", "networkx", "pydantic"]
@@ -61,7 +55,7 @@ rope = "^1.7.0"
 
 [tool.taskipy.tasks]
 black = "black cyto tests"
-isort = "isort cyto tests"
+ruff = "ruff cyto tests"
 mypy = "mypy --show-error-codes cyto tests"
 pre-commit = "pre-commit run --all-files"
 pylint = "pylint cyto tests"
@@ -76,7 +70,7 @@ isolated_build = true
 # TODO: Use `py{310,311}`
 envlist = clean,py{310}-{app,app_cli,settings,settings_source_toml},coverage
 requires =
-    tox-poetry-installer[poetry] == 0.10.1
+    tox-poetry-installer[poetry] == 0.10.3
 
 [testenv]
 require_locked_deps = true
@@ -132,11 +126,51 @@ commands =
     coverage report --precision=2 --fail-under=0
 """
 
+[tool.ruff]
+target-version = "py310"
+select = ["ALL"]
+ignore = [
+    # "flake8-annotations". mypy does our type checking.
+    "ANN",
+    # "flake8-commas (COM)". We use black instead.
+    "COM",
+    # "flake8-errmsg (EM)". Three rules that are all about "Exception must not use
+    # a string literal, assign to variable first". Too little gained for the effort.
+    # Maybe later.
+    "EM",
+    # "Boolean default value in function definition". We think it's perfectly okay to
+    # provide a default value for a boolean flag.
+    "FBT002",
+    # "pydocstyle (D)". We *should* do this. It's just a large effort. Maybe later.
+    "D",
+    # "First argument of a method should be named self".
+    # Too many false-positives with `pydantic.root_validator`. If pydantic 2.0 changes
+    # things, we can reconsider this rule.
+    "N805",
+    # "Pylint (PL)". We still use pylint until ruff reaches feature parity.
+    # See: https://github.com/charliermarsh/ruff/issues/970
+    "PL",
+    # "Use of assert detected". We like `assert`.
+    "S101",
+    # "flake8-type-checking". Too little gained for the effort. Maybe later.
+    "TCH",
+    # "TD002 Missing author in TODO".
+    # "TD003 Missing issue link on the line following this TODO".
+    # That's not how we use TODO.
+    "TD002",
+    "TD003",
+    # "Relative imports from parent modules are banned". We like relative imports.
+    "TID252",
+    # "Avoid specifying long messages outside the exception class".
+    # Apparently, any string that contains a space is "too long". That's a bit too
+    # strict for us.
+    "TRY003",
+]
+# Same as Black
+line-length = 88
+
 [tool.black]
 target-version = ['py310']
-
-[tool.isort]
-profile = 'black'
 
 [tool.mypy]
 strict = true
@@ -162,18 +196,27 @@ module = ["networkx.*"]
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
+module = ["portion.*"]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = ["syslog_rfc5424_formatter.*"]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
 # TODO: Replace with tomllib from Python 3.11 
 module = "toml.*"
 ignore_missing_imports = true
 
 [tool.pylint.master]
 # i,j,k: You can use this for an integer index in a loop.
+# db: For a database instance (or database client instance).
 # fs: We use this in the tests to get a pyfakefs file system reference.
 #     Since pytest's dependency injection is name based, we have to use
 #     this exact argument name.
 # io: You can use this for a `TextIO`, `BinaryIO`, etc
 # tg: You can use this for an `anyio.TaskGroup`.
-good-names = 'i,j,k,fs,io,tg' # Default is 'i,j,k,ex,Run,_'
+good-names = 'i,j,k,db,fs,io,tg' # Default is 'i,j,k,ex,Run,_'
 # Increase the default values a bit. Yes, this may hurt maintainability
 # ever so slightly but it increases the speed of development.
 max-args = '7'        # Default is 5

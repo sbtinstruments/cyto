@@ -1,5 +1,5 @@
-from collections.abc import Mapping
-from typing import Any, Iterator
+from collections.abc import Iterator, Mapping
+from typing import Any
 
 from pydantic import Extra
 
@@ -24,7 +24,8 @@ class ResultMap(FrozenModel, Mapping[str, Any]):
     def __getitem__(self, key: str) -> Any:
         return self.__dict__[key]
 
-    def __iter__(self) -> Iterator[str]:
+    # TODO: Use the `override` decorator when we get python 3.12
+    def __iter__(self) -> Iterator[str]:  # type: ignore[override]
         """Return iterator of all fields in this model.
 
         This includes, e.g., the "keynote" field and not just the

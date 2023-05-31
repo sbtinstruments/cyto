@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from collections.abc import Sequence
-from typing import Any, ClassVar, Iterable, Iterator, Literal, get_args
+from collections.abc import Iterable, Iterator, Sequence
+from typing import Any, ClassVar, Literal, get_args, overload
 
 from pydantic import StrictFloat, StrictInt, parse_obj_as, root_validator
 
@@ -32,7 +32,8 @@ class TentativeItem(FrozenModel):
             "value": value,
         }
 
-    def dict(self, **kwargs: Any) -> dict[str, Any]:
+    # A003: We have to use `dict` since pydantic choose this name.
+    def dict(self, **_kwargs: Any) -> dict[str, Any]:  # noqa: A003
         return {f"{self.key}?": self.value}
 
 
@@ -55,7 +56,8 @@ class FinalItem(FrozenModel):
             "value": value,
         }
 
-    def dict(self, **kwargs: Any) -> dict[str, Any]:
+    # A003: We have to use `dict` since pydantic choose this name.
+    def dict(self, **_kwargs: Any) -> dict[str, Any]:  # noqa: A003
         return {self.key: self.value}
 
 
@@ -81,7 +83,8 @@ class Subset(FrozenModel):
             "rhs": {key_operands[1]: value_operands[1]},
         }
 
-    def dict(self, **kwargs: Any) -> dict[str, Any]:
+    # A003: We have to use `dict` since pydantic choose this name.
+    def dict(self, **_kwargs: Any) -> dict[str, Any]:  # noqa: A003
         lhs_suffix = "?" if isinstance(self.lhs, TentativeItem) else ""
         rhs_suffix = "?" if isinstance(self.rhs, TentativeItem) else ""
         key = f"{self.lhs.key}{lhs_suffix}{self.delimiter}{self.rhs.key}{rhs_suffix}"
@@ -144,12 +147,21 @@ class Keynote(FrozenModel, Sequence[Slide]):
 
     """
 
-    __root__: tuple[Slide, ...] = tuple()
+    __root__: tuple[Slide, ...] = ()
 
+    @overload
     def __getitem__(self, item: int) -> Slide:
+        ...
+
+    @overload
+    def __getitem__(self, _slice: slice) -> Sequence[Slide]:
+        ...
+
+    def __getitem__(self, item: Any) -> Any:
         return self.__root__[item]
 
-    def __iter__(self) -> Iterator[Slide]:
+    # TODO: Use the `override` decorator when we get python 3.12
+    def __iter__(self) -> Iterator[Slide]:  # type: ignore[override]
         return iter(self.__root__)
 
     def __len__(self) -> int:
@@ -160,8 +172,8 @@ class Keynote(FrozenModel, Sequence[Slide]):
 
         Returns a copy. Does *not* mutate this instance.
         """
-        slide = parse_obj_as(Slide, rhs)
-        return Keynote(__root__=self.__root__ + (slide,))
+        slide = parse_obj_as(Slide, rhs)  # type: ignore[var-annotated, arg-type]
+        return Keynote(__root__=(*self.__root__, slide))
 
     @property
     def finality(self) -> Finality:
@@ -181,7 +193,11 @@ class Keynote(FrozenModel, Sequence[Slide]):
 
     def content(self) -> Iterable[ContentSlide]:
         """Return all content slides (e.g., no sentinel slides like "TENTATIVE")."""
-        return (slide for slide in self if isinstance(slide, get_args(ContentSlide)))
+        return (
+            slide  # type: ignore[misc]
+            for slide in self
+            if isinstance(slide, get_args(ContentSlide))
+        )
 
     def final_content(self) -> Iterable[ContentSlide]:
         """Return all "final" content slides (i.e., non-tentative slides)."""

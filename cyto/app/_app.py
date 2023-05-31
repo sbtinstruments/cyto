@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import inspect
 import logging
-from contextlib import ExitStack
+from contextlib import AbstractContextManager, ExitStack
 from types import TracebackType
-from typing import Any, ContextManager, Optional, TypeVar, cast
+from typing import Any, TypeVar, cast
 
 from anyio import run
 
@@ -18,7 +18,7 @@ _LOGGER = logging.getLogger(__name__)
 ReturnT = TypeVar("ReturnT")
 
 
-class App(ContextManager["App"]):
+class App(AbstractContextManager["App"]):
     """Useful defaults for applications."""
 
     def __init__(self, name: str, settings: Settings) -> None:
@@ -41,8 +41,8 @@ class App(ContextManager["App"]):
         cls,
         func: Func[ReturnT],
         *,
-        name: Optional[str] = None,
-        settings_class: Optional[type[Settings]] = None,
+        name: str | None = None,
+        settings_class: type[Settings] | None = None,
     ) -> ReturnT:
         """Create app instance and run the given coroutine function."""
         # Set defaults for optional arguments
@@ -87,9 +87,9 @@ class App(ContextManager["App"]):
 
     def __exit__(
         self,
-        exc_type: Optional[type[BaseException]],
-        exc_value: Optional[BaseException],
-        traceback: Optional[TracebackType],
+        exc_type: type[BaseException] | None,
+        exc_value: BaseException | None,
+        traceback: TracebackType | None,
     ) -> bool | None:
         suppress_exc = self._stack.__exit__(exc_type, exc_value, traceback)
         # Log exit

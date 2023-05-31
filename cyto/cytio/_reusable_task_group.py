@@ -1,13 +1,15 @@
 from __future__ import annotations
 
+from collections.abc import Callable, Coroutine
+from contextlib import AbstractAsyncContextManager
 from types import TracebackType
-from typing import Any, AsyncContextManager, Callable, Coroutine
+from typing import Any
 
 import anyio
 from anyio.abc import TaskGroup
 
 
-class ReusableTaskGroup(AsyncContextManager["ReusableTaskGroup"]):
+class ReusableTaskGroup(AbstractAsyncContextManager["ReusableTaskGroup"]):
     """Reusable (but not reentrant) task group."""
 
     def __init__(self) -> None:
@@ -33,7 +35,8 @@ class ReusableTaskGroup(AsyncContextManager["ReusableTaskGroup"]):
         > Manually calling CancelScope.__enter__() and CancelScope.__exit__(),
         > usually from another context manager class, in the wrong order
 
-        See: https://anyio.readthedocs.io/en/stable/cancellation.html#avoiding-cancel-scope-stack-corruption
+        See:
+        https://anyio.readthedocs.io/en/stable/cancellation.html#avoiding-cancel-scope-stack-corruption
 
         When you call `ReusableTaskGroup.clear`, you actually call
         `TaskGroup.__aexit__` closely followed by `TaskGroup.__aenter__`. In turn,
@@ -134,7 +137,7 @@ class ReusableTaskGroup(AsyncContextManager["ReusableTaskGroup"]):
                 assert self._tg is None
                 # Never raises (unless cancelled) since we are sure that `_tg` is
                 # None.
-                await self.__aenter__()
+                await self.__aenter__()  # pylint: disable=unnecessary-dunder-call
 
     # TODO: Replace return type with `typing.Self` in python 3.11
     async def __aenter__(self) -> ReusableTaskGroup:

@@ -1,22 +1,17 @@
 from __future__ import annotations
 
 import logging
+from collections.abc import AsyncIterator, Mapping, Sequence
 from contextlib import asynccontextmanager, suppress
 from datetime import timedelta
-from logging import Logger
 from os import PathLike
 from subprocess import PIPE
 from time import perf_counter
 from typing import (
     IO,
     Any,
-    AsyncIterator,
     Generic,
-    Mapping,
-    Optional,
-    Sequence,
     TypeVar,
-    Union,
 )
 
 import anyio
@@ -28,19 +23,21 @@ T = TypeVar("T")
 _LOGGER = logging.getLogger(__name__)
 
 
-class ProcessContext(TaskContext[T], Generic[T]):
-    ...
+class ProcessContext(  # pylint: disable=too-few-public-methods
+    TaskContext[T], Generic[T]
+):
+    """This is a workaround for mypy to get proper typing in derived classes."""
 
 
 @asynccontextmanager
 async def open_process(
-    command: Union[str, bytes, Sequence[Union[str, bytes]]],
+    command: str | bytes | Sequence[str | bytes],
     *,
-    stdin: Union[int, IO[Any], None] = PIPE,
-    stdout: Union[int, IO[Any], None] = PIPE,
-    stderr: Union[int, IO[Any], None] = PIPE,
-    cwd: Union[str, bytes, "PathLike[str]", None] = None,
-    env: Optional[Mapping[str, str]] = None,
+    stdin: int | IO[Any] | None = PIPE,
+    stdout: int | IO[Any] | None = PIPE,
+    stderr: int | IO[Any] | None = PIPE,
+    cwd: str | bytes | PathLike[str] | None = None,
+    env: Mapping[str, str] | None = None,
     start_new_session: bool = False,
     kill_delay: timedelta | None = None,
 ) -> AsyncIterator[Process]:

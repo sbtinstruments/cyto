@@ -1,5 +1,3 @@
-from inspect import Parameter
-
 from ...factory import FACTORY
 from ...model import FrozenModel
 

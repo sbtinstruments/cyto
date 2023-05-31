@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Iterable
+from collections.abc import Iterable
 
 from anyio.streams.memory import MemoryObjectReceiveStream, MemoryObjectSendStream
 from tinydb.database import TinyDB
@@ -34,7 +34,7 @@ class ProjectDatabase:
         assert isinstance(doc_id, int)
         return doc_id
 
-    def all(self) -> Iterable[Project]:
+    def all_projects(self) -> Iterable[Project]:
         return (Project(**doc) for doc in self._db)
 
 

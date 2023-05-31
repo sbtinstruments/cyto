@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 import logging
+from collections.abc import AsyncIterator, Iterable, Iterator
 from contextlib import ExitStack, asynccontextmanager, contextmanager
 from datetime import timedelta
-from typing import AsyncIterator, Iterable, Iterator, Optional, Union
 
 import anyio
 
@@ -16,7 +16,7 @@ _LOGGER = logging.getLogger(__name__)
 
 
 @contextmanager
-def warn_after(time_limit: Union[float, timedelta]) -> Iterator[None]:
+def warn_after(time_limit: float | timedelta) -> Iterator[None]:
     time_limit = _normalize_timedelta(time_limit)
     try:
         task_section = instances()[_MutableSection]
@@ -31,14 +31,14 @@ def warn_after(time_limit: Union[float, timedelta]) -> Iterator[None]:
     current_section.planned_duration = time_limit
 
     # Trigger update
-    instances().set(Section.from_mutable_section(task_section))
+    instances().setauto(Section.from_mutable_section(task_section))
 
     with _scopes.warn_after(time_limit, logger=_LOGGER):
         yield
 
 
 @contextmanager
-def fail_after(time_limit: Union[float, timedelta]) -> Iterator[None]:
+def fail_after(time_limit: float | timedelta) -> Iterator[None]:
     time_limit = _normalize_timedelta(time_limit)
     try:
         task_section = instances()[_MutableSection]
@@ -53,7 +53,7 @@ def fail_after(time_limit: Union[float, timedelta]) -> Iterator[None]:
     current_section.planned_duration = time_limit
 
     # Trigger update
-    instances().set(Section.from_mutable_section(task_section))
+    instances().setauto(Section.from_mutable_section(task_section))
 
     with anyio.fail_after(time_limit.total_seconds()):
         yield
@@ -61,7 +61,7 @@ def fail_after(time_limit: Union[float, timedelta]) -> Iterator[None]:
 
 @asynccontextmanager
 async def wait_exactly(
-    time_limit: Union[float, timedelta], shield: bool = False
+    time_limit: float | timedelta, *, shield: bool = False
 ) -> AsyncIterator[None]:
     time_limit = _normalize_timedelta(time_limit)
     try:
@@ -79,13 +79,13 @@ async def wait_exactly(
     current_section.planned_duration = time_limit
 
     # Trigger update
-    instances().set(Section.from_mutable_section(task_section))
+    instances().setauto(Section.from_mutable_section(task_section))
 
     async with _scopes.wait_exactly(time_limit, shield=shield):
         yield
 
 
-async def sleep(time_limit: Union[float, timedelta]) -> None:
+async def sleep(time_limit: float | timedelta) -> None:
     time_limit = _normalize_timedelta(time_limit)
     try:
         task_section = instances()[_MutableSection]
@@ -99,15 +99,13 @@ async def sleep(time_limit: Union[float, timedelta]) -> None:
     current_section.planned_duration = time_limit
 
     # Trigger update
-    instances().set(Section.from_mutable_section(task_section))
+    instances().setauto(Section.from_mutable_section(task_section))
 
     await anyio.sleep(time_limit.total_seconds())
 
 
 @contextmanager
-def section(
-    name: str, *, hints: Optional[Iterable[SectionHint]] = None
-) -> Iterator[None]:
+def section(name: str, *, hints: Iterable[SectionHint] | None = None) -> Iterator[None]:
     """Create a new section in the current task."""
     if hints is None:
         hints = set()
@@ -116,20 +114,20 @@ def section(
         is_root_section = False
     except KeyError:
         task_section = _MutableSection(name=name, hints=hints)
-        instances().set(task_section)
+        instances().setauto(task_section)
         is_root_section = True
     with ExitStack() as stack:
         if not is_root_section:
             current_section = task_section.innermost_active_child()
             stack.enter_context(current_section.child(name, hints=hints))
-        instances().set(Section.from_mutable_section(task_section))
+        instances().setauto(Section.from_mutable_section(task_section))
         yield
-    instances().set(Section.from_mutable_section(task_section))
+    instances().setauto(Section.from_mutable_section(task_section))
 
 
-def _normalize_timedelta(value: Union[timedelta, float, int]) -> timedelta:
+def _normalize_timedelta(value: timedelta | float | int) -> timedelta:
     if isinstance(value, timedelta):
         return value
-    if isinstance(value, (float, int)):
+    if isinstance(value, float | int):
         return timedelta(seconds=value)
     raise TypeError(f"Can't normalize {value} as timedelta.")

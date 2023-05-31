@@ -27,7 +27,7 @@ class Argv:
         self._monkeypatch.setattr(sys, "argv", self._argv)
 
 
-@pytest.fixture()
+@pytest.fixture(autouse=True)
 def argv(monkeypatch: Any) -> Argv:
     """Clear process arguments and return a helper object to add other args."""
     return Argv(monkeypatch)

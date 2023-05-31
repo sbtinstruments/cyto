@@ -1,7 +1,7 @@
 import logging
+from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 from time import perf_counter
-from typing import Callable, Iterator
 
 from ._log_message import frames_to_log_message
 

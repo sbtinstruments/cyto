@@ -1,13 +1,11 @@
 from __future__ import annotations
 
 import logging
-from collections import defaultdict
-from collections.abc import MutableMapping
+from collections.abc import Iterator, MutableMapping
 from contextlib import contextmanager
-from typing import Any, Iterator, TypeVar
+from typing import TypeVar
 
 from anyio.streams.memory import MemoryObjectReceiveStream
-from pydantic import parse_obj_as, validate_arguments
 
 from .._broadcast_value import BroadcastValue
 
@@ -42,11 +40,11 @@ class BroadcastMap(MutableMapping[KT, VT]):
 
     def __setitem__(self, key: KT, value: VT) -> None:
         self._data[key] = value
-        self._broadcast.set(self)
+        self._broadcast.publish(self)
 
     def __delitem__(self, key: KT) -> None:
         del self._data[key]
-        self._broadcast.set(self)
+        self._broadcast.publish(self)
 
     def __iter__(self) -> Iterator[KT]:
         return iter(self._data)
@@ -59,4 +57,4 @@ class BroadcastMap(MutableMapping[KT, VT]):
         try:
             yield self._data
         finally:
-            self._broadcast.set(self)
+            self._broadcast.publish(self)

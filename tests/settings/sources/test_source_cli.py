@@ -42,7 +42,7 @@ class CustomCliSettings(BaseSettings):
         extra = "forbid"
 
 
-@pytest.fixture
+@pytest.fixture()
 def customcli_settings() -> type[CustomCliSettings]:
     return autofill(name="customcli")(CustomCliSettings)
 
@@ -56,7 +56,7 @@ class HackerSettings(BaseSettings):
     bobby: Bobby = Bobby()
 
 
-@pytest.fixture
+@pytest.fixture()
 def hacker_settings() -> type[HackerSettings]:
     return autofill(name="hacker")(HackerSettings)
 
@@ -380,10 +380,13 @@ def test_precedence(
     assert settings.theme == "monokai"
 
 
-def test_edge_cases(argv: Argv, hacker_settings: type[HackerSettings]) -> None:
+def test_edge_cases(hacker_settings: type[HackerSettings]) -> None:
     # Fields such as `bobby__tables` conflict with the default
     # internal delimiter "__".
-    with pytest.raises(ValueError):
+    with pytest.raises(
+        ValueError,
+        match='The "bobby__tables" field conflicts with the internal delimiter "__".',
+    ):
         hacker_settings()
 
     # The internal delimiter must be a python identifier
@@ -391,7 +394,9 @@ def test_edge_cases(argv: Argv, hacker_settings: type[HackerSettings]) -> None:
         "zoobar2000",
         cli_settings={"internal_delimiter": "."},
     )(Zoobar2000Settings)
-    with pytest.raises(ValueError):
+    with pytest.raises(
+        ValueError, match='The internal delimiter "." is not a valid identifier.'
+    ):
         zoobar2000_settings()
 
     # Fields such as `large_text` conflict with the delimiter "_"
@@ -399,7 +404,10 @@ def test_edge_cases(argv: Argv, hacker_settings: type[HackerSettings]) -> None:
         "zoobar2000",
         cli_settings={"delimiter": "_"},
     )(Zoobar2000Settings)
-    with pytest.raises(ValueError):
+    with pytest.raises(
+        ValueError,
+        match='The "user_favourites" field conflicts with the delimiter "_".',
+    ):
         zoobar2000_settings()
 
     # Likewise, when we convert the `large_text` field into the `large-text`
@@ -408,7 +416,10 @@ def test_edge_cases(argv: Argv, hacker_settings: type[HackerSettings]) -> None:
         "zoobar2000",
         cli_settings={"delimiter": "-"},
     )(Zoobar2000Settings)
-    with pytest.raises(ValueError):
+    with pytest.raises(
+        ValueError,
+        match='The "user-favourites" field conflicts with the delimiter "-".',
+    ):
         zoobar2000_settings()
 
     # The (external) delimiter can be the same as the internal delimiter

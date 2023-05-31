@@ -1,5 +1,6 @@
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 
 def get_app_name(main_func: Callable[..., Any] | None = None) -> str:
@@ -22,9 +23,9 @@ def get_app_name(main_func: Callable[..., Any] | None = None) -> str:
     #
     # `main` looks something like this:
     #
-    #     main.__name__   : __main__
-    #     main.__package__: baxter
-    #     main.__file__   : /media/system/lib/python3.6/site-packages/baxter/__main__.py
+    # >>> main.__name__   : __main__
+    # >>> main.__package__: baxter
+    # >>> main.__file__   : /media/system/lib/python3.6/site-packages/baxter/__main__.py
     #
     if isinstance(main.__package__, str):
         return main.__package__
@@ -33,19 +34,19 @@ def get_app_name(main_func: Callable[..., Any] | None = None) -> str:
     #
     # `main` looks something like this:
     #
-    #     main.__name__   : __main__
-    #     main.__package__: None
-    #     main.__file__   : /media/system/bin/baxter
+    # >>> main.__name__   : __main__
+    # >>> main.__package__: None
+    # >>> main.__file__   : /media/system/bin/baxter
     #
     # Or, sometimes, like this:
     #
-    #     main.__file__   : _appster.py
+    # >>> main.__file__   : _appster.py
     #
     try:
         main_file = main.__file__
     # Raises `AttributeError` if you, e.g., run python code directly:
     #
-    #     python -c "import __main__; __main__.__file__"  # Raises AttributeError!
+    # >>> python -c "import __main__; __main__.__file__"  # Raises AttributeError!
     #
     except AttributeError:
         pass

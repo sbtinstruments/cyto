@@ -1,16 +1,13 @@
 import inspect
-from contextlib import AsyncExitStack, suppress
-from functools import wraps
-from typing import (
-    Any,
-    AsyncContextManager,
-    Callable,
-    ContextManager,
-    Coroutine,
-    Optional,
-    Protocol,
-    TypeVar,
+from collections.abc import Callable, Coroutine
+from contextlib import (
+    AbstractAsyncContextManager,
+    AbstractContextManager,
+    AsyncExitStack,
+    suppress,
 )
+from functools import wraps
+from typing import Any, Protocol, TypeVar
 
 from anyio import create_task_group
 from anyio.abc import TaskGroup
@@ -29,14 +26,14 @@ Func = Callable[..., Coroutine[Any, Any, ReturnT_co]]
 class InjectedFunc(Protocol[ReturnT_co]):  # pylint: disable=too-few-public-methods
     """`Func` after we apply `inject` to it."""
 
-    async def __call__(self) -> ReturnT_co:  # noqa: D102
+    async def __call__(self) -> ReturnT_co:
         ...
 
 
 class Factory(Protocol):  # pylint: disable=too-few-public-methods
     """Given a type, return an instance of said type."""
 
-    async def __call__(self, __annotation: type[Any]) -> Any:  # noqa: D102
+    async def __call__(self, __annotation: type[Any]) -> Any:
         ...
 
 
@@ -48,7 +45,7 @@ async def _basic_factory(annotation: type[Any]) -> Any:
 
 def inject(
     *,
-    extra_factory: Optional[Factory] = None,
+    extra_factory: Factory | None = None,
 ) -> Callable[[Func[ReturnT_co]], InjectedFunc[ReturnT_co]]:
     """Inject instances of the given function's argument types."""
 
@@ -73,16 +70,9 @@ def inject(
                             f'annotation "{annotation}"'
                         )
 
-                    # There is a bug in pylint with
-                    # isinstance-second-argument-not-valid-type
-                    # See: https://github.com/PyCQA/pylint/issues/3507
-                    if isinstance(  # pylint: disable=isinstance-second-argument-not-valid-type
-                        arg, AsyncContextManager
-                    ):
+                    if isinstance(arg, AbstractAsyncContextManager):
                         arg = await stack.enter_async_context(arg)
-                    elif isinstance(  # pylint: disable=isinstance-second-argument-not-valid-type
-                        arg, ContextManager
-                    ):
+                    elif isinstance(arg, AbstractContextManager):
                         arg = stack.enter_context(arg)
                     args.append(arg)
 
@@ -96,7 +86,7 @@ def inject(
 async def _get_arg(
     annotation: type[Any],
     stack: AsyncExitStack,
-    extra_factory: Optional[Factory] = None,
+    extra_factory: Factory | None = None,
 ) -> Any:
     if issubclass(annotation, AsyncExitStack):
         return stack

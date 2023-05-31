@@ -1,6 +1,6 @@
 import logging
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
-from typing import AsyncIterator
 
 import anyio
 
@@ -35,4 +35,4 @@ async def _tree_changes_to_outline(
             project_db = tree_to_project_database(tree)
             trail = project_db_to_trail(project_db)
             outline = Outline(trail=trail)
-            outline_broadcast.set(outline)
+            outline_broadcast.publish(outline)

@@ -13,38 +13,36 @@ from anyio.abc import TaskGroup
 
 from cyto.app import App, Settings
 
-from ..conftest import Argv
 
-
-def test_inject_nothing(argv: Argv) -> None:
+def test_inject_nothing() -> None:
     async def main() -> None:
         pass
 
     App.launch(main)
 
 
-def test_injection_settings(argv: Argv) -> None:
+def test_injection_settings() -> None:
     async def main(settings: Settings) -> None:
         assert isinstance(settings, Settings)
 
     App.launch(main)
 
 
-def test_inject_task_group(argv: Argv) -> None:
+def test_inject_task_group() -> None:
     async def main(tg: TaskGroup) -> None:
         assert isinstance(tg, TaskGroup)
 
     App.launch(main)
 
 
-def test_inject_stack(argv: Argv) -> None:
+def test_inject_stack() -> None:
     async def main(stack: AsyncExitStack) -> None:
         assert isinstance(stack, AsyncExitStack)
 
     App.launch(main)
 
 
-def test_inject_multiple(argv: Argv) -> None:
+def test_inject_multiple() -> None:
     # Note that the argument names can be anything. We inject solely based
     # on the type annotation.
     async def main(apple: TaskGroup, banana: AsyncExitStack, grape: Settings) -> None:
@@ -55,28 +53,35 @@ def test_inject_multiple(argv: Argv) -> None:
     App.launch(main)
 
 
-def test_inject_missing_anno(argv: Argv) -> None:
+def test_inject_missing_anno() -> None:
     # We purposely omit the annotation, hence the "type: ignore" comment
     # Likewise, we purposely don't use the argument for anything. We just
     # want to test the inject semantics.
-    async def main(stack) -> None:  # type: ignore[no-untyped-def] # pylint: disable=unused-argument
+    async def main(stack) -> None:  # type: ignore[no-untyped-def] # noqa: ARG001
         pass
 
-    with pytest.raises(ValueError):
+    with pytest.raises(
+        ValueError, match='Argument "stack must have a type annotation"'
+    ):
         App.launch(main)
 
 
-def test_inject_unknown_anno(argv: Argv) -> None:
+def test_inject_unknown_anno() -> None:
     # Note that we inject arguments based on the type annotation and not
     # the argument name.
-    async def main(stack: int) -> None:  # pylint: disable=unused-argument
+    async def main(
+        stack: int,  # pylint: disable=unused-argument # noqa: ARG001
+    ) -> None:
         pass
 
-    with pytest.raises(ValueError):
+    with pytest.raises(
+        ValueError,
+        match='Argument "stack" has unknown type annotation "<class \'int\'>"',
+    ):
         App.launch(main)
 
 
-def test_custom_settings(argv: Argv) -> None:
+def test_custom_settings() -> None:
     class FooBarSettings(Settings):
         is_meringue_burnt: bool = False
 
@@ -86,7 +91,7 @@ def test_custom_settings(argv: Argv) -> None:
     App.launch(main)
 
 
-def test_returns(argv: Argv) -> None:
+def test_returns() -> None:
     async def main() -> int:
         await sleep(0.1)
         return 42
@@ -95,16 +100,16 @@ def test_returns(argv: Argv) -> None:
     assert result == 42
 
 
-def test_raises(argv: Argv) -> None:
+def test_raises() -> None:
     async def main() -> None:
         await sleep(0.1)
-        raise RuntimeError()
+        raise RuntimeError
 
     with pytest.raises(RuntimeError):
         App.launch(main)
 
 
-def test_tasks(argv: Argv) -> None:
+def test_tasks() -> None:
     result = 0
     num_tasks = 5
 
@@ -121,7 +126,7 @@ def test_tasks(argv: Argv) -> None:
     assert result == sum(range(num_tasks))
 
 
-def test_tasks_raises(argv: Argv) -> None:
+def test_tasks_raises() -> None:
     num_tasks = 5
     failing_task = 3
 
@@ -139,7 +144,7 @@ def test_tasks_raises(argv: Argv) -> None:
     assert str(failing_task) == str(excinfo.value)
 
 
-def test_custom_app_name(argv: Argv) -> None:
+def test_custom_app_name() -> None:
     async def appster(app: App) -> None:
         assert app.name == "appster"
 

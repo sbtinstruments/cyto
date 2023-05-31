@@ -1,7 +1,8 @@
 from __future__ import annotations
 
+from collections.abc import Callable, MutableMapping
 from pathlib import Path
-from typing import Any, Callable, MutableMapping, Protocol
+from typing import Any, Protocol
 
 from pydantic import BaseSettings
 
@@ -16,7 +17,7 @@ from ....basic import deep_update as dict_deep_update
 class Loader(Protocol):  # pylint: disable=too-few-public-methods
     """Given raw file content, return a settings dict."""
 
-    def __call__(self, __data: str) -> MutableMapping[str, Any]:  # noqa: D102
+    def __call__(self, __data: str) -> MutableMapping[str, Any]:
         ...
 
 

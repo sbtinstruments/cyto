@@ -1,5 +1,6 @@
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Callable, TypeVar
+from typing import Any, TypeVar
 
 from pydantic import BaseSettings, Extra, Field
 from pydantic.env_settings import SettingsSourceCallable
@@ -28,9 +29,9 @@ def _app_computed_settings(name: str) -> SettingsSourceCallable:
 class Settings(BaseSettings):
     """Application base settings."""
 
-    debug: bool = Field(False, description="Enable debug checks.")
+    debug: bool = Field(default=False, description="Enable debug checks.")
     background: bool = Field(
-        True,
+        default=True,
         cli=CliExtras(disable_flag="foreground"),
         description="Daemonize this process.",
     )

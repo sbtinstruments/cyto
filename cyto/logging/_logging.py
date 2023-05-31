@@ -13,14 +13,11 @@ def initialize_logging(app_name: str | None = None) -> None:
     root = logging.getLogger()
 
     # Level
-    if "DEBUG" in os.environ:
-        level = logging.DEBUG
-    else:
-        level = logging.INFO
+    level = logging.DEBUG if "DEBUG" in os.environ else logging.INFO
     root.setLevel(level)
 
     # Warnings
-    logging.captureWarnings(True)
+    logging.captureWarnings(capture=True)
 
     # Handler
     handler_name = os.environ.get("LOG_HANDLER", "stderr")

@@ -15,13 +15,11 @@
 import pytest
 from pydantic import ValidationError
 
-from ..conftest import Argv
 from .conftest import DefaultSettings, Layer, NestedSettings, PartialSettings
 
 
 def test_defaults(
     default_settings: type[DefaultSettings],
-    argv: Argv,
 ) -> None:
     settings = default_settings()
     assert settings.my_bool is False
@@ -31,7 +29,6 @@ def test_defaults(
 
 def test_missing(
     partial_settings: type[PartialSettings],
-    argv: Argv,
 ) -> None:
     with pytest.raises(ValidationError) as exc_info:
         partial_settings()
@@ -43,7 +40,6 @@ def test_missing(
 
 def test_set_partial_with_kwargs(
     partial_settings: type[PartialSettings],
-    argv: Argv,
 ) -> None:
     settings = partial_settings(my_int=44, my_string="string with spaces")
     assert settings.my_bool is False
@@ -54,7 +50,6 @@ def test_set_partial_with_kwargs(
 def test_set_partial_with_env(
     monkeypatch,
     partial_settings: type[PartialSettings],
-    argv: Argv,
 ) -> None:
     monkeypatch.setenv("foobar_my_int", "99")
     monkeypatch.setenv("foobar_my_string", "string with spaces")
@@ -66,7 +61,6 @@ def test_set_partial_with_env(
 
 def test_set_nested_with_kwargs(
     nested_settings: type[NestedSettings],
-    argv: Argv,
 ) -> None:
     settings = nested_settings(
         cake={
@@ -87,7 +81,6 @@ def test_set_nested_with_kwargs(
 def test_set_nested_with_env(
     monkeypatch,
     nested_settings: type[NestedSettings],
-    argv: Argv,
 ) -> None:
     value = """
     {

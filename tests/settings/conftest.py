@@ -35,7 +35,7 @@ class MyTunesSettings(BaseSettings):
     }
 
 
-@pytest.fixture
+@pytest.fixture()
 def mytunes_settings() -> type[MyTunesSettings]:
     return autofill(name="mytunes")(MyTunesSettings)
 
@@ -45,7 +45,7 @@ class WinLampSettings(BaseSettings):
     version_info: tuple[str, int, int, int] = ("1.2.0", 1, 2, 0)
 
 
-@pytest.fixture
+@pytest.fixture()
 def winlamp_settings() -> type[WinLampSettings]:
     return autofill(name="winlamp")(WinLampSettings)
 
@@ -54,7 +54,7 @@ class DotifySettings(BaseSettings):
     featured_album: Album
 
 
-@pytest.fixture
+@pytest.fixture()
 def dotify_settings() -> type[DotifySettings]:
     return autofill(name="dotify")(DotifySettings)
 
@@ -81,7 +81,7 @@ class Zoobar2000Settings(BaseSettings):
     )
 
 
-@pytest.fixture
+@pytest.fixture()
 def zoobar2000_settings() -> type[Zoobar2000Settings]:
     return autofill(name="zoobar2000")(Zoobar2000Settings)
 
@@ -92,7 +92,7 @@ class NoDefaultSettings(BaseSettings):
     strings: dict[str, str]
 
 
-@pytest.fixture
+@pytest.fixture()
 def nodefault_settings() -> type[NoDefaultSettings]:
     return autofill(name="nodefault")(NoDefaultSettings)
 
@@ -136,16 +136,16 @@ class NestedSettings(BaseSettings):
     )
 
 
-@pytest.fixture
+@pytest.fixture()
 def default_settings() -> type[DefaultSettings]:
     return autofill(name="foobar")(DefaultSettings)
 
 
-@pytest.fixture
+@pytest.fixture()
 def partial_settings() -> type[PartialSettings]:
     return autofill(name="foobar")(PartialSettings)
 
 
-@pytest.fixture
+@pytest.fixture()
 def nested_settings() -> type[NestedSettings]:
     return autofill(name="foobar")(NestedSettings)

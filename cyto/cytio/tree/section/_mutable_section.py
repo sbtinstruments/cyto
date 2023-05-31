@@ -1,9 +1,10 @@
 from __future__ import annotations
 
+from collections.abc import Iterable, Iterator
 from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
 from types import TracebackType
-from typing import Iterable, Iterator, Literal, Optional
+from typing import Literal
 
 from pydantic import BaseModel, Field
 
@@ -19,10 +20,10 @@ class _MutableSection(BaseModel):
             lower=datetime.now(timezone.utc)
         )
     )
-    planned_duration: Optional[timedelta] = None
+    planned_duration: timedelta | None = None
     hints: set[SectionHint] = Field(default_factory=set)
     children: dict[str, _MutableSection] = Field(default_factory=dict)
-    active_child: Optional[_MutableSection] = None
+    active_child: _MutableSection | None = None
 
     @property
     def planned(self) -> time_interval.ClosedOpen:
@@ -43,8 +44,8 @@ class _MutableSection(BaseModel):
         self,
         name: str,
         *,
-        planned_duration: Optional[timedelta] = None,
-        hints: Optional[Iterable[SectionHint]] = None,
+        planned_duration: timedelta | None = None,
+        hints: Iterable[SectionHint] | None = None,
     ) -> Iterator[_MutableSection]:
         if hints is None:
             hints = set()
@@ -68,9 +69,9 @@ class _MutableSection(BaseModel):
 
     def __exit__(  # type: ignore[return]
         self,
-        exc_type: Optional[type[BaseException]],
-        exc_value: Optional[BaseException],
-        traceback: Optional[TracebackType],
+        exc_type: type[BaseException] | None,
+        exc_value: BaseException | None,
+        traceback: TracebackType | None,
     ) -> bool | None:
         self.actual = time_interval.closed_open(
             self.actual.lower, datetime.now(timezone.utc)

@@ -9,17 +9,16 @@
 # Unfortunately, pylint matches fixtures based on argument names.
 # Therefore, redefinitions can't be avoided.
 
+
 # mypy: disable-error-code=no-untyped-def
 # Hopefully, pytest changes soon so we don't need to ignore no-untyped-def anymore.
 # See https://github.com/pytest-dev/pytest/issues/7469
-from ..conftest import Argv
 from .conftest import DefaultSettings
 
 
 def test_etc_precedence(
     fs,
     default_settings: type[DefaultSettings],
-    argv: Argv,
 ) -> None:
     fs.create_file("/etc/foobar/0.json", contents='{ "my_int": 0 }')
     fs.create_file("/etc/foobar/1.json", contents='{ "my_int": 1 }')
@@ -40,7 +39,6 @@ def test_etc_precedence(
 def test_etc_vs_cwd_precedence(
     fs,
     default_settings: type[DefaultSettings],
-    argv: Argv,
 ) -> None:
     fs.create_file("/etc/foobar/a.json", contents='{ "my_int": 1 }')
     fs.create_file("./a.foobar.json", contents='{ "my_int": 2 }')
@@ -52,7 +50,6 @@ def test_cwd_vs_env_precedence(
     fs,
     monkeypatch,
     default_settings: type[DefaultSettings],
-    argv: Argv,
 ) -> None:
     fs.create_file("./a.foobar.json", contents='{ "my_int": 2 }')
     monkeypatch.setenv("foobar_my_int", "3")
@@ -63,7 +60,6 @@ def test_cwd_vs_env_precedence(
 def test_env_vs_kwarg_precedence(
     monkeypatch,
     default_settings: type[DefaultSettings],
-    argv: Argv,
 ) -> None:
     monkeypatch.setenv("foobar_my_int", "3")
     settings = default_settings(my_int=4)

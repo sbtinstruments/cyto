@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 import logging
+from collections.abc import Iterator
 from contextlib import contextmanager
-from typing import Any, Iterator, TypeVar
+from typing import Any, TypeVar
 
 from ....model import FrozenModel
 from .._broadcast_value import BroadcastValue, MaybeValue, NoValue
@@ -13,11 +14,17 @@ T = TypeVar("T", bound=FrozenModel)
 
 
 class BroadcastModel(BroadcastValue[T]):
+    """Broadcast of a model that publishes on each change to said model."""
+
     def __init__(self, value: MaybeValue[T] = NoValue) -> None:
         super().__init__(value=value)
 
     @contextmanager
     def mutate(self) -> Iterator[dict[str, Any]]:
+        """Make changes to this model.
+
+        Automatically publishes the changes when you exit the context manager.
+        """
         if self.latest_value is NoValue:
             raise RuntimeError(
                 "You must initialize this broadcast before you can mutate it"
@@ -28,4 +35,4 @@ class BroadcastModel(BroadcastValue[T]):
             yield mutable_value
         finally:
             new_value = type(self.latest_value)(**mutable_value)
-            self.set(new_value)
+            self.publish(new_value)  # type: ignore[arg-type]

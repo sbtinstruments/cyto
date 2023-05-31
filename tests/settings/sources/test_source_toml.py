@@ -12,14 +12,12 @@
 # mypy: disable-error-code=no-untyped-def
 # Hopefully, pytest changes soon so we don't need to ignore no-untyped-def anymore.
 # See https://github.com/pytest-dev/pytest/issues/7469
-from ...conftest import Argv
 from ..conftest import Album, MyTunesSettings, Track, Zoobar2000Settings
 
 
 def test_set_basic_field(
     fs,
     mytunes_settings: type[MyTunesSettings],
-    argv: Argv,
 ) -> None:
     fs.create_file("/etc/mytunes/first.toml", contents='theme = "dark"')
     fs.create_file("./second.mytunes.toml", contents="volume = 81")
@@ -37,7 +35,6 @@ def test_set_basic_field(
 def test_complex_hierarchy(
     fs,
     zoobar2000_settings: type[Zoobar2000Settings],
-    argv: Argv,
 ) -> None:
     contents = """
         [user_favourites]
@@ -79,7 +76,6 @@ def test_complex_hierarchy(
 def test_merging(
     fs,
     zoobar2000_settings: type[Zoobar2000Settings],
-    argv: Argv,
 ) -> None:
     contents = """
         [user_favourites]

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from types import TracebackType
-from typing import Generic, Literal, Optional, Type, TypeVar, Union, cast
+from typing import Generic, Literal, TypeVar, Union, cast
 
 from anyio import BrokenResourceError, WouldBlock, create_memory_object_stream
 from anyio.streams.memory import MemoryObjectReceiveStream, MemoryObjectSendStream
@@ -18,7 +18,8 @@ class NoValue:  # pylint: disable=too-few-public-methods
     pass
 
 
-MaybeValue = Union[T, Type[NoValue]]
+# TODO: Figure out why mypy can't use the pipe syntax for unions in this case.
+MaybeValue = Union[T, type[NoValue]]  # noqa: UP007
 
 
 @dataclass(frozen=True)
@@ -53,7 +54,7 @@ class BroadcastValue(Generic[T]):
     def latest_value(self) -> MaybeValue[T]:
         return self._latest_value
 
-    def subscribe(self, *, seed: Optional[Seed] = None) -> MemoryObjectReceiveStream[T]:
+    def subscribe(self, *, seed: Seed | None = None) -> MemoryObjectReceiveStream[T]:
         if self._closed:
             raise RuntimeError("Can't subscribe to closed broadcast")
 
@@ -66,14 +67,13 @@ class BroadcastValue(Generic[T]):
         if seed == "latest-value":
             if self._latest_value is not NoValue:
                 sub.send_stream.send_nowait(cast(T, self._latest_value))
-        elif seed == "first-value":
-            if self._first_value is not NoValue:
-                sub.send_stream.send_nowait(cast(T, self._first_value))
+        elif seed == "first-value" and self._first_value is not NoValue:
+            sub.send_stream.send_nowait(cast(T, self._first_value))
         return sub.receive_stream
 
-    def set(self, value: T) -> None:
+    def publish(self, value: T) -> None:
         if self._closed:
-            raise RuntimeError("Can't set value of closed broadcast")
+            raise RuntimeError("Can't publish value of closed broadcast")
 
         if self._first_value is NoValue:
             self._first_value = value
@@ -105,8 +105,8 @@ class BroadcastValue(Generic[T]):
 
     def __exit__(  # type: ignore[return]
         self,
-        exc_type: Optional[type[BaseException]],
-        exc_value: Optional[BaseException],
-        traceback: Optional[TracebackType],
+        exc_type: type[BaseException] | None,
+        exc_value: BaseException | None,
+        traceback: TracebackType | None,
     ) -> bool | None:
         self.close()

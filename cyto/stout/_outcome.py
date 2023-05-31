@@ -1,4 +1,6 @@
-from typing import Any, AsyncContextManager, AsyncIterable, Iterable
+from collections.abc import AsyncIterable, Iterable
+from contextlib import AbstractAsyncContextManager
+from typing import Any
 
 from pydantic import Field, constr
 
@@ -23,7 +25,9 @@ class Outcome(FrozenModel):
     #
     # Note that mypy doesn't recognize `Code` as a type. It should be
     # `Type[str]`. For now, we simply ignore the error.
-    messages: dict[Code, Message] = Field(default_factory=dict)  # type: ignore
+    messages: dict[Code, Message] = Field(  # type: ignore[valid-type]
+        default_factory=dict,
+    )
 
     def keynote(self) -> Keynote:
         """Return the keynote of the result (if any).
@@ -63,4 +67,4 @@ class Outcome(FrozenModel):
             return None
 
 
-OutcomeStream = AsyncContextManager[AsyncIterable[Outcome]]
+OutcomeStream = AbstractAsyncContextManager[AsyncIterable[Outcome]]

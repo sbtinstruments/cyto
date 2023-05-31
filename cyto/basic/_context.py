@@ -1,13 +1,13 @@
 from __future__ import annotations
 
-from contextlib import AsyncExitStack
+from contextlib import AbstractAsyncContextManager, AsyncExitStack
 from types import TracebackType
-from typing import AsyncContextManager, Generic, TypeVar
+from typing import Generic, TypeVar
 
 T = TypeVar("T")
 
 
-class AsyncContextStack(AsyncContextManager[T], Generic[T]):
+class AsyncContextStack(AbstractAsyncContextManager[T], Generic[T]):
     """Combine several context managers into one via an AsyncExitStack."""
 
     def __init__(self) -> None:

@@ -1,4 +1,5 @@
-from typing import Any, Hashable, Iterator, MutableMapping, TypeVar
+from collections.abc import Hashable, Iterator, MutableMapping
+from typing import Any, TypeVar
 
 T = TypeVar("T")
 
@@ -12,7 +13,7 @@ class InstanceMapping:
     def __getitem__(self, type_: type[T]) -> T:
         value = self._base[type_]
         if not isinstance(value, type_):
-            raise RuntimeError(f"Invalid value stored for type '{type_}'")
+            raise TypeError(f"Invalid value stored for type '{type_}'")
         return value
 
     def __setitem__(self, type_: type[T], value: T) -> None:
@@ -27,12 +28,12 @@ class InstanceMapping:
     def __len__(self) -> int:
         return len(self._base)
 
-    def set(self, value: Any) -> None:
+    def setauto(self, value: Any) -> None:
         self[type(value)] = value
 
     def setdefault(self, default: T) -> T:
         type_ = type(default)
         value = self._base.setdefault(type_, default)
         if not isinstance(value, type(default)):
-            raise RuntimeError(f"Invalid value stored for type: '{type_}'")
+            raise TypeError(f"Invalid value stored for type: '{type_}'")
         return value

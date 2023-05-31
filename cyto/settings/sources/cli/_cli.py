@@ -2,23 +2,11 @@ from __future__ import annotations
 
 import json
 import sys
-from collections import defaultdict
+from collections.abc import Container, Iterable, Mapping, Sequence
 from dataclasses import dataclass
 from datetime import timedelta
 from enum import Enum
-from typing import (
-    Any,
-    Container,
-    DefaultDict,
-    Iterable,
-    Literal,
-    Mapping,
-    Optional,
-    Sequence,
-    Union,
-    get_args,
-    get_origin,
-)
+from typing import Any, Literal, get_args, get_origin
 
 import click
 from pydantic import BaseModel, BaseSettings
@@ -34,7 +22,7 @@ from .._api_models import CliExtras
 try:
     from rich_click import RichCommand as Command
 except ImportError:
-    Command = click.Command
+    Command = click.Command  # type: ignore[assignment, misc]
 
 
 def cli_settings_source(
@@ -88,7 +76,7 @@ def cli_settings_source(
         command = Command(name=name, callback=_set_result, params=params)
         # Per default, click calls `sys.exit` whenever the command is done.
         # We don't want this behaviour, so we disable it with `standalone_mode=False`.
-        status_code: Optional[int] = command.main(standalone_mode=False)
+        status_code: int | None = command.main(standalone_mode=False)
         # If `code` is set, the user asked for help (e.g., via "--help").
         # In this case, we exit the application right away.
         if status_code is not None:
@@ -132,27 +120,31 @@ def _kwargs_to_settings(
 
 
 def _to_options(
-    model: Union[BaseModel, type[BaseModel]],
+    model: BaseModel | type[BaseModel],
     delimiter: str,
     internal_delimiter: str,
     *,
-    parent_path: tuple[str, ...] = tuple(),
+    parent_path: tuple[str, ...] = (),
 ) -> Iterable[click.Option]:
-    """Convert `pydantic.BaseModel` to the equivalent `click.Option`s."""
-    # Let's use an example to explain the code below as we go along.
-    # A simple model-within-a-model:
-    #
-    #     class CoffeePreference(BaseModel):
-    #         cream_and_sugar: bool
-    #
-    #     class Coffee(BaseModel):
-    #         roast_level: int
-    #         preference: CoffeePreference
-    #
-    # In our example, there are only three fields in total:
-    #   1. `roast_level` (from the root model)
-    #   2. `preference` (from the root model)
-    #   3. `cream_and_sugar` (from the nested model)
+    """Convert `pydantic.BaseModel` to the equivalent `click.Option`s.
+
+    ## Example to explain the implementation
+
+    Let's use an example to explain the code below as we go along.
+    A simple model-within-a-model:
+
+        class CoffeePreference(BaseModel):
+            cream_and_sugar: bool
+
+        class Coffee(BaseModel):
+            roast_level: int
+            preference: CoffeePreference
+
+    In our example, there are only three fields in total:
+      1. `roast_level` (from the root model)
+      2. `preference` (from the root model)
+      3. `cream_and_sugar` (from the nested model)
+    """
 
     # We go through all the fields of the model.
     for field in model.__fields__.values():
@@ -204,7 +196,7 @@ def _to_options(
                 field.outer_type_,
                 delimiter,
                 internal_delimiter,
-                parent_path=parent_path + (kebab_name,),
+                parent_path=(*parent_path, kebab_name),
             )
             continue
         # If the field isn't a model itself, we call it a "simple" field.
@@ -266,7 +258,7 @@ class _ParamDecls:
         # `base_option_name` is:
         #   1. "roast-level"
         #   2. "preference.cream-and-sugar".
-        base_option_name = delimiter.join(parent_path + (kebab_name,))
+        base_option_name = delimiter.join((*parent_path, kebab_name))
         # `click` expects the full option name (with a "--" prefix)
         #
         # `full_option_name` is
@@ -323,7 +315,7 @@ def _full_option_name(
     # Fall back to a simple "no-" prefix to the "enable" flag
     else:
         disable_flag = f"no-{kebab_name}"
-    full_disable_flag = delimiter.join(parent_path + (disable_flag,))
+    full_disable_flag = delimiter.join((*parent_path, disable_flag))
     return full_option_name + f"/--{full_disable_flag}"
 
 
@@ -335,7 +327,7 @@ class JsonType(click.ParamType):
     # The `self.fail` call always raises. Pylint doesn't know this and complains
     # about inconsistent return statements.
     def convert(  # pylint: disable=inconsistent-return-statements
-        self, value: str, param: Optional[click.Parameter], ctx: Optional[click.Context]
+        self, value: str, param: click.Parameter | None, ctx: click.Context | None
     ) -> Any:
         """Convert raw JSON string to a dict."""
         try:
@@ -402,11 +394,13 @@ class _Option(click.Option):
         )
 
 
-SingleClickParamType = Union[type, click.ParamType]
-ClickParamType = Union[SingleClickParamType, tuple[SingleClickParamType, ...]]
+SingleClickParamType = type | click.ParamType
+ClickParamType = SingleClickParamType | tuple[SingleClickParamType, ...]
 
 
-def _clickify_type(type_: type, extras: CliExtras) -> ClickParamType:
+def _clickify_type(  # pylint: disable=too-many-return-statements
+    type_: type, extras: CliExtras
+) -> ClickParamType:
     # Early out if the user explicitly forces the field type to JSON
     if extras.force_json:
         return JSON_TYPE
@@ -456,7 +450,7 @@ def _clickify_default(
     return default
 
 
-def _get_show_default(default: Any, type_: type) -> Union[bool, str]:
+def _get_show_default(default: Any, type_: type) -> bool | str:
     # click's help message for an empty container is "[default: ]". This can
     # confuse the user user. Therefore, we explicitly set the `show_default`
     # to, e.g., "empty list". In turn, click displays this as
@@ -571,13 +565,13 @@ def _clickify_arg(arg: type) -> SingleClickParamType:
     return arg
 
 
-def _clickify_container_default(default: Any) -> Optional[tuple[Any, ...]]:
+def _clickify_container_default(default: Any) -> tuple[Any, ...] | None:
     assert issubclass(type(default), Sequence)
     return tuple(v.json() if isinstance(v, BaseModel) else v for v in default)
 
 
 def _type_name(type_: type) -> str:
-    origin: Optional[type] = get_origin(type_)
+    origin: type | None = get_origin(type_)
     if origin is None:
         return type_.__name__
     return origin.__name__

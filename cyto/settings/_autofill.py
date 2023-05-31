@@ -1,20 +1,21 @@
+from collections.abc import Callable, Iterable
 from json import loads as json_loads
 from pathlib import Path
-from typing import Any, Callable, Iterable, Optional, TypeVar
+from typing import Any, TypeVar
 
 from pydantic import BaseSettings
 from pydantic.env_settings import SettingsSourceCallable
 
 from .sources.glob import GlobSource, Loader
 
-toml_loads: Optional[Loader]
+toml_loads: Loader | None
 try:
     # TODO: Replace with tomllib from Python 3.11
     from toml import loads as toml_loads  # type: ignore[no-redef]
 except ImportError:
     toml_loads = None
 
-cli_settings_source: Optional[Callable[..., SettingsSourceCallable]]
+cli_settings_source: Callable[..., SettingsSourceCallable] | None
 try:
     from .sources.cli import cli_settings_source
 except ImportError:
@@ -26,8 +27,8 @@ SettingsT = TypeVar("SettingsT", bound=BaseSettings)
 def autofill(
     name: str,
     *,
-    extra_sources: Iterable[SettingsSourceCallable] = tuple(),
-    cli_settings: Optional[dict[str, Any]] = None,
+    extra_sources: Iterable[SettingsSourceCallable] = (),
+    cli_settings: dict[str, Any] | None = None,
 ) -> Callable[[type[SettingsT]], type[SettingsT]]:
     """Fill in the blanks based on setting files, env vars, etc."""
     if cli_settings is None:
@@ -38,7 +39,8 @@ def autofill(
         if hasattr(base, "__autofill__"):
             return base
 
-        class _Wrapper(base):  # type: ignore[valid-type, misc] # pylint: disable=too-few-public-methods
+        # pylint: disable=too-few-public-methods
+        class _Wrapper(base):  # type: ignore[valid-type, misc]
             class Config:  # pylint: disable=missing-docstring,too-few-public-methods
                 env_prefix = f"{name}_"
 
@@ -53,7 +55,7 @@ def autofill(
                     sources = [
                         # First (highest precedence), settings given via the constructor
                         # itself directly within Python. E.g.:
-                        #   settings = Settings(debug=True, background=True)
+                        #   >>> settings = Settings(debug=True, background=True)
                         init_settings
                     ]
                     if cli_settings_source is not None:

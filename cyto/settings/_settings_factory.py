@@ -1,4 +1,5 @@
-from typing import Callable, Iterable, TypeVar
+from collections.abc import Callable, Iterable
+from typing import TypeVar
 
 from pydantic.env_settings import SettingsSourceCallable
 
@@ -10,7 +11,7 @@ T = TypeVar("T")
 
 
 def settings_factory(
-    *, extra_sources: Iterable[SettingsSourceCallable] = tuple()
+    *, extra_sources: Iterable[SettingsSourceCallable] = ()
 ) -> Callable[[ProductSpec[T]], T]:
     def _settings_factory(spec: ProductSpec[T]) -> T:
         if spec.annotation not in _SETTINGS.values():
@@ -23,7 +24,7 @@ def settings_factory(
 
         for _, setting in all_settings:
             if isinstance(setting, spec.annotation):
-                return setting
+                return setting  # type: ignore[no-any-return]
         raise CanNotProduce
 
     return _settings_factory

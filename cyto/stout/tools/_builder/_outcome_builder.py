@@ -2,9 +2,10 @@ from __future__ import annotations
 
 import logging
 from collections import defaultdict
+from collections.abc import Iterator
 from contextlib import ExitStack, contextmanager, suppress
 from types import TracebackType
-from typing import Any, Iterator, Optional, Type, TypedDict
+from typing import Any, TypedDict, cast
 
 from mergedeep import Strategy
 
@@ -32,21 +33,22 @@ OutcomeLayerMap = dict[str, Outcome]
 
 
 class _StopNow(BaseException):
-    pass
+    def __init__(self, message: str) -> None:
+        super().__init__(f"Stop now due to: {message}")
 
 
 class OutcomeBuilder(BroadcastModel[Outcome]):
     def __init__(
         self,
         *,
-        stop_on_message: Optional[bool] = None,
+        stop_on_message: bool | None = None,
     ) -> None:
         super().__init__(Outcome())
         if stop_on_message is None:
             stop_on_message = False
         self._stop_on_message = stop_on_message
         self._layers: defaultdict[str, Outcome] = defaultdict(Outcome)
-        self._stack: Optional[ExitStack] = None
+        self._stack: ExitStack | None = None
 
     def __getitem__(self, layer_name: str) -> Outcome:
         return self._layers[layer_name]
@@ -64,21 +66,29 @@ class OutcomeBuilder(BroadcastModel[Outcome]):
             )
         self._push()
 
+    # TODO: Use the `override` decorator when we get python 3.12
     @contextmanager
-    def mutate(self, layer_name: str | None = None) -> Iterator[MutableOutcome]:
+    def mutate(  # type: ignore[override]
+        self,
+        layer_name: str | None = None,
+    ) -> Iterator[MutableOutcome]:
+        """Make changes to the outcome at the given layer.
+
+        Automatically publishes the changes when you exit the context manager.
+        """
         if layer_name is None:
             layer_name = "__default__"
         layer = self._layers[layer_name]
         mutable_layer = layer.dict()
         try:
-            yield mutable_layer
+            yield cast(MutableOutcome, mutable_layer)
         finally:
             self._layers[layer_name] = Outcome.parse_obj(mutable_layer)
             self._push()
 
     @contextmanager
     def catch_message(self) -> Iterator[None]:
-        """Catch `OutcomeMessage` and set it for this outcome.
+        """Catch `OutcomeMessage` and set it in the `__default__` layer.
 
         Raises `SystemExit` if `stop_on_message` is set.
         """
@@ -96,11 +106,11 @@ class OutcomeBuilder(BroadcastModel[Outcome]):
         # Early out if there is no change
         if next_value == self.latest_value:
             return
-        self.set(next_value)
+        self.publish(next_value)
         # Optionally, raise as soon as we get a message
         if self._stop_on_message and next_value.messages:
             _LOGGER.info("Stop now because of message in outcome")
-            raise _StopNow("Stop now because of message in outcome")
+            raise _StopNow("Message in outcome")
 
     def __enter__(self) -> OutcomeBuilder:
         assert self._stack is None
@@ -114,9 +124,9 @@ class OutcomeBuilder(BroadcastModel[Outcome]):
 
     def __exit__(
         self,
-        exc_type: Optional[Type[BaseException]],
-        exc_value: Optional[BaseException],
-        traceback: Optional[TracebackType],
+        exc_type: type[BaseException] | None,
+        exc_value: BaseException | None,
+        traceback: TracebackType | None,
     ) -> bool | None:
         assert self._stack is not None
         return self._stack.__exit__(exc_type, exc_value, traceback)

@@ -2,16 +2,15 @@ from __future__ import annotations
 
 import logging
 from collections import defaultdict
-from collections.abc import MutableMapping
+from collections.abc import Iterator, MutableMapping
 from contextlib import contextmanager
-from typing import Any, Iterator
+from typing import Any
 
 from anyio.streams.memory import MemoryObjectReceiveStream
-from pydantic import parse_obj_as, validate_arguments
+from pydantic import validate_arguments
 
 from ...cytio.broadcast import BroadcastValue
-from ...stout import Message, Outcome, ResultMap
-from ...stout.keynote import Keynote
+from ...stout import Message, ResultMap
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -45,11 +44,11 @@ class LayerMap(OutcomeLayerMap):
     @validate_arguments
     def __setitem__(self, layer_name: str, value: ResultMap) -> None:
         self._data[layer_name] = value
-        self._broadcast.set(self)
+        self._broadcast.publish(self)
 
     def __delitem__(self, layer_name: str) -> None:
         del self._data[layer_name]
-        self._broadcast.set(self)
+        self._broadcast.publish(self)
 
     def __iter__(self) -> Iterator[str]:
         return iter(self._data)
@@ -89,11 +88,11 @@ class MessageMap(MutableMapping[str, Message]):
 
     def __setitem__(self, code: str, value: Message) -> None:
         self._data[code] = value
-        self._broadcast.set(self)
+        self._broadcast.publish(self)
 
     def __delitem__(self, code: str) -> None:
         del self._data[code]
-        self._broadcast.set(self)
+        self._broadcast.publish(self)
 
     def __iter__(self) -> Iterator[str]:
         return iter(self._data)

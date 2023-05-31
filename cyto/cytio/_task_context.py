@@ -11,7 +11,9 @@ from ..basic import AsyncContextStack
 T = TypeVar("T")
 
 
-class TaskContext(AsyncContextStack[T], Generic[T]):
+class TaskContext(  # pylint: disable=too-few-public-methods
+    AsyncContextStack[T], Generic[T]
+):
     """`AsyncContextStack` with a built-in `TaskGroup` for background work.
 
     That's it. Don't need the `TaskGroup`? Just use a regular `AsyncContextStack`.

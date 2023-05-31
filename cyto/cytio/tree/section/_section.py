@@ -10,7 +10,7 @@ class Section(FrozenModel):
     actual: time_interval.ClosedOpen
     planned: time_interval.ClosedOpen
     hints: frozenset[SectionHint] = frozenset()
-    children: tuple[Section, ...] = tuple()
+    children: tuple[Section, ...] = ()
 
     @classmethod
     def from_mutable_section(cls, mutable_section: _MutableSection) -> Section:
@@ -24,11 +24,3 @@ class Section(FrozenModel):
                 for child in mutable_section.children.values()
             ),
         )
-
-    def pretty_print(self, *, level: int = 0) -> None:
-        indent = " " * level * 4
-        if level == 0:
-            print()
-        print(f"{indent}{self.name}")
-        for child in self.children:
-            child.pretty_print(level=level + 1)

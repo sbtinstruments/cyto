@@ -10,3 +10,16 @@ from ._keynote import (
     TentativeItem,
     ValueType,
 )
+
+__all__ = (
+    "ContentSlide",
+    "FinalItem",
+    "Keynote",
+    "RawSlide",
+    "SentinelSlide",
+    "Slide",
+    "Subset",
+    "Tentative",
+    "TentativeItem",
+    "ValueType",
+)

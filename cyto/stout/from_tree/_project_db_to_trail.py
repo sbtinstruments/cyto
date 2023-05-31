@@ -1,12 +1,12 @@
 from __future__ import annotations
 
 import logging
+from collections.abc import Iterable, Iterator
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Iterable, Iterator, Optional
+from itertools import pairwise
 
-from ...basic import pairwise
-from ...cytio.tree import provide
+from ...cytio.tree import fetch
 from ...interval import time_interval
 from .._project_database import Project, ProjectDatabase
 from .._trail import Trail, TrailSection
@@ -26,8 +26,8 @@ def project_db_to_trail(db: ProjectDatabase) -> Trail:
 
 
 def _project_db_to_trail_sections(db: ProjectDatabase) -> Iterator[TrailSection]:
-    config = provide(ProjectDatabaseToTrailConfig)
-    projects: Iterable[Project] = db.all()
+    config = fetch(ProjectDatabaseToTrailConfig)
+    projects: Iterable[Project] = db.all_projects()
 
     if config.only_include is not None:
         projects = (
@@ -48,7 +48,10 @@ def _project_db_to_trail_sections(db: ProjectDatabase) -> Iterator[TrailSection]
         elif isinstance(marker_first, _EndMarker):
             stack.pop()
         else:
-            raise RuntimeError("Unknown marker")
+            # TRY004: Normally, we prefer `TypeError` but that only applies if
+            # it's an *argument* of an invalid type. In this case, `marker_first` is
+            # an internal detail.
+            raise RuntimeError("Unknown marker")  # noqa: TRY004
         try:
             marker_project = stack[-1]
         except IndexError:
@@ -60,12 +63,6 @@ def _project_db_to_trail_sections(db: ProjectDatabase) -> Iterator[TrailSection]
             ),
             hints=marker_project.hints,
         )
-        # # The "persist" hint basically means: This is the last segment so
-        # # don't show the rest (if any). We use it as a hack to avoid an
-        # # unwanted transition from "Emptying" to "Measuring" and the very
-        # # end of the measure program.
-        # if "persist" in marker_outline.hints:
-        #     return
 
 
 def _markers(project: Project) -> Iterator[_Marker]:
@@ -95,7 +92,7 @@ class _BeginMarker(_Marker):  # pylint: disable=too-few-public-methods
 
 class _EndMarker(_Marker):  # pylint: disable=too-few-public-methods
     @classmethod
-    def from_project(cls, project: Project) -> Optional[_EndMarker]:
+    def from_project(cls, project: Project) -> _EndMarker | None:
         if isinstance(project.actual, time_interval.ClosedOpenFin):
             time = project.actual.upper
         elif isinstance(project.planned, time_interval.ClosedOpenFin):

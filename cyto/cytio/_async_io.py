@@ -1,5 +1,5 @@
+from collections.abc import AsyncIterable
 from io import TextIOBase
-from typing import AsyncIterable
 
 from anyio import to_thread
 

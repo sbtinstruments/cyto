@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Optional, TypeVar
+from typing import Any, TypeVar
 
 from mergedeep import Strategy, merge
 from pydantic import BaseModel, Extra
@@ -14,7 +14,7 @@ class FrozenModel(BaseModel):
     # TODO: Add root validator that ensure that all members are frozen as well
 
     def update(
-        self: Derived, strategy: Optional[Strategy] = None, /, **kwargs: Any
+        self: Derived, strategy: Strategy | None = None, /, **kwargs: Any
     ) -> Derived:
         """Return copy of this model updated with the given values.
 
@@ -32,7 +32,6 @@ class FrozenModel(BaseModel):
             key: value.dict() if isinstance(value, BaseModel) else value
             for key, value in kwargs.items()
         }
-        # unvalidated_copy = self.copy(update=kwargs)
         unvalidated_dict = merge({}, self.dict(), patch, strategy=strategy)
         # For now, we simply call the constructor to trigger validation
         return type(self)(**unvalidated_dict)

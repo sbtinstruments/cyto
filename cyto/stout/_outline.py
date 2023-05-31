@@ -1,6 +1,8 @@
 from __future__ import annotations
 
-from typing import Any, AsyncContextManager, AsyncIterable
+from collections.abc import AsyncIterable
+from contextlib import AbstractAsyncContextManager
+from typing import Any
 
 from ..model import FrozenModel, none_as_null
 from ._trail import Trail
@@ -29,4 +31,4 @@ class Outline(FrozenModel):
             none_as_null(schema, model)
 
 
-OutlineStream = AsyncContextManager[AsyncIterable[Outline]]
+OutlineStream = AbstractAsyncContextManager[AsyncIterable[Outline]]

@@ -1,8 +1,9 @@
 import logging
 import signal
 import sys
+from collections.abc import AsyncIterator, Iterable
 from contextlib import asynccontextmanager
-from typing import AsyncIterator, Iterable, Literal
+from typing import Literal
 
 import anyio
 from anyio.abc import TaskGroup, TaskStatus

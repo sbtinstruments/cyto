@@ -1,12 +1,12 @@
 from __future__ import annotations
 
 import logging
+from collections.abc import Iterable
 from dataclasses import dataclass, replace
 from typing import (
     Annotated,
     Any,
     Generic,
-    Iterable,
     Literal,
     Protocol,
     TypeVar,
@@ -27,11 +27,12 @@ T = TypeVar("T")
 class ProductFactory(Generic[T], Protocol):  # pylint: disable=too-few-public-methods
     """Given a produc spec, return the corresponding product."""
 
-    def __call__(self, __spec: ProductSpec[T]) -> T:  # noqa: D102
+    def __call__(self, __spec: ProductSpec[T]) -> T:
         ...
 
 
-class CanNotProduce(ValueError):
+# N818: This exception an actual error. It's a signal/sentinel.
+class CanNotProduce(ValueError):  # noqa: N818
     pass
 
 
@@ -42,7 +43,9 @@ ProductSource = Literal["cli", "env", "file", "db", "default"]
 class ProductSpec(Generic[T]):
     source: ProductSource
     factory: ProductFactory[T]
-    annotation: type[T] = Any
+    annotation: type[
+        T
+    ] | Any = Any  # Any annotation with a `type` as its first argument
     name: str | None = None
 
 
@@ -58,7 +61,7 @@ class ProductRegistry:
         *,
         source: ProductSource,
         factory: ProductFactory[T],
-        annotation: type[T] = Any,
+        annotation: type[T] | Any = Any,
         product_name: str | None = None,
     ) -> None:
         spec: ProductSpec[Any] = ProductSpec(

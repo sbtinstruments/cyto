@@ -1,7 +1,7 @@
 import logging
 import os
+from collections.abc import AsyncIterable
 from io import TextIOBase
-from typing import AsyncIterable
 
 from anyio import IncompleteRead
 from anyio.abc import ByteReceiveStream

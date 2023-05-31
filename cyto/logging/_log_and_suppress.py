@@ -1,6 +1,6 @@
 import logging
+from collections.abc import Iterator
 from contextlib import contextmanager
-from typing import Iterator
 
 from ._log_message import frames_to_log_message
 

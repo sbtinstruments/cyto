@@ -1,5 +1,3 @@
-from typing import Optional
-
 from pydantic import BaseModel
 
 
@@ -12,4 +10,4 @@ class CliExtras(BaseModel):
     # Defaults to the "enable" name prefixed with "no-". E.g.: "debug" becomes
     # "no-debug".
     # Don't prefix the disable flag with "--".
-    disable_flag: Optional[str] = None
+    disable_flag: str | None = None

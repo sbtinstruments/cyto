@@ -1,14 +1,14 @@
 from __future__ import annotations
 
+from collections.abc import Iterator
 from contextlib import AbstractContextManager, contextmanager
+from itertools import pairwise
 from types import TracebackType
-from typing import Iterator, Optional
 
 import networkx as nx
 from anyio.streams.memory import MemoryObjectReceiveStream, MemoryObjectSendStream
 from networkx.classes.reportviews import NodeDataView, NodeView
 
-from ....basic import pairwise
 from ...broadcast import BroadcastValue
 from ._models import Node, NodePath
 from ._task_data import TaskData
@@ -81,16 +81,8 @@ class TaskTree(AbstractContextManager["TaskTree"]):
             raise RuntimeError("No longer an arborescence")
         self._broadcast_change()
 
-    def pretty_print(self, *, node: Optional[Node] = None, level: int = 0) -> None:
-        if node is None:
-            node = self._root
-        indent = " " * level * 4
-        print(f"{indent}{node.name}")
-        for neighbour in self._graph[node]:
-            self.pretty_print(node=neighbour, level=level + 1)
-
     def _broadcast_change(self) -> None:
-        self._change_broadcast.set(self)
+        self._change_broadcast.publish(self)
 
     def __enter__(self) -> TaskTree:
         self._broadcast_change()
@@ -98,8 +90,8 @@ class TaskTree(AbstractContextManager["TaskTree"]):
 
     def __exit__(
         self,
-        exc_type: Optional[type[BaseException]],
-        exc_value: Optional[BaseException],
-        traceback: Optional[TracebackType],
+        exc_type: type[BaseException] | None,
+        exc_value: BaseException | None,
+        traceback: TracebackType | None,
     ) -> bool | None:
         return self._change_broadcast.__exit__(exc_type, exc_value, traceback)

@@ -1,11 +1,11 @@
 import logging
 
-from pytest import LogCaptureFixture
+import pytest
 
 from cyto.logging import log_duration
 
 
-def test_log_duration(caplog: LogCaptureFixture) -> None:
+def test_log_duration(caplog: pytest.LogCaptureFixture) -> None:
     caplog.set_level(logging.DEBUG)
     with log_duration():
         pass

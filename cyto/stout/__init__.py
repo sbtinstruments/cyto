@@ -19,3 +19,22 @@ except ImportError as exc:
     from .._extra import ExtraImportError
 
     raise ExtraImportError.from_module_name(__name__) from exc
+
+
+__all__ = (
+    "Message",
+    "MessageSeverity",
+    "Outcome",
+    "Outline",
+    "Project",
+    "ProjectDatabase",
+    "ResultMap",
+    "OutcomeSwig",
+    "OutlineSwig",
+    "Status",
+    "StatusSwig",
+    "Swig",
+    "is_status_current",
+    "Trail",
+    "TrailSection",
+)

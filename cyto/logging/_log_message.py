@@ -23,7 +23,6 @@ def frames_to_log_message(frames: list[inspect.FrameInfo] | None = None) -> str:
         parent_frame = frames[3]
     except IndexError:
         return ""
-    else:
-        func_name = parent_frame.function
-        func_line = parent_frame.lineno
+    func_name = parent_frame.function
+    func_line = parent_frame.lineno
     return f"Code block (starting at line {func_line}) in {func_name}"

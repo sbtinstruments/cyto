@@ -1,3 +1,4 @@
+# pylint:disable=duplicate-code
 from cyto.stout import Outcome, ResultMap
 from cyto.stout.keynote import FinalItem, Keynote, Subset, TentativeItem
 
