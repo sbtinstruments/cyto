@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from collections.abc import Iterable, Iterator
 from contextlib import suppress
 from typing import Any, TypeVar
@@ -8,6 +9,8 @@ from ._task_tree import InstanceMapping, Node, TaskTree
 from .current_tree import add_root_path
 
 T = TypeVar("T")
+
+_LOGGER = logging.getLogger(__name__)
 
 
 def get_first_instance(type_: type[T]) -> T:

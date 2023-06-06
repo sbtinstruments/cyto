@@ -1209,7 +1209,6 @@ files = [
 ]
 
 [extras]
-all = ["anyio", "click", "mergedeep", "networkx", "pydantic", "redis", "toml"]
 app = ["anyio", "pydantic"]
 cytio = ["anyio"]
 cytio-tree = ["anyio", "networkx", "pydantic"]
@@ -1226,4 +1225,4 @@ stout = ["portion", "pydantic", "tinydb"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "95c0d7a5c9bb1586767de7daaa8fa64a8776c6409e013f6887b1a1441b93f47b"
+content-hash = "4b1d0b79ad93f0b8f05a6c7874b32d109b2ca4e78db10418ae5f588c5e3d4058"

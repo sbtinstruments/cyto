@@ -26,7 +26,7 @@ def project_db_to_trail(db: ProjectDatabase) -> Trail:
 
 
 def _project_db_to_trail_sections(db: ProjectDatabase) -> Iterator[TrailSection]:
-    config = fetch(ProjectDatabaseToTrailConfig)
+    config = fetch(ProjectDatabaseToTrailConfig, store_produced_instance=False)
     projects: Iterable[Project] = db.all_projects()
 
     if config.only_include is not None:

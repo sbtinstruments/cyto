@@ -17,15 +17,8 @@ from ._exceptions import OutcomeMessage
 _LOGGER = logging.getLogger(__name__)
 
 
-MutableKeynote = tuple[dict[str, Any] | str, ...]
-
-
-class MutableResultMap(TypedDict):
-    keynote: MutableKeynote
-
-
 class MutableOutcome(TypedDict):
-    result: MutableResultMap | Any
+    result: Any
     messages: dict[str, Any]
 
 
@@ -138,4 +131,5 @@ def _flatten(layers: dict[str, Outcome]) -> Outcome:
     res = Outcome()
     for layer in sorted_layers:
         res = res.update(**layer.dict())
+    return res
     return res

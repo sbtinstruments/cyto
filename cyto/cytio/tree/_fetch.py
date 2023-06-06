@@ -10,21 +10,29 @@ T = TypeVar("T")
 FM = TypeVar("FM", bound=FrozenModel)
 
 
-def fetch(type_: type[T], *, factory: ProductRegistry | None = None) -> T:
+def fetch(
+    type_: type[T],
+    *,
+    factory: ProductRegistry | None = None,
+    store_produced_instance: bool | None = None,
+) -> T:
     """Return the instance (if any) of the given type for the current task path.
 
     Automatically produces an instance of the given type if there is no existing
-    instance.
+    instance. In this case (and if `store_produced_instance=True`), stores the
+    instance for the next time around.
 
     Raises `RuntimeError` if there is no existing instance and we fail to produce one.
     """
     if factory is None:
         factory = FACTORY
+    if store_produced_instance is None:
+        store_produced_instance = True
     try:
         # Traverse the task path from the current task to the root task. Get the
         # first instance of the given type.
         instance = current_path.get_first_instance(type_)
-    except KeyError:
+    except LookupError:
         # If there is no instance of the given type, we attempt to produce it
         try:
             instance = factory.produce(annotation=type_)
@@ -34,7 +42,8 @@ def fetch(type_: type[T], *, factory: ProductRegistry | None = None) -> T:
                 " no factory could produce it."
             ) from exc
         # Remember the instance for the next time around
-        current_task.instances()[type_] = instance
+        if store_produced_instance:
+            current_task.instances()[type_] = instance
     return instance
 
 
