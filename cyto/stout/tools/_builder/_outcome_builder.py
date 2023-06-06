@@ -132,4 +132,3 @@ def _flatten(layers: dict[str, Outcome]) -> Outcome:
     for layer in sorted_layers:
         res = res.update(**layer.dict())
     return res
-    return res
