@@ -11,15 +11,14 @@ T = TypeVar("T")
 
 
 def settings_factory(
-    *, extra_sources: Iterable[SettingsSourceCallable] = ()
+    *, app_name: str, extra_sources: Iterable[SettingsSourceCallable] = ()
 ) -> Callable[[ProductSpec[T]], T]:
     def _settings_factory(spec: ProductSpec[T]) -> T:
         if spec.annotation not in _SETTINGS.values():
             raise CanNotProduce
         cls = get_base_settings_class()
-        # TODO: Use app_name instead of mytest1
         # TODO: LRU cache for both `auto_cls` and `all_settings`
-        auto_cls = autofill("mytest1", extra_sources=extra_sources)(cls)
+        auto_cls = autofill(app_name, extra_sources=extra_sources)(cls)
         all_settings = auto_cls()
 
         for _, setting in all_settings:

@@ -81,7 +81,7 @@ async def _apply_action_on_signal(
     tg_scope: anyio.CancelScope,
     signal_actions: dict[int, _SignalAction],
     *,
-    task_status: TaskStatus = anyio.TASK_STATUS_IGNORED,
+    task_status: TaskStatus[anyio.CancelScope] = anyio.TASK_STATUS_IGNORED,
 ) -> None:
     """Cancel the outer cancel scope if we receive a signal."""
     with anyio.CancelScope(shield=True) as listener_scope:

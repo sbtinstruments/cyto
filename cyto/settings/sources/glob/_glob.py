@@ -1,12 +1,16 @@
 from __future__ import annotations
 
+import logging
 from collections.abc import Callable, MutableMapping
 from pathlib import Path
 from typing import Any, Protocol
 
 from pydantic import BaseSettings
 
+from ....basic import count_leaves
 from ....basic import deep_update as dict_deep_update
+
+_LOGGER = logging.getLogger(__name__)
 
 # Note that we disable D102 for `Protocol`s since it's redundant documentation.
 # Similarly, we disable too-few-public-methods since it doesn't make sense for
@@ -37,6 +41,7 @@ class GlobSource:  # pylint: disable=too-few-public-methods
         # lacking signature.
         self._update_func: Callable[[Any, Any], None]
         if deep_update:
+            # TODO: Replace with `mergedeep`
             self._update_func = dict_deep_update
         else:
             self._update_func = dict.update
@@ -45,12 +50,28 @@ class GlobSource:  # pylint: disable=too-few-public-methods
         """Return a dict with settings from the globbed files."""
         result: dict[str, Any] = {}
         for path in sorted(self._dir.glob(self._pattern)):
-            with path.open("r") as settings_file:
+            try:
                 # For now, we simply load everything into memory up front.
                 # Settings files are usually small, so this shouldn't be
                 # a problem in practice. In turn, it makes it easier to
                 # support different loaders.
-                data = settings_file.read()
-            settings = dict(self._loader(data))
+                data = path.read_text(encoding="utf8")
+            except (OSError, UnicodeDecodeError) as exc:
+                _LOGGER.warning(
+                    "We skip settings file '%s' because we can not read it: %s",
+                    path,
+                    exc,
+                )
+                continue
+            try:
+                settings = dict(self._loader(data))
+            except ValueError as exc:
+                _LOGGER.warning(
+                    "We skip settings file '%s' because we can not parse it: %s",
+                    path,
+                    exc,
+                )
+                continue
+            _LOGGER.debug("Got %d settings from '%s'", count_leaves(settings), path)
             self._update_func(result, settings)
         return result

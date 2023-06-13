@@ -4,6 +4,8 @@ from pydantic import BaseModel
 class CliExtras(BaseModel):
     """CLI-specific model settings."""
 
+    # Force click to not parse the corresponding option
+    force_unprocessed: bool = False
     # Force click to parse the corresponding option as JSON
     force_json: bool = False
     # Use a custom "disable" flag. Only valid for boolean fields.

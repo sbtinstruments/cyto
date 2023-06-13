@@ -5,6 +5,8 @@ from typing import Any, Generic, TypeVar
 
 import portion
 from portion import Interval as PortionInterval
+from portion.io import from_string as portion_from_string
+from pydantic.json import ENCODERS_BY_TYPE
 
 T = TypeVar("T")
 
@@ -28,4 +30,10 @@ class Interval(Generic[T], PortionInterval):  # type: ignore[misc]
     def validate_type(cls, val: Any) -> Interval[T]:
         if isinstance(val, cls):
             return val
+        if isinstance(val, str):
+            # TODO: Unite the `conv=float` type with the template type (`T`)
+            return cls(portion_from_string(val, conv=float))
         return cls(portion.closedopen(*val))
+
+
+ENCODERS_BY_TYPE[Interval] = str

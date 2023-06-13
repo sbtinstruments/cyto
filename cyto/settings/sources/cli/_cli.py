@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import json
+import logging
 import sys
 from collections.abc import Container, Iterable, Mapping, Sequence
+from contextlib import suppress
 from dataclasses import dataclass
 from datetime import timedelta
 from enum import Enum
@@ -17,12 +19,15 @@ from pydantic.types import Json, JsonWrapper
 from pydantic.typing import NoArgAnyCallable
 from pydantic.utils import lenient_issubclass
 
+from ....basic import count_leaves
 from .._api_models import CliExtras
 
 try:
     from rich_click import RichCommand as Command
 except ImportError:
     Command = click.Command  # type: ignore[assignment, misc]
+
+_LOGGER = logging.getLogger(__name__)
 
 
 def cli_settings_source(
@@ -73,7 +78,7 @@ def cli_settings_source(
         params: list[click.Parameter] = list(
             _to_options(settings, delimiter, internal_delimiter)
         )
-        command = Command(name=name, callback=_set_result, params=params)
+        command = Command(name=name, callback=_set_result, params=params, help=name)
         # Per default, click calls `sys.exit` whenever the command is done.
         # We don't want this behaviour, so we disable it with `standalone_mode=False`.
         status_code: int | None = command.main(standalone_mode=False)
@@ -81,6 +86,8 @@ def cli_settings_source(
         # In this case, we exit the application right away.
         if status_code is not None:
             sys.exit(status_code)
+
+        _LOGGER.debug("Got %d settings from the CLI", count_leaves(result))
 
         return result
 
@@ -125,6 +132,7 @@ def _to_options(
     internal_delimiter: str,
     *,
     parent_path: tuple[str, ...] = (),
+    parent_default: Any = None,
 ) -> Iterable[click.Option]:
     """Convert `pydantic.BaseModel` to the equivalent `click.Option`s.
 
@@ -177,6 +185,11 @@ def _to_options(
         # CLI-specific extras (settings)
         extras = field.field_info.extra.get("cli", CliExtras())
 
+        # Resolve the default value for this field
+        default = _resolve_default(
+            field.name, field.default, field.default_factory, parent_default
+        )
+
         # `field.outer_type_` is the type:
         #   1. `int`
         #   2. `CoffeePreference`
@@ -197,6 +210,7 @@ def _to_options(
                 delimiter,
                 internal_delimiter,
                 parent_path=(*parent_path, kebab_name),
+                parent_default=default,
             )
             continue
         # If the field isn't a model itself, we call it a "simple" field.
@@ -213,7 +227,7 @@ def _to_options(
             field, kebab_name, delimiter, internal_delimiter, parent_path, extras
         )
         # Then, we "clickify" the field.
-        yield _Option.from_field(field, param_decls, extras)
+        yield _Option.from_field(field, param_decls, default, extras)
 
 
 def _raise_on_delimiter_conflict(name: str, delimiter: str) -> None:
@@ -374,14 +388,16 @@ class _Option(click.Option):
 
     @classmethod
     def from_field(
-        cls, field: ModelField, param_decls: _ParamDecls, extras: CliExtras
+        cls,
+        field: ModelField,
+        param_decls: _ParamDecls,
+        default: Any,
+        extras: CliExtras,
     ) -> _Option:
         # Clickify the field's members
         type_ = _clickify_type(field.outer_type_, extras)
-        default = _clickify_default(
-            field.default, field.default_factory, field.outer_type_, extras
-        )
-        show_default = _get_show_default(field.default, field.outer_type_)
+        default = _clickify_default(default, field.outer_type_, extras)
+        show_default = _get_show_default(default, field.outer_type_)
         multiple = _get_multiple(field.outer_type_, extras)
         # Return an option constructed from the clickified field members
         return cls(
@@ -401,6 +417,10 @@ ClickParamType = SingleClickParamType | tuple[SingleClickParamType, ...]
 def _clickify_type(  # pylint: disable=too-many-return-statements
     type_: type, extras: CliExtras
 ) -> ClickParamType:
+    # Early out if the user explicitly opts to not process the field.
+    # Useful for classes that do their own processing (serialization/deserialization).
+    if extras.force_unprocessed:
+        return click.UNPROCESSED
     # Early out if the user explicitly forces the field type to JSON
     if extras.force_json:
         return JSON_TYPE
@@ -429,17 +449,16 @@ def _clickify_type(  # pylint: disable=too-many-return-statements
 
 def _clickify_default(
     default: Any,
-    default_factory: NoArgAnyCallable | None,
     type_: type,
     extras: CliExtras,
 ) -> Any:
-    # Call `default_factory` (if provided) to create a value for `default`.
-    if default_factory is not None and default is None:
-        default = default_factory()
     # Pydantic uses both `None` and `Ellipsis` to denote "no default value".
     # Click only understands `None`, so we return that.
     if default in (None, Ellipsis):
         return None
+    # Early out if the user explicitly opts to not process the field
+    if extras.force_unprocessed:
+        return default
     # Early out if the user explicitly forces the field type to JSON
     if extras.force_json or _is_mapping(type_):
         return json.dumps(default, default=pydantic_encoder)
@@ -464,6 +483,9 @@ def _get_show_default(default: Any, type_: type) -> bool | str:
 
 
 def _get_multiple(type_: type, extras: CliExtras) -> bool:
+    # Early out if the user explicitly opts to not process the field.
+    if extras.force_unprocessed:
+        return False
     # Early out if the user explicitly forces the field type to JSON
     if extras.force_json:
         return False
@@ -575,6 +597,58 @@ def _type_name(type_: type) -> str:
     if origin is None:
         return type_.__name__
     return origin.__name__
+
+
+def _resolve_default(
+    field_name: str,
+    default: Any,
+    default_factory: NoArgAnyCallable | None,
+    parent_default: Any | None,
+) -> Any:
+    """Resolve the default value (if any) for the field.
+
+    The use of this function allows scenarios such as:
+
+        class Engine(BaseModel):
+            power: float          # No default value!
+            gasoline_left: float  # No default value!
+
+        class Car(BaseModel):
+            engine: Engine = Engine(power=42.8, gasoline_left=1e3)
+
+    In this case, the CLI finds the default values for `power` and `gasoline_left`
+    through the `Car`'s default value for `engine`.
+
+    In practice, you may also want to do something like:
+
+        class Car(BaseModel):
+            engine: Engine = Field(
+                default_factory=lambda: Engine(power=42.8, gasoline_left=1e3)
+            )
+
+    This also works since the CLI calls `default_factory` to get the default value.
+    With that in mind, ensure that your `default_factory`s are compute/memory efficient
+    since we'll call `default_factory` of *every* field that has it.
+    """
+    # Call `default_factory` (if provided) to create a value for `default`.
+    if default_factory is not None and default is None:
+        # `default_factory` may fail for various reasons. We suppress that here.
+        # It's just a default value anynow.
+        with suppress(Exception):
+            return default_factory()
+    # Use the parent's default value to find the default value of the current field
+    if parent_default is not None and default is None:
+        try:
+            # In the `Car` example from the docsting, this call is something like:
+            #
+            #     > parent_default = Engine(power=42.8, gasoline_left=1e3)
+            #     > return getattr(parent_default, "power")
+            #
+            # Same thing for the `gasoline_left` field.
+            return getattr(parent_default, field_name)
+        except AttributeError:
+            pass
+    return default
 
 
 def allow_if_specified(_: click.Context, param: click.Parameter, value: Any) -> Any:
