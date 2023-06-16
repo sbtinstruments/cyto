@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections.abc import Iterable, Iterator, Sequence
 from typing import Any, ClassVar, Literal, get_args, overload
 
-from pydantic import StrictFloat, StrictInt, parse_obj_as, root_validator
+from pydantic import StrictFloat, StrictInt, parse_obj_as, root_validator, schema_of
 
 from ...model import FrozenModel
 
@@ -36,6 +36,24 @@ class TentativeItem(FrozenModel):
     def dict(self, **_kwargs: Any) -> dict[str, Any]:  # noqa: A003
         return {f"{self.key}?": self.value}
 
+    class Config:
+        @staticmethod
+        def schema_extra(schema: dict[str, Any]) -> None:
+            """Override the schema entirely."""
+            schema.clear()
+            schema.update(
+                {
+                    "type": "object",
+                    # Anything that ends with "?"
+                    "patternProperties": {
+                        "^.*\\?$": schema_of(ValueType, title="Value")
+                    },
+                    "minProperties": 1,
+                    "maxProperties": 1,
+                    "additionalProperties": False,
+                }
+            )
+
 
 class FinalItem(FrozenModel):
     finality: Finality = "final"  # Never serialized. Just for run-time distinction.
@@ -59,6 +77,24 @@ class FinalItem(FrozenModel):
     # A003: We have to use `dict` since pydantic choose this name.
     def dict(self, **_kwargs: Any) -> dict[str, Any]:  # noqa: A003
         return {self.key: self.value}
+
+    class Config:
+        @staticmethod
+        def schema_extra(schema: dict[str, Any]) -> None:
+            """Override the schema entirely."""
+            schema.clear()
+            schema.update(
+                {
+                    "type": "object",
+                    # Anything that does *not* end with "?"
+                    "patternProperties": {
+                        "^.*[^\\?]$": schema_of(ValueType, title="Value")
+                    },
+                    "minProperties": 1,
+                    "maxProperties": 1,
+                    "additionalProperties": False,
+                }
+            )
 
 
 class Subset(FrozenModel):
@@ -96,6 +132,26 @@ class Subset(FrozenModel):
         if self.lhs.finality == "tentative" or self.rhs.finality == "tentative":
             return "tentative"
         return "final"
+
+    class Config:
+        @staticmethod
+        def schema_extra(schema: dict[str, Any]) -> None:
+            """Override the schema."""
+            schema.update(
+                {
+                    "patternProperties": {
+                        # Both key and value *must* contain the delimiter.
+                        f"^.*{Subset.delimiter}.*$": {
+                            "type": "string",
+                            "pattern": f"^.*{Subset.delimiter}.*$",
+                        }
+                    },
+                    "minProperties": 1,
+                    "maxProperties": 1,
+                }
+            )
+            schema.pop("required")
+            schema.pop("properties")
 
 
 def _exactly_one_item(values: dict[str, Any]) -> tuple[str, Any]:
