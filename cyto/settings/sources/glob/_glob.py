@@ -72,6 +72,6 @@ class GlobSource:  # pylint: disable=too-few-public-methods
                     exc,
                 )
                 continue
-            _LOGGER.debug("Got %d settings from '%s'", count_leaves(settings), path)
+            _LOGGER.debug("Got %d setting(s) from '%s'", count_leaves(settings), path)
             self._update_func(result, settings)
         return result

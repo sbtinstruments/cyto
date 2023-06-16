@@ -4,7 +4,7 @@ from typing import Any
 from pydantic import Extra
 
 from ..model import FrozenModel
-from .keynote._keynote import Keynote
+from .keynote import Keynote
 
 
 class ResultMap(FrozenModel, Mapping[str, Any]):

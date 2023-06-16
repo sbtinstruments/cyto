@@ -31,6 +31,8 @@ class _StopNow(BaseException):
 
 
 class OutcomeBuilder(BroadcastModel[Outcome]):
+    default_layer_name = "__default__"
+
     def __init__(
         self,
         *,
@@ -45,6 +47,10 @@ class OutcomeBuilder(BroadcastModel[Outcome]):
 
     def __getitem__(self, layer_name: str) -> Outcome:
         return self._layers[layer_name]
+
+    def __setitem__(self, layer_name: str, layer: Outcome) -> None:
+        self._layers[layer_name] = layer
+        self._push()
 
     def update(self, layers: dict[str, Outcome]) -> None:
         self._layers.update(layers)
@@ -70,14 +76,13 @@ class OutcomeBuilder(BroadcastModel[Outcome]):
         Automatically publishes the changes when you exit the context manager.
         """
         if layer_name is None:
-            layer_name = "__default__"
+            layer_name = OutcomeBuilder.default_layer_name
         layer = self._layers[layer_name]
         mutable_layer = layer.dict()
         try:
             yield cast(MutableOutcome, mutable_layer)
         finally:
-            self._layers[layer_name] = Outcome.parse_obj(mutable_layer)
-            self._push()
+            self[layer_name] = Outcome.parse_obj(mutable_layer)
 
     @contextmanager
     def catch_message(self) -> Iterator[None]:

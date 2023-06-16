@@ -78,7 +78,7 @@ def cli_settings_source(
         params: list[click.Parameter] = list(
             _to_options(settings, delimiter, internal_delimiter)
         )
-        command = Command(name=name, callback=_set_result, params=params, help=name)
+        command = Command(name=name, callback=_set_result, params=params)
         # Per default, click calls `sys.exit` whenever the command is done.
         # We don't want this behaviour, so we disable it with `standalone_mode=False`.
         status_code: int | None = command.main(standalone_mode=False)
@@ -87,7 +87,7 @@ def cli_settings_source(
         if status_code is not None:
             sys.exit(status_code)
 
-        _LOGGER.debug("Got %d settings from the CLI", count_leaves(result))
+        _LOGGER.debug("Got %d setting(s) from the CLI", count_leaves(result))
 
         return result
 
