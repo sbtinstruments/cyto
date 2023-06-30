@@ -181,9 +181,14 @@ Tentative = Literal["TENTATIVE"]
 # `FinalItem` because the former is stricter than the latter. Otherwise,
 # we would never get `TentativeItem` instances (because every value coerces
 # to the lenient `FinalItem` type).
-ContentSlide = Subset | TentativeItem | FinalItem
+ItemSlide = Subset | TentativeItem | FinalItem
+ContentSlide = ItemSlide | str
 SentinelSlide = Tentative
-Slide = ContentSlide | SentinelSlide
+# Again, we put `SentinelSlide` before `str` because the latter is the most
+# lenient (all sentinels are strings).
+Slide = ItemSlide | SentinelSlide | str
+# Make sure that our types add up.
+assert {*get_args(ContentSlide), Tentative} == {*get_args(Slide)}
 
 
 RawSlide = dict[str, Any] | Tentative
@@ -237,10 +242,10 @@ class Keynote(FrozenModel, Sequence[Slide]):
 
         Otherwise, return "tentative".
 
-        Note that an empty keynote is still "final".
+        Note that the empty keynote is "final".
         """
         all_content_is_final = all(
-            slide.finality == "final" for slide in self.content()
+            _get_finality(slide) == "final" for slide in self.content()
         )
         no_tentative_sentinel = "TENTATIVE" not in self
         if all_content_is_final and no_tentative_sentinel:
@@ -257,4 +262,16 @@ class Keynote(FrozenModel, Sequence[Slide]):
 
     def final_content(self) -> Iterable[ContentSlide]:
         """Return all "final" content slides (i.e., non-tentative slides)."""
-        return (slide for slide in self.content() if slide.finality == "final")
+        return (slide for slide in self.content() if _get_finality(slide) == "final")
+
+
+def _get_finality(slide: Slide) -> Finality:
+    # Mypy (1.4.1 as of this writing) thinks this `isinstance` check with union is
+    # illegal. It is not. It's a feature of python 3.10.
+    if isinstance(slide, ItemSlide):  # type: ignore[misc,arg-type]
+        return slide.finality  # type: ignore[union-attr]
+    if slide == "TENTATIVE":
+        return "tentative"
+    if isinstance(slide, str):
+        return "tentative" if slide.endswith("?") else "final"
+    raise ValueError(f"Unknown keynote slide type: '{type(slide).__name__}'")
