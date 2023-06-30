@@ -5,7 +5,25 @@ from pydantic import BaseModel
 
 # Inspired by: https://github.com/pydantic/pydantic/issues/1270#issuecomment-729555558
 def none_as_null(schema: dict[str, Any], model: type[BaseModel]) -> None:
-    """Ensure that `Optional` results in a nullable type in the schema."""
+    """Ensure that `Optional` results in a nullable type in the schema.
+
+    Usage example:
+
+        class MyModel(BaseModel):
+            my_field: int | None = None
+
+            class Config:
+                @staticmethod
+                def schema_extra(schema: dict[str, Any], model: type[MyModel]) -> None:
+                    none_as_null(schema, model)
+
+    The schema of the above example becomes something like:
+
+        "my_field": {
+            "anyOf": [{"type': "int"}, {"type": "null"}],
+        }
+
+    """
     for prop, value in schema.get("properties", {}).items():
         assert isinstance(value, dict)
         # retrieve right field from alias or name

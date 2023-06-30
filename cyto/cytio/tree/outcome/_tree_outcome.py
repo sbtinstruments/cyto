@@ -1,9 +1,13 @@
+from datetime import datetime
 from typing import Any
 
+from pydantic import BaseModel, Extra
+
+from ....model import FrozenModel
 from ..current_task import instances
 
 
-class ResultCollection(list[Any]):
+class ResultCollection(list[ResultEntry]):
     pass
 
 
