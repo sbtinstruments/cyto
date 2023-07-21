@@ -88,7 +88,10 @@ def test_content_filters() -> None:
     )
 
     keynote = Keynote.parse_obj([{"ID": "A03"}])
-    keynote_with_bonus = keynote + ["BONUS SLIDES", {"flow_rate?": 32.1}]
+    keynote_with_bonus = keynote + (  # noqa: RUF005
+        "BONUS SLIDES",
+        {"flow_rate?": 32.1},
+    )
 
     # Exclude bonus slides
     assert (

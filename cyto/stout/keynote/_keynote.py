@@ -335,46 +335,86 @@ class Keynote(FrozenModel, Sequence[Slide]):
         if finality is None:
             finality = "include-all"
 
-        reached_tentative_sentinel = False
-        reached_bonus_slides_sentinel = False
+        slides: Iterable[Slide] = self
+        slides = _apply_bonus_filter(self, bonus_slides)
+        slides = _apply_finality_filter(slides, finality)
+        return slides
 
-        for slide in self:
-            match slide:
-                case "TENTATIVE":
-                    reached_tentative_sentinel = True
-                case "BONUS SLIDES":
-                    reached_bonus_slides_sentinel = True
 
-            # Only final slides: Stop when we reach the "TENTATIVE" sentinel.
-            # Since the "TENTATIVE" sentinel MUST come first, this means that we
-            # early out right away.
-            if reached_tentative_sentinel and finality == "only-final":
+def _apply_bonus_filter(
+    slides: Iterable[Slide], bonus_slides: BonusSlidesFilter
+) -> Iterable[Slide]:
+    match bonus_slides:
+        case "only":
+            return _only_bonus_slides(slides)
+        case "exclude":
+            return _exclude_bonus_slides(slides)
+        case "include":
+            # Just exclude the "BONUS SLIDES" sentinel itself. Keep all other slides.
+            return (slide for slide in slides if slide != "BONUS SLIDES")
+
+
+def _only_bonus_slides(slides: Iterable[Slide]) -> Iterable[Slide]:
+    # Create an iterator explicitly so that we can easily exhaust it at [1].
+    slides_iter = iter(slides)
+    for slide in slides_iter:
+        match slide:
+            case "BONUS SLIDES":
+                # All slides after the "BONUS SLIDES" sentinel are bonus slides.
+                # Moreover, this sentinel is the only method to classify bonus
+                # slides. Therefore, there is no `_get_bonus_state` function or
+                # similar like there is for the "finality" property.
+                #
+                # We exhaust the remaining slides and return.
+                yield from slides_iter  # [1]
                 return
 
-            match bonus_slides:
-                # Exclude bonus slides: Stop when we reach the "BONUS SLIDES" sentinel
-                case "exclude" if reached_bonus_slides_sentinel:
-                    return
-                # Only bonus slides: Skip ahead until we reach the
-                # "BONUS SLIDES" sentinel.
-                case "only" if not reached_bonus_slides_sentinel:
-                    continue
 
-            # Skip all sentinel (e.g., non-content) slides
-            if slide in ("TENTATIVE", "BONUS SLIDES"):
-                continue
+def _exclude_bonus_slides(slides: Iterable[Slide]) -> Iterable[Slide]:
+    for slide in slides:
+        match slide:
+            case "BONUS SLIDES":
+                return
+            case _:
+                yield slide
 
-            match finality:
-                # Only final slides: Skip any non-final (e.g., tentative) slides
-                case "only-final":
-                    if _get_finality(slide) != "final":
-                        continue
-                # Only tentative slides: Skip any non-tentative (e.g., final) slides
-                case "only-tentative" if not reached_tentative_sentinel:
-                    if _get_finality(slide) != "tentative":
-                        continue
 
-            yield slide
+def _apply_finality_filter(
+    slides: Iterable[Slide], finality: FinalityFilter
+) -> Iterable[Slide]:
+    match finality:
+        case "only-final":
+            return _only_final(slides)
+        case "only-tentative":
+            return _only_tentative(slides)
+        case "include-all":
+            # Just exclude the "TENTATIVE" sentinel itself. Keep all other slides.
+            return (slide for slide in slides if slide != "TENTATIVE")
+
+
+def _only_final(slides: Iterable[Slide]) -> Iterable[Slide]:
+    for slide in slides:
+        match slide:
+            case "TENTATIVE":
+                # Stop when we reach the "TENTATIVE" sentinel. Since the "TENTATIVE"
+                # sentinel MUST come first, this means that we early out right away.
+                return
+            case _ if _get_finality(slide) == "final":
+                yield slide
+
+
+def _only_tentative(slides: Iterable[Slide]) -> Iterable[Slide]:
+    # Create an iterator explicitly so that we can easily exhaust it at [2].
+    slides_iter = iter(slides)
+    for slide in slides_iter:
+        match slide:
+            case "TENTATIVE":
+                # Every slide after the "TENTATIVE" sentinel is tentative.
+                # We exhaust the remaining slides and return.
+                yield from slides_iter  # [2]
+                return
+            case _ if _get_finality(slide) == "tentative":
+                yield slide
 
 
 def _get_finality(slide: ContentSlide) -> Finality:
