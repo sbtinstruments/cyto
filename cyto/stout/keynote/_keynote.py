@@ -10,6 +10,7 @@ from ...model import FrozenModel
 ValueType = StrictInt | StrictFloat | str
 
 Finality = Literal["tentative", "final"]
+FinalityFilter = Literal["only-final", "only-tentative", "include-all"]
 
 
 class TentativeItem(FrozenModel):
@@ -170,8 +171,17 @@ def _exactly_one_item(values: dict[str, Any]) -> tuple[str, Any]:
 # Use this sentinel to indicate that the keynote is tentative (even though
 # it only contains "final" content). E.g., to denote that the you'll add
 # additional slides later.
+#
+# MUST be the first slide.
+# MUST be unique (there can not be multiple "TENTATIVE" slides).
 Tentative = Literal["TENTATIVE"]
-
+# Use this sentinel to indicate the the subsequent slides are nonessential.
+# E.g., said slides represent additional information, deep dives, reference
+# material, etc.
+#
+# MUST be unique (there can not be multiple "TENTATIVE" slides).
+BonusSlides = Literal["BONUS SLIDES"]
+BonusSlidesFilter = Literal["exclude", "include", "only"]
 
 # Order matters here!
 #
@@ -183,12 +193,12 @@ Tentative = Literal["TENTATIVE"]
 # to the lenient `FinalItem` type).
 ItemSlide = Subset | TentativeItem | FinalItem
 ContentSlide = ItemSlide | str
-SentinelSlide = Tentative
+SentinelSlide = Tentative | BonusSlides
 # Again, we put `SentinelSlide` before `str` because the latter is the most
 # lenient (all sentinels are strings).
 Slide = ItemSlide | SentinelSlide | str
 # Make sure that our types add up.
-assert {*get_args(ContentSlide), Tentative} == {*get_args(Slide)}
+assert {*get_args(ContentSlide), *get_args(SentinelSlide)} == {*get_args(Slide)}
 
 
 RawSlide = dict[str, Any] | Tentative
@@ -200,15 +210,29 @@ class Keynote(FrozenModel, Sequence[Slide]):
     Serializes to something like this:
 
         [
+            "TENTATIVE",
             { "intact cells/ml ⊆ total particles/ml": "12 000 ⊆ 50 000" },
             { "flow_rate?": 32.1 },
-            { "ID": "A03" },
-            "TENTATIVE"
+            { "ID": "A03" }
         ]
 
     """
 
     __root__: tuple[Slide, ...] = ()
+
+    @root_validator()
+    def _validate_sentinels(cls, values: dict[str, Any]) -> dict[str, Any]:
+        root = values["__root__"]
+        # "TENTATIVE" sentinel MUST be the first slide
+        if "TENTATIVE" in root and root[0] != "TENTATIVE":
+            raise ValueError("The 'TENTATIVE' slide must be the first slide")
+        # "TENTATIVE" sentinel MUST be unique
+        if len([slide for slide in root if slide == "TENTATIVE"]) > 1:
+            raise ValueError("There can only be one 'TENTATIVE' slide")
+        # "BONUS SLIDES" sentinel MUST be unique
+        if len([slide for slide in root if slide == "BONUS SLIDES"]) > 1:
+            raise ValueError("There can only be one 'BONUS SLIDES' slide")
+        return values
 
     @overload
     def __getitem__(self, item: int) -> Slide:
@@ -233,45 +257,131 @@ class Keynote(FrozenModel, Sequence[Slide]):
 
         Returns a copy. Does *not* mutate this instance.
         """
+        if isinstance(rhs, Iterable):
+            return Keynote(__root__=(*self.__root__, *rhs))
         slide = parse_obj_as(Slide, rhs)  # type: ignore[var-annotated, arg-type]
         return Keynote(__root__=(*self.__root__, slide))
 
     @property
     def finality(self) -> Finality:
-        """Return True if all content is final and there is no "TENTATIVE" slide.
+        """Return "tentative" if there is any tentative content.
 
-        Otherwise, return "tentative".
+        Otherwise, return "final".
 
-        Note that the empty keynote is "final".
+        Note that:
+
+         * The empty keynote is "final".
+         * A keynote with a single "TENTATIVE" slide is "tentative".
+         * Slides after the "BONUS SLIDES" sentinel do not count.
+
         """
-        all_content_is_final = all(
-            _get_finality(slide) == "final" for slide in self.content()
+        tentative_content = (
+            True
+            for _ in self.content(bonus_slides="exclude", finality="only-tentative")
         )
-        no_tentative_sentinel = "TENTATIVE" not in self
-        if all_content_is_final and no_tentative_sentinel:
-            return "final"
-        return "tentative"
+        tentative_sentinel = "TENTATIVE" in self
+        if any(tentative_content) or tentative_sentinel:
+            return "tentative"
+        return "final"
 
-    def content(self) -> Iterable[ContentSlide]:
-        """Return all content slides (e.g., no sentinel slides like "TENTATIVE")."""
-        return (
-            slide  # type: ignore[misc]
-            for slide in self
-            if isinstance(slide, get_args(ContentSlide))
-        )
+    def content(
+        self,
+        *,
+        bonus_slides: BonusSlidesFilter | None = None,
+        finality: FinalityFilter | None = None,
+    ) -> Iterable[ContentSlide]:
+        """Return all content slides (e.g., no sentinel slides like "TENTATIVE").
 
-    def final_content(self) -> Iterable[ContentSlide]:
-        """Return all "final" content slides (i.e., non-tentative slides)."""
-        return (slide for slide in self.content() if _get_finality(slide) == "final")
+        This is the primary keynote "view". You usually interact via the keynote
+        through this function. This view takes the sentinels ("TENTATIVE",
+        "BONUS SLIDES") into account and allows you to filter on it.
 
 
-def _get_finality(slide: Slide) -> Finality:
+        ## Analogy to computer language theory
+
+        It might be useful to draw analogy to computer language theory:
+
+         * Source code: List of raw slides (e.g., `["Welcome", {"ID?": "A03"}]`)
+         * Lexer: The `Keynote.parse_obj` that we get from pydantic
+         * Tokens: A `Keynote` instance (tuple of `Slide`s)
+         * Parser: The `Keynote.content` function
+         * Abstract syntax tree (AST): An iterable of `ContentSlide`
+
+        These concepts connect like this:
+
+            Source code --(lexer)--> Tokens --(parser)--> AST
+
+        In this analogy, the `Keynote` itself is just a sequence of tokens. Not
+        very meaningful on their own; more like an intermediate calculation.
+        After we call `Keynote.content`, we get the AST. We can use the AST
+        directly.
+
+        Note that this analogy does not hold up completely since
+        `Keynote._validate_sentinels` goes beyond the scope of what a lexer
+        would do.
+
+        ## Default values
+
+        Note that this function:
+
+         * Excludes bonus slides per default.
+           Use `bonus_filter` to override this.
+         * Includes both tentative and final slides per default.
+           Use `finality_filter` to override this.
+
+        """
+        if bonus_slides is None:
+            bonus_slides = "exclude"
+        if finality is None:
+            finality = "include-all"
+
+        reached_tentative_sentinel = False
+        reached_bonus_slides_sentinel = False
+
+        for slide in self:
+            match slide:
+                case "TENTATIVE":
+                    reached_tentative_sentinel = True
+                case "BONUS SLIDES":
+                    reached_bonus_slides_sentinel = True
+
+            # Only final slides: Stop when we reach the "TENTATIVE" sentinel.
+            # Since the "TENTATIVE" sentinel MUST come first, this means that we
+            # early out right away.
+            if reached_tentative_sentinel and finality == "only-final":
+                return
+
+            match bonus_slides:
+                # Exclude bonus slides: Stop when we reach the "BONUS SLIDES" sentinel
+                case "exclude" if reached_bonus_slides_sentinel:
+                    return
+                # Only bonus slides: Skip ahead until we reach the
+                # "BONUS SLIDES" sentinel.
+                case "only" if not reached_bonus_slides_sentinel:
+                    continue
+
+            # Skip all sentinel (e.g., non-content) slides
+            if slide in ("TENTATIVE", "BONUS SLIDES"):
+                continue
+
+            match finality:
+                # Only final slides: Skip any non-final (e.g., tentative) slides
+                case "only-final":
+                    if _get_finality(slide) != "final":
+                        continue
+                # Only tentative slides: Skip any non-tentative (e.g., final) slides
+                case "only-tentative" if not reached_tentative_sentinel:
+                    if _get_finality(slide) != "tentative":
+                        continue
+
+            yield slide
+
+
+def _get_finality(slide: ContentSlide) -> Finality:
     # Mypy (1.4.1 as of this writing) thinks this `isinstance` check with union is
     # illegal. It is not. It's a feature of python 3.10.
     if isinstance(slide, ItemSlide):  # type: ignore[misc,arg-type]
         return slide.finality  # type: ignore[union-attr]
-    if slide == "TENTATIVE":
-        return "tentative"
     if isinstance(slide, str):
         return "tentative" if slide.endswith("?") else "final"
     raise ValueError(f"Unknown keynote slide type: '{type(slide).__name__}'")
