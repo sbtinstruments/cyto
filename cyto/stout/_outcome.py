@@ -36,7 +36,7 @@ class Outcome(FrozenModel):
         """
         if not isinstance(self.result, ResultMap):
             return Keynote()
-        return self.result.keynote
+        return self.result.keynote()
 
     def result_is_final(self) -> bool:
         """There is a result (of a known type) in a final state (no further changes).

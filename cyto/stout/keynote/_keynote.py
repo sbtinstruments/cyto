@@ -1,266 +1,59 @@
 from __future__ import annotations
 
-from collections.abc import Iterable, Iterator, Sequence
-from typing import Any, ClassVar, Literal, get_args, overload
+from collections import defaultdict
+from collections.abc import Iterable, Sequence
+from typing import Any, Literal
 
-from pydantic import StrictFloat, StrictInt, parse_obj_as, root_validator, schema_of
+from pydantic import validator
 
-from ...model import FrozenModel
+from cyto.model import FrozenModel
 
-ValueType = StrictInt | StrictFloat | str
+from ._keynote_token_seq import WIP_TAG, KeynoteTokenSeq
+from ._keynote_tokens import (
+    Finality,
+    ItemToken,
+    SectionBeginToken,
+    SlideToken,
+    TagToken,
+    Token,
+)
 
-Finality = Literal["tentative", "final"]
-FinalityFilter = Literal["only-final", "only-tentative", "include-all"]
-
-
-class TentativeItem(FrozenModel):
-    finality: Finality = "tentative"  # Never serialized. Just for run-time distinction.
-    key: str
-    value: ValueType
-
-    @root_validator(pre=True)
-    def _validate(cls, values: dict[str, Any]) -> dict[str, Any]:
-        # Early out if we get each field directly
-        if "key" in values and "value" in values:
-            assert values.get("finality") in (None, "tentative")
-            return values
-        # Otherwise, we parse the raw dict
-        key, value = _exactly_one_item(values)
-        assert key.endswith("?")
-        return {
-            "finality": "tentative",
-            "key": key[:-1],
-            "value": value,
-        }
-
-    # A003: We have to use `dict` since pydantic choose this name.
-    def dict(self, **_kwargs: Any) -> dict[str, Any]:  # noqa: A003
-        return {f"{self.key}?": self.value}
-
-    class Config:
-        @staticmethod
-        def schema_extra(schema: dict[str, Any]) -> None:
-            """Override the schema entirely."""
-            schema.clear()
-            schema.update(
-                {
-                    "type": "object",
-                    # Anything that ends with "?"
-                    "patternProperties": {
-                        "^.*\\?$": schema_of(ValueType, title="Value")
-                    },
-                    "minProperties": 1,
-                    "maxProperties": 1,
-                    "additionalProperties": False,
-                }
-            )
-
-
-class FinalItem(FrozenModel):
-    finality: Finality = "final"  # Never serialized. Just for run-time distinction.
-    key: str
-    value: ValueType
-
-    @root_validator(pre=True)
-    def _validate(cls, values: dict[str, Any]) -> dict[str, Any]:
-        # Early out if we get each field directly
-        if "key" in values and "value" in values:
-            assert values.get("finality") in (None, "final")
-            return values
-        # Otherwise, we parse the raw dict
-        key, value = _exactly_one_item(values)
-        return {
-            "finality": "final",
-            "key": key,
-            "value": value,
-        }
-
-    # A003: We have to use `dict` since pydantic choose this name.
-    def dict(self, **_kwargs: Any) -> dict[str, Any]:  # noqa: A003
-        return {self.key: self.value}
-
-    class Config:
-        @staticmethod
-        def schema_extra(schema: dict[str, Any]) -> None:
-            """Override the schema entirely."""
-            schema.clear()
-            schema.update(
-                {
-                    "type": "object",
-                    # Anything that does *not* end with "?"
-                    "patternProperties": {
-                        "^.*[^\\?]$": schema_of(ValueType, title="Value")
-                    },
-                    "minProperties": 1,
-                    "maxProperties": 1,
-                    "additionalProperties": False,
-                }
-            )
-
-
-class Subset(FrozenModel):
-    lhs: TentativeItem | FinalItem
-    rhs: TentativeItem | FinalItem
-    delimiter: ClassVar[str] = " ⊆ "
-
-    @root_validator(pre=True)
-    def _validate(cls, values: dict[str, Any]) -> dict[str, Any]:
-        # Early out if we get each field directly
-        if "lhs" in values and "rhs" in values:
-            return values
-        # Otherwise, we parse the raw dict
-        key, value = _exactly_one_item(values)
-        assert isinstance(value, str)
-        key_operands = key.split(cls.delimiter)
-        value_operands = value.split(cls.delimiter)
-        assert len(key_operands) == 2
-        assert len(value_operands) == 2
-        return {
-            "lhs": {key_operands[0]: value_operands[0]},
-            "rhs": {key_operands[1]: value_operands[1]},
-        }
-
-    # A003: We have to use `dict` since pydantic choose this name.
-    def dict(self, **_kwargs: Any) -> dict[str, Any]:  # noqa: A003
-        lhs_suffix = "?" if isinstance(self.lhs, TentativeItem) else ""
-        rhs_suffix = "?" if isinstance(self.rhs, TentativeItem) else ""
-        key = f"{self.lhs.key}{lhs_suffix}{self.delimiter}{self.rhs.key}{rhs_suffix}"
-        value = f"{self.lhs.value}{self.delimiter}{self.rhs.value}"
-        return {key: value}
-
-    @property
-    def finality(self) -> Finality:
-        if self.lhs.finality == "tentative" or self.rhs.finality == "tentative":
-            return "tentative"
-        return "final"
-
-    class Config:
-        @staticmethod
-        def schema_extra(schema: dict[str, Any]) -> None:
-            """Override the schema."""
-            schema.update(
-                {
-                    "patternProperties": {
-                        # Both key and value *must* contain the delimiter.
-                        f"^.*{Subset.delimiter}.*$": {
-                            "type": "string",
-                            "pattern": f"^.*{Subset.delimiter}.*$",
-                        }
-                    },
-                    "minProperties": 1,
-                    "maxProperties": 1,
-                }
-            )
-            schema.pop("required")
-            schema.pop("properties")
-
-
-def _exactly_one_item(values: dict[str, Any]) -> tuple[str, Any]:
-    items = iter(values.items())
-    try:
-        key, value = next(items)
-    except StopIteration as exc:
-        raise ValueError("There must be at least one item in values") from exc
-    try:
-        next(items)
-    except StopIteration:
-        return key, value
-    raise ValueError("There must not be more than one item in values")
-
-
-# Use this sentinel to indicate that the keynote is tentative (even though
-# it only contains "final" content). E.g., to denote that the you'll add
-# additional slides later.
-#
-# MUST be the first slide.
-# MUST be unique (there can not be multiple "TENTATIVE" slides).
-Tentative = Literal["TENTATIVE"]
-# Use this sentinel to indicate the the subsequent slides are nonessential.
-# E.g., said slides represent additional information, deep dives, reference
-# material, etc.
-#
-# MUST be unique (there can not be multiple "TENTATIVE" slides).
-BonusSlides = Literal["BONUS SLIDES"]
 BonusSlidesFilter = Literal["exclude", "include", "only"]
-
-# Order matters here!
-#
-# Pydantic tries each type in this union in sequence. It returns the first
-# type that matches (read: the first value that we can coerce into the type).
-# Therefore, it is important that, e.g., `TentativeItem` comes before
-# `FinalItem` because the former is stricter than the latter. Otherwise,
-# we would never get `TentativeItem` instances (because every value coerces
-# to the lenient `FinalItem` type).
-ItemSlide = Subset | TentativeItem | FinalItem
-ContentSlide = ItemSlide | str
-SentinelSlide = Tentative | BonusSlides
-# Again, we put `SentinelSlide` before `str` because the latter is the most
-# lenient (all sentinels are strings).
-Slide = ItemSlide | SentinelSlide | str
-# Make sure that our types add up.
-assert {*get_args(ContentSlide), *get_args(SentinelSlide)} == {*get_args(Slide)}
+FinalityFilter = Literal["only-final", "only-tentative", "include-all"]
+SlideSeq = tuple[SlideToken, ...]
 
 
-RawSlide = dict[str, Any] | Tentative
+class KeynoteSection(FrozenModel):
+    name: str = "__anon__"
+    slides: SlideSeq = ()
+
+    def __bool__(self) -> bool:
+        return bool(self.slides)
 
 
-class Keynote(FrozenModel, Sequence[Slide]):
-    """Sequence of keynote slides.
+SectionSeq = tuple[KeynoteSection, ...]
 
-    Serializes to something like this:
 
-        [
-            "TENTATIVE",
-            { "intact cells/ml ⊆ total particles/ml": "12 000 ⊆ 50 000" },
-            { "flow_rate?": 32.1 },
-            { "ID": "A03" }
-        ]
+class Keynote(FrozenModel):
+    """Keynote slides grouped into sections.
 
+    This is the primary keynote "view". You usually use the `Keynote` class and don't
+    deal with the low-level `KeynoteTokenSeq` class. The `Keynote` class takes the
+    sentinel tokens (e.g., `[work-in-progress]`, `# Bonus slides`) into account and
+    allows you to filter on them.
     """
 
-    __root__: tuple[Slide, ...] = ()
+    work_in_progress: bool = False
+    sections: SectionSeq = ()
 
-    @root_validator()
-    def _validate_sentinels(cls, values: dict[str, Any]) -> dict[str, Any]:
-        root = values["__root__"]
-        # "TENTATIVE" sentinel MUST be the first slide
-        if "TENTATIVE" in root and root[0] != "TENTATIVE":
-            raise ValueError("The 'TENTATIVE' slide must be the first slide")
-        # "TENTATIVE" sentinel MUST be unique
-        if len([slide for slide in root if slide == "TENTATIVE"]) > 1:
-            raise ValueError("There can only be one 'TENTATIVE' slide")
-        # "BONUS SLIDES" sentinel MUST be unique
-        if len([slide for slide in root if slide == "BONUS SLIDES"]) > 1:
-            raise ValueError("There can only be one 'BONUS SLIDES' slide")
-        return values
-
-    @overload
-    def __getitem__(self, item: int) -> Slide:
-        ...
-
-    @overload
-    def __getitem__(self, _slice: slice) -> Sequence[Slide]:
-        ...
-
-    def __getitem__(self, item: Any) -> Any:
-        return self.__root__[item]
-
-    # TODO: Use the `override` decorator when we get python 3.12
-    def __iter__(self) -> Iterator[Slide]:  # type: ignore[override]
-        return iter(self.__root__)
-
-    def __len__(self) -> int:
-        return len(self.__root__)
-
-    def __add__(self, rhs: Any) -> Keynote:
-        """Return a copy with the given slide appended.
-
-        Returns a copy. Does *not* mutate this instance.
-        """
-        if isinstance(rhs, Iterable):
-            return Keynote(__root__=(*self.__root__, *rhs))
-        slide = parse_obj_as(Slide, rhs)  # type: ignore[var-annotated, arg-type]
-        return Keynote(__root__=(*self.__root__, slide))
+    @validator("sections")
+    def _validate_sections(cls, value: Any) -> Any:
+        names = tuple(section.name for section in value)
+        if len(names) != len(frozenset(names)):
+            raise ValueError("Sections must have unique names")
+        if names and "Bonus slides" in names and names[-1] != "Bonus slides":
+            raise ValueError("The 'Bonus slides' section must come last")
+        return value
 
     @property
     def finality(self) -> Finality:
@@ -271,16 +64,14 @@ class Keynote(FrozenModel, Sequence[Slide]):
         Note that:
 
          * The empty keynote is "final".
-         * A keynote with a single "TENTATIVE" slide is "tentative".
-         * Slides after the "BONUS SLIDES" sentinel do not count.
+         * A keynote with a "[work-in-progress]" tag is "tentative".
+         * Slides in the "Bonus slides" section do not count.
 
         """
-        tentative_content = (
-            True
-            for _ in self.content(bonus_slides="exclude", finality="only-tentative")
+        tentative_content = self.content(
+            bonus_slides="exclude", finality="only-tentative"
         )
-        tentative_sentinel = "TENTATIVE" in self
-        if any(tentative_content) or tentative_sentinel:
+        if tentative_content or self.work_in_progress:
             return "tentative"
         return "final"
 
@@ -289,36 +80,12 @@ class Keynote(FrozenModel, Sequence[Slide]):
         *,
         bonus_slides: BonusSlidesFilter | None = None,
         finality: FinalityFilter | None = None,
-    ) -> Iterable[ContentSlide]:
-        """Return all content slides (e.g., no sentinel slides like "TENTATIVE").
+        remove_empty_sections: bool | None = None,
+    ) -> Keynote:
+        """Return copy with the given content filters applied.
 
-        This is the primary keynote "view". You usually interact via the keynote
-        through this function. This view takes the sentinels ("TENTATIVE",
-        "BONUS SLIDES") into account and allows you to filter on it.
+        Does *not* modify this instance. Returns a copy instead.
 
-
-        ## Analogy to computer language theory
-
-        It might be useful to draw analogy to computer language theory:
-
-         * Source code: List of raw slides (e.g., `["Welcome", {"ID?": "A03"}]`)
-         * Lexer: The `Keynote.parse_obj` that we get from pydantic
-         * Tokens: A `Keynote` instance (tuple of `Slide`s)
-         * Parser: The `Keynote.content` function
-         * Abstract syntax tree (AST): An iterable of `ContentSlide`
-
-        These concepts connect like this:
-
-            Source code --(lexer)--> Tokens --(parser)--> AST
-
-        In this analogy, the `Keynote` itself is just a sequence of tokens. Not
-        very meaningful on their own; more like an intermediate calculation.
-        After we call `Keynote.content`, we get the AST. We can use the AST
-        directly.
-
-        Note that this analogy does not hold up completely since
-        `Keynote._validate_sentinels` goes beyond the scope of what a lexer
-        would do.
 
         ## Default values
 
@@ -328,100 +95,156 @@ class Keynote(FrozenModel, Sequence[Slide]):
            Use `bonus_filter` to override this.
          * Includes both tentative and final slides per default.
            Use `finality_filter` to override this.
-
+         * Removes empty sections per default.
+           Use `remove_empty_sections` to override this.
         """
         if bonus_slides is None:
             bonus_slides = "exclude"
         if finality is None:
             finality = "include-all"
+        if remove_empty_sections is None:
+            remove_empty_sections = True
 
-        slides: Iterable[Slide] = self
-        slides = _apply_bonus_filter(self, bonus_slides)
-        slides = _apply_finality_filter(slides, finality)
-        return slides
+        sections = self.sections
+        sections = _apply_bonus_slides_filter_to_sections(sections, bonus_slides)
+        sections = _apply_finality_filter_to_sections(sections, finality)
+        if remove_empty_sections:
+            sections = _remove_empty_sections(sections)
+        return Keynote(work_in_progress=self.work_in_progress, sections=sections)
+
+    def __bool__(self) -> bool:
+        return bool(self.sections)
+
+    @classmethod
+    def from_token_seq(
+        cls,
+        token_seq: KeynoteTokenSeq | Iterable[Any],
+    ) -> Keynote:
+        """Return instance created from the given token sequence.
 
 
-def _apply_bonus_filter(
-    slides: Iterable[Slide], bonus_slides: BonusSlidesFilter
-) -> Iterable[Slide]:
+        ## Analogy to computer language theory
+
+        It might be useful to draw analogy to computer language theory:
+
+         * Source code: List of raw slides (e.g., `["Welcome", {"ID?": "A03"}]`)
+         * Lexer: The `KeynoteTokenSeq.parse_obj` that we get from pydantic
+         * Tokens: A `KeynoteTokenSeq` instance (tuple of `Slide`s)
+         * Parser: The `Keynote.from_token_seq` function
+         * Abstract syntax tree (AST): An instance of `Keynote`
+
+        These concepts connect like this:
+
+            Source code --(lexer)--> Tokens --(parser)--> AST
+
+        In this analogy, the `KeynoteTokenSeq` itself is just a sequence of tokens.
+        Not very meaningful on their own; more like an intermediate calculation.
+        After we call `Keynote.from_token_seq`, we get the AST. We can use the AST
+        directly.
+
+        Note that this analogy does not hold up completely since
+        `KeynoteTokenSeq._validate_sentinels` goes beyond the scope of what a lexer
+        would do.
+        """
+        if not isinstance(token_seq, KeynoteTokenSeq):
+            token_seq = KeynoteTokenSeq.parse_obj(token_seq)
+        if not token_seq:
+            return Keynote()
+        first_token = token_seq[0]
+        work_in_progress = first_token == WIP_TAG
+        sections = _tokens_to_sections(token_seq)
+        return cls(work_in_progress=work_in_progress, sections=sections)
+
+    def to_raw_seq(self) -> Sequence[str | dict[str, Any]]:
+        """Convert to raw token sequence."""
+        token_seq = self.to_token_seq()
+        result = token_seq.to_raw_seq()
+        assert isinstance(result, Sequence)
+        return result
+
+    def to_token_seq(self) -> KeynoteTokenSeq:
+        """Convert to token sequence."""
+        return KeynoteTokenSeq(__root__=self._to_tokens())
+
+    def _to_tokens(self) -> Iterable[Token]:
+        if self.work_in_progress:
+            yield WIP_TAG
+        for section in self.sections:
+            if section.name != "__anon__":
+                yield SectionBeginToken(__root__=f"# {section.name}")
+            yield from section.slides
+
+
+def _apply_bonus_slides_filter_to_sections(
+    sections: SectionSeq, bonus_slides: BonusSlidesFilter
+) -> SectionSeq:
     match bonus_slides:
-        case "only":
-            return _only_bonus_slides(slides)
         case "exclude":
-            return _exclude_bonus_slides(slides)
+            return tuple(
+                section for section in sections if section.name != "Bonus slides"
+            )
+        case "only":
+            return tuple(
+                section for section in sections if section.name == "Bonus slides"
+            )
         case "include":
-            # Just exclude the "BONUS SLIDES" sentinel itself. Keep all other slides.
-            return (slide for slide in slides if slide != "BONUS SLIDES")
+            return sections
+        case _:
+            raise ValueError(f"Invalid 'BonusSlidesFilter' value: '{bonus_slides}'")
 
 
-def _only_bonus_slides(slides: Iterable[Slide]) -> Iterable[Slide]:
-    # Create an iterator explicitly so that we can easily exhaust it at [1].
-    slides_iter = iter(slides)
-    for slide in slides_iter:
-        match slide:
-            case "BONUS SLIDES":
-                # All slides after the "BONUS SLIDES" sentinel are bonus slides.
-                # Moreover, this sentinel is the only method to classify bonus
-                # slides. Therefore, there is no `_get_bonus_state` function or
-                # similar like there is for the "finality" property.
-                #
-                # We exhaust the remaining slides and return.
-                yield from slides_iter  # [1]
-                return
+def _apply_finality_filter_to_sections(
+    sections: SectionSeq, finality: FinalityFilter
+) -> SectionSeq:
+    return tuple(
+        KeynoteSection(
+            name=section.name,
+            slides=tuple(_apply_finality_filter_to_slides(section.slides, finality)),
+        )
+        for section in sections
+    )
 
 
-def _exclude_bonus_slides(slides: Iterable[Slide]) -> Iterable[Slide]:
-    for slide in slides:
-        match slide:
-            case "BONUS SLIDES":
-                return
-            case _:
-                yield slide
-
-
-def _apply_finality_filter(
-    slides: Iterable[Slide], finality: FinalityFilter
-) -> Iterable[Slide]:
+def _apply_finality_filter_to_slides(
+    slides: Iterable[SlideToken], finality: FinalityFilter
+) -> Iterable[SlideToken]:
     match finality:
         case "only-final":
-            return _only_final(slides)
+            return (slide for slide in slides if _get_finality(slide) == "final")
         case "only-tentative":
-            return _only_tentative(slides)
+            return (slide for slide in slides if _get_finality(slide) == "tentative")
         case "include-all":
-            # Just exclude the "TENTATIVE" sentinel itself. Keep all other slides.
-            return (slide for slide in slides if slide != "TENTATIVE")
+            return slides
+        case _:
+            raise ValueError(f"Invalid 'FinalityFilter' value: '{finality}'")
 
 
-def _only_final(slides: Iterable[Slide]) -> Iterable[Slide]:
-    for slide in slides:
-        match slide:
-            case "TENTATIVE":
-                # Stop when we reach the "TENTATIVE" sentinel. Since the "TENTATIVE"
-                # sentinel MUST come first, this means that we early out right away.
-                return
-            case _ if _get_finality(slide) == "final":
-                yield slide
-
-
-def _only_tentative(slides: Iterable[Slide]) -> Iterable[Slide]:
-    # Create an iterator explicitly so that we can easily exhaust it at [2].
-    slides_iter = iter(slides)
-    for slide in slides_iter:
-        match slide:
-            case "TENTATIVE":
-                # Every slide after the "TENTATIVE" sentinel is tentative.
-                # We exhaust the remaining slides and return.
-                yield from slides_iter  # [2]
-                return
-            case _ if _get_finality(slide) == "tentative":
-                yield slide
-
-
-def _get_finality(slide: ContentSlide) -> Finality:
+def _get_finality(slide: SlideToken) -> Finality:
     # Mypy (1.4.1 as of this writing) thinks this `isinstance` check with union is
     # illegal. It is not. It's a feature of python 3.10.
-    if isinstance(slide, ItemSlide):  # type: ignore[misc,arg-type]
+    if isinstance(slide, ItemToken):  # type: ignore[misc,arg-type]
         return slide.finality  # type: ignore[union-attr]
     if isinstance(slide, str):
         return "tentative" if slide.endswith("?") else "final"
     raise ValueError(f"Unknown keynote slide type: '{type(slide).__name__}'")
+
+
+def _remove_empty_sections(sections: SectionSeq) -> SectionSeq:
+    return tuple(section for section in sections if section)
+
+
+def _tokens_to_sections(token_seq: KeynoteTokenSeq) -> SectionSeq:
+    result: defaultdict[str, list[SlideToken]] = defaultdict(list)
+    section_name = "__anon__"
+    for token in token_seq:
+        match token:
+            case SectionBeginToken(name=section_name):  # type: ignore[misc]
+                continue
+            case TagToken():  # type: ignore[misc]
+                # Ignore all other sentinels
+                continue
+            case _:
+                result[section_name].append(token)
+    return tuple(
+        KeynoteSection(name=name, slides=slides) for name, slides in result.items()
+    )

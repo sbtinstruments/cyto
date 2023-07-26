@@ -61,7 +61,8 @@ class _SwigBase(FrozenModel):
         if append_newline is None:
             append_newline = True
         sys.stdout.write(self.json())
-        sys.stdout.write(os.linesep)
+        if append_newline:
+            sys.stdout.write(os.linesep)
 
 
 class StatusSwig(_SwigBase):

@@ -1,25 +1,25 @@
-from ._keynote import (
-    ContentSlide,
+from ._keynote import Keynote, KeynoteSection
+from ._keynote_token_seq import KeynoteTokenSeq
+from ._keynote_tokens import (
     FinalItem,
-    Keynote,
-    RawSlide,
-    SentinelSlide,
-    Slide,
+    SlideToken,
     Subset,
-    Tentative,
     TentativeItem,
+    Token,
     ValueType,
 )
+from ._mutable_keynote import MutableKeynote, MutableKeynoteSection
 
 __all__ = (
-    "ContentSlide",
     "FinalItem",
     "Keynote",
-    "RawSlide",
-    "SentinelSlide",
-    "Slide",
+    "KeynoteSection",
+    "KeynoteTokenSeq",
+    "MutableKeynote",
+    "MutableKeynoteSection",
+    "Token",
+    "SlideToken",
     "Subset",
-    "Tentative",
     "TentativeItem",
     "ValueType",
 )
