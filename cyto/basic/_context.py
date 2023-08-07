@@ -37,3 +37,34 @@ class AsyncContextStack(AbstractAsyncContextManager[T], Generic[T]):
     ) -> bool | None:
         assert self._stack is not None
         return await self._stack.__aexit__(exc_type, exc_value, traceback)
+
+
+class ReentrantAsyncContextStack(AsyncContextStack[T], Generic[T]):
+    """Reentrant (and reusable) version of the async context stack."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self._enter_count = 0
+
+    # TODO: Replace return type with `typing.Self` in Python 3.11
+    async def __aenter__(self) -> T:
+        self._enter_count += 1
+        if self._enter_count != 1:
+            return self  # type: ignore[return-value]
+        await super().__aenter__()
+        return self  # type: ignore[return-value]
+
+    async def __aexit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_value: BaseException | None,
+        traceback: TracebackType | None,
+    ) -> bool | None:
+        self._enter_count -= 1
+        if self._enter_count != 0:
+            return None
+        try:
+            return await super().__aexit__(exc_type, exc_value, traceback)
+        finally:
+            # Prepare this class for reuse
+            self._stack = None
