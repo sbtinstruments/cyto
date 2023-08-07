@@ -1,5 +1,6 @@
 *.pyc
-.vscode
+.vscode/*
+!.vscode/settings.default.json
 .tox
 .coverage
 htmlcov

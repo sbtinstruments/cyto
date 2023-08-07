@@ -18,5 +18,6 @@
     "python.testing.pytestEnabled": true,
     "mypy-type-checker.path": [
         ".venv/bin/mypy"
-    ]
+    ],
+    "black-formatter.path": [".venv/bin/black"]
 }
