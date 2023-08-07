@@ -202,4 +202,5 @@ async def _log_stream(
             text = text.rstrip(os.linesep)
         except UnicodeDecodeError:
             text = "<Binary>"
-        logger.info(text, extra={"subprocess": pid})
+        for line in text.splitlines():
+            logger.info(line, extra={"subprocess": pid})
