@@ -24,6 +24,7 @@ class _MutableSection(BaseModel):
     hints: set[SectionHint] = Field(default_factory=set)
     children: dict[str, _MutableSection] = Field(default_factory=dict)
     active_child: _MutableSection | None = None
+    is_entered: bool = False
 
     @property
     def planned(self) -> time_interval.ClosedOpen:
@@ -65,6 +66,7 @@ class _MutableSection(BaseModel):
             self.active_child = None
 
     def __enter__(self) -> _MutableSection:
+        self.is_entered = True
         return self
 
     def __exit__(  # type: ignore[return]
@@ -73,6 +75,7 @@ class _MutableSection(BaseModel):
         exc_value: BaseException | None,
         traceback: TracebackType | None,
     ) -> bool | None:
+        self.is_entered = False
         self.actual = time_interval.closed_open(
             self.actual.lower, datetime.now(timezone.utc)
         )

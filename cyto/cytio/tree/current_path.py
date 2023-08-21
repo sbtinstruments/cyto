@@ -21,13 +21,22 @@ def get_first_instance(type_: type[T]) -> T:
 
     Raises `LookupError` if there is no instance for the given type.
     """
+    for instance in get_instances(type_):
+        return instance
+    raise LookupError
+
+
+def get_instances(type_: type[T]) -> Iterable[T]:
+    """Get all instances (if any) of the given type for the current task path.
+
+    Traverses the task path from the current task to the root task. Returns instances
+    in that order.
+    """
     tree, path_from_root_to_node = add_root_path()
     path_data = _path_data(tree, path_from_root_to_node)
     path_instances = _path_instances(path_data, type_)
     instances = list(path_instances)
-    for instance in reversed(instances):
-        return instance
-    raise LookupError
+    return reversed(instances)
 
 
 def _path_instances(path_data: Iterable[dict[Any, Any]], type_: type[T]) -> Iterator[T]:

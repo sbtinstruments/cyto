@@ -2,15 +2,16 @@ from __future__ import annotations
 
 import logging
 from collections.abc import AsyncIterator, Iterable, Iterator
-from contextlib import ExitStack, asynccontextmanager, contextmanager
+from contextlib import asynccontextmanager, contextmanager
 from datetime import timedelta
 
 import anyio
 
 from ... import _scopes
+from ..current_path import get_first_instance
 from ..current_task import instances
 from ._mutable_section import SectionHint, _MutableSection
-from ._section import Section
+from ._update_section import update_section
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -31,7 +32,7 @@ def warn_after(time_limit: float | timedelta) -> Iterator[None]:
     current_section.planned_duration = time_limit
 
     # Trigger update
-    instances().setauto(Section.from_mutable_section(task_section))
+    update_section()
 
     with _scopes.warn_after(time_limit, logger=_LOGGER):
         yield
@@ -53,7 +54,7 @@ def fail_after(time_limit: float | timedelta) -> Iterator[None]:
     current_section.planned_duration = time_limit
 
     # Trigger update
-    instances().setauto(Section.from_mutable_section(task_section))
+    update_section()
 
     with anyio.fail_after(time_limit.total_seconds()):
         yield
@@ -79,7 +80,7 @@ async def wait_exactly(
     current_section.planned_duration = time_limit
 
     # Trigger update
-    instances().setauto(Section.from_mutable_section(task_section))
+    update_section()
 
     async with _scopes.wait_exactly(time_limit, shield=shield):
         yield
@@ -99,7 +100,7 @@ async def sleep(time_limit: float | timedelta) -> None:
     current_section.planned_duration = time_limit
 
     # Trigger update
-    instances().setauto(Section.from_mutable_section(task_section))
+    update_section()
 
     await anyio.sleep(time_limit.total_seconds())
 
@@ -109,20 +110,43 @@ def section(name: str, *, hints: Iterable[SectionHint] | None = None) -> Iterato
     """Create a new section in the current task."""
     if hints is None:
         hints = set()
+
     try:
+        # Get the existing section for this task (if any)
         task_section = instances()[_MutableSection]
-        is_root_section = False
     except KeyError:
-        task_section = _MutableSection(name=name, hints=hints)
+        # There is no existing section for this task. We create one.
+        try:
+            parent_task_section = get_first_instance(_MutableSection)
+        except LookupError:
+            filters = []
+        else:
+            filters = parent_task_section.filters
+        task_section = _MutableSection(name=name, hints=hints, filters=filters)
         instances().setauto(task_section)
-        is_root_section = True
-    with ExitStack() as stack:
-        if not is_root_section:
-            current_section = task_section.innermost_active_child()
-            stack.enter_context(current_section.child(name, hints=hints))
-        instances().setauto(Section.from_mutable_section(task_section))
-        yield
-    instances().setauto(Section.from_mutable_section(task_section))
+        new_section = task_section
+    else:
+        # Early out
+        if not task_section.is_entered:
+            raise RuntimeError(
+                f"The current task already has a root-level section called '{task_section.name}'. "
+                f"You tried to create a new root-level section with name '{name}'. "
+                "That would override the existing root-level section so we do not allow this. "
+                "Did you mean to create a nested section instead?"
+            )
+        # There is an existing section for this task. We use the existing section
+        # hierarchy.
+        parent_section = task_section.innermost_active_child()
+        new_section = parent_section.child(name, hints=hints)
+
+    try:
+        with new_section:
+            update_section()
+            yield
+    finally:
+        # Second update after `_MutableSeciton.__exit__` with, e.g., the `actual`
+        # timings in place.
+        update_section()
 
 
 def _normalize_timedelta(value: timedelta | float | int) -> timedelta:
