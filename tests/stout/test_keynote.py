@@ -292,19 +292,21 @@ def test_keynote_to_token_seq() -> None:
 
 def test_keynote_get_values() -> None:
     keynote = Keynote.from_token_seq(_RAW_KEYNOTE)
-    assert tuple(keynote.get_values()) == ()
+    assert (  # pylint: disable=use-implicit-booleaness-not-comparison
+        tuple(keynote.get_values()) == ()
+    )
     # Single, final item
     assert tuple(keynote.get_values("ID")) == ("A03",)
     # Multiple items: One tentative, one final
-    # assert tuple(keynote.get_values("flow_rate", "ID")) == (32.1, "A03")
+    assert tuple(keynote.get_values("flow_rate", "ID")) == (32.1, "A03")
     # ...and reversed argument order
-    # assert tuple(keynote.get_values("ID", "flow_rate")) == ("A03", 32.1)
+    assert tuple(keynote.get_values("ID", "flow_rate")) == ("A03", 32.1)
     # Misspelled key
     assert tuple(keynote.get_values("ID", "fløw_raid")) == ("A03", None)
     # Duplicate keys:
     #
-    #     {"red cards? ⊆ all cards": "3 ⊆ 52"},
-    #     {"red cards ⊆ all cards": "26 ⊆ 52"},
+    # >    {"red cards? ⊆ all cards": "3 ⊆ 52"},
+    # >    {"red cards ⊆ all cards": "26 ⊆ 52"},
     #
     # TODO: Change it so that they parser converts from string to int/float as
     # appropriate. For now, we just use strings.

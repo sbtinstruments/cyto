@@ -6,7 +6,7 @@ from ._mutable_section import SectionHint, _MutableSection
 
 
 class Section(FrozenModel):
-    name: str | None = None
+    name: str
     actual: time_interval.ClosedOpen
     planned: time_interval.ClosedOpen
     hints: frozenset[SectionHint] = frozenset()

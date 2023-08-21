@@ -1,3 +1,10 @@
+# We want to keep the tests very explicit and separate the context managers into
+# their own `with` statements. Therefore, we disable:
+#
+#     SIM117 [*] Use a single `with` statement with multiple contexts instead of
+#     nested `with` statements
+#
+# ruff: noqa: SIM117
 from datetime import datetime
 
 import pytest
@@ -125,7 +132,10 @@ async def test_erroneous_patch() -> None:
     with plant_tree():
         with pytest.raises(
             ValueError,
-            match=r"1 validation error for Mouse\nclicks\n  value is not a valid integer",
+            match=(
+                r"1 validation error for Mouse\nclicks\n  value is not a "
+                r"valid integer"
+            ),
         ):
             with patch(Mouse, clicks="sure, why not"):
                 pass
@@ -136,7 +146,10 @@ async def test_erroneous_patch() -> None:
 
         with pytest.raises(
             ValueError,
-            match=r"1 validation error for Mouse\nwheel -> mileage -> unit\n  str type expected",
+            match=(
+                r"1 validation error for Mouse\nwheel -> mileage -> unit\n  "
+                r"str type expected"
+            ),
         ):
             with patch(Mouse, wheel={"mileage": {"unit": datetime}}):
                 pass

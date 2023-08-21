@@ -7,7 +7,7 @@ from pydantic.env_settings import SettingsSourceCallable
 
 from ..factory import CanNotProduce, ProductSpec
 from ._autofill import autofill
-from ._settings import _SETTINGS, get_base_settings_class
+from ._settings import get_base_settings_class
 
 T = TypeVar("T")
 

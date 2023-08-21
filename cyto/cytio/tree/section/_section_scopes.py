@@ -2,13 +2,12 @@ from __future__ import annotations
 
 import logging
 from collections.abc import AsyncIterator, Iterable, Iterator
-from contextlib import asynccontextmanager, contextmanager
+from contextlib import AbstractContextManager, asynccontextmanager, contextmanager
 from datetime import timedelta
 
 import anyio
 
 from ... import _scopes
-from ..current_path import get_first_instance
 from ..current_task import instances
 from ._mutable_section import SectionHint, _MutableSection
 from ._update_section import update_section
@@ -111,28 +110,24 @@ def section(name: str, *, hints: Iterable[SectionHint] | None = None) -> Iterato
     if hints is None:
         hints = set()
 
+    new_section: AbstractContextManager[_MutableSection]
     try:
         # Get the existing section for this task (if any)
         task_section = instances()[_MutableSection]
     except KeyError:
         # There is no existing section for this task. We create one.
-        try:
-            parent_task_section = get_first_instance(_MutableSection)
-        except LookupError:
-            filters = []
-        else:
-            filters = parent_task_section.filters
-        task_section = _MutableSection(name=name, hints=hints, filters=filters)
+        task_section = _MutableSection(name=name, hints=hints)
         instances().setauto(task_section)
         new_section = task_section
     else:
         # Early out
         if not task_section.is_entered:
             raise RuntimeError(
-                f"The current task already has a root-level section called '{task_section.name}'. "
-                f"You tried to create a new root-level section with name '{name}'. "
-                "That would override the existing root-level section so we do not allow this. "
-                "Did you mean to create a nested section instead?"
+                "The current task already has a root-level section called "
+                f"'{task_section.name}'. You tried to create a new root-level "
+                f"section with name '{name}'. That would override the existing "
+                "root-level section so we do not allow this. Did you mean to "
+                "create a nested section instead?"
             )
         # There is an existing section for this task. We use the existing section
         # hierarchy.

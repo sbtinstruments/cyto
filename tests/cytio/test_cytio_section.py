@@ -1,3 +1,10 @@
+# We want to keep the tests very explicit and separate the context managers into
+# their own `with` statements. Therefore, we disable:
+#
+#     SIM117 [*] Use a single `with` statement with multiple contexts instead of
+#     nested `with` statements
+#
+# ruff: noqa: SIM117
 from typing import Any
 
 import pytest
@@ -36,7 +43,8 @@ async def test_two_parallel_root_sections() -> None:
         with section("First"):
             pass
         with pytest.raises(
-            RuntimeError, match=r"The current task already has a section called 'First'"
+            RuntimeError,
+            match=r"The current task already has a root-level section called 'First'",
         ):
             with section("Second"):
                 pass
@@ -112,13 +120,13 @@ async def test_duplicate_section_names() -> None:
                     pass
 
 
-def _summarize_section(section: Section) -> dict[str, Any]:
+def _summarize_section(section_: Section) -> dict[str, Any]:
     return {
-        section.name: {
-            child.name: _summarize_section_inner(child) for child in section.children
+        section_.name: {
+            child.name: _summarize_section_inner(child) for child in section_.children
         }
     }
 
 
-def _summarize_section_inner(section: Section) -> dict[str, Any]:
-    return {child.name: _summarize_section_inner(child) for child in section.children}
+def _summarize_section_inner(section_: Section) -> dict[str, Any]:
+    return {child.name: _summarize_section_inner(child) for child in section_.children}
