@@ -10,12 +10,16 @@ from cyto.model import FrozenModel
 
 from ._keynote_token_seq import WIP_TAG, KeynoteTokenSeq
 from ._keynote_tokens import (
+    FinalItem,
     Finality,
     ItemToken,
     SectionBeginToken,
     SlideToken,
+    Subset,
     TagToken,
+    TentativeItem,
     Token,
+    ValueType,
 )
 
 BonusSlidesFilter = Literal["exclude", "include", "only"]
@@ -37,7 +41,7 @@ SectionSeq = tuple[KeynoteSection, ...]
 class Keynote(FrozenModel):
     """Keynote slides grouped into sections.
 
-    This is the primary keynote "view". You usually use the `Keynote` class and don't
+    This is the primary keynote "view". You usually use this `Keynote` class and don't
     deal with the low-level `KeynoteTokenSeq` class. The `Keynote` class takes the
     sentinel tokens (e.g., `[work-in-progress]`, `# Bonus slides`) into account and
     allows you to filter on them.
@@ -173,6 +177,36 @@ class Keynote(FrozenModel):
             if section.name != "__anon__":
                 yield SectionBeginToken(__root__=f"# {section.name}")
             yield from section.slides
+
+    def get_values(self, *keys: str) -> Iterable[ValueType | None]:
+        """Search for the given keys in this keynote.
+
+        Returns `None` for keys that we could not find.
+        If there are duplicate entries for a key, we return the value of the
+        first entry.
+
+        Worst-case runtime is `O(n*m)` where `n` is the number of slides in this
+        keynote and `m` is the number of keys to search for.
+        """
+        # Worst-case runtime: `O(n*m)`
+        for search_key in keys:  # `m`: number of keys
+            matching_values = (
+                value for key, value in self._items() if key == search_key
+            )
+            for matching_value in matching_values:  # `n`: number of slides
+                yield matching_value
+                break
+            else:  # no break (key not found)
+                yield None
+
+    def _items(self) -> Iterable[tuple[str, ValueType]]:
+        slides = tuple(slide for section in self.sections for slide in section.slides)
+        for slide in slides:
+            if isinstance(slide, TentativeItem | FinalItem):
+                yield (slide.key, slide.value)
+            elif isinstance(slide, Subset):
+                yield (slide.lhs.key, slide.lhs.value)
+                yield (slide.rhs.key, slide.rhs.value)
 
 
 def _apply_bonus_slides_filter_to_sections(
