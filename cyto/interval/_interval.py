@@ -15,6 +15,10 @@ T = TypeVar("T")
 # See: https://github.com/AlexandreDecan/portion/issues/27
 class Interval(Generic[T], PortionInterval):  # type: ignore[misc]
     @classmethod
+    def closed(cls, lower: T, upper: T) -> Interval[T]:
+        return cls(portion.closed(lower, upper))
+
+    @classmethod
     def closedopen(cls, lower: T, upper: T | portion.inf | None = None) -> Interval[T]:
         if upper is None:
             upper = portion.inf
