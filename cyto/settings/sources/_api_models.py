@@ -4,6 +4,10 @@ from pydantic import BaseModel
 class CliExtras(BaseModel):
     """CLI-specific model settings."""
 
+    # Exclude this setting from the CLI.
+    # Use this for settings that are difficult/impossible to parse in via the
+    # CLI. E.g., functions or classes.
+    exclude: bool = False
     # Force click to not parse the corresponding option
     force_unprocessed: bool = False
     # Force click to parse the corresponding option as JSON

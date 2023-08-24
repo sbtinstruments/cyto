@@ -184,6 +184,16 @@ def _to_options(
 
         # CLI-specific extras (settings)
         extras = field.field_info.extra.get("cli", CliExtras())
+        if not isinstance(extras, CliExtras):
+            raise RuntimeError(
+                "The 'cli' field setting must be an instance of 'CliExtras'"
+            )
+
+        # Skip the field if the user asked for it. This is useful for types that
+        # are impossible/difficult to pass in via the CLI. E.g., a cfunction or
+        # a class.
+        if extras.exclude:
+            continue
 
         # Resolve the default value for this field
         default = _resolve_default(
