@@ -185,7 +185,7 @@ def _to_options(
         # CLI-specific extras (settings)
         extras = field.field_info.extra.get("cli", CliExtras())
         if not isinstance(extras, CliExtras):
-            raise RuntimeError(
+            raise TypeError(
                 "The 'cli' field setting must be an instance of 'CliExtras'"
             )
 
