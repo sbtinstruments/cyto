@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections import defaultdict
 from collections.abc import Iterable, Sequence
-from typing import Any, Literal
+from typing import Any, Literal, TypeVar
 
 from pydantic import validator
 
@@ -36,6 +36,7 @@ class KeynoteSection(FrozenModel):
 
 
 SectionSeq = tuple[KeynoteSection, ...]
+Self = TypeVar("Self", bound="Keynote")
 
 
 class Keynote(FrozenModel):
@@ -121,9 +122,9 @@ class Keynote(FrozenModel):
 
     @classmethod
     def from_token_seq(
-        cls,
+        cls: type[Self],
         token_seq: KeynoteTokenSeq | Iterable[Any],
-    ) -> Keynote:
+    ) -> Self:
         """Return instance created from the given token sequence.
 
 
@@ -153,7 +154,7 @@ class Keynote(FrozenModel):
         if not isinstance(token_seq, KeynoteTokenSeq):
             token_seq = KeynoteTokenSeq.parse_obj(token_seq)
         if not token_seq:
-            return Keynote()
+            return Keynote()  # type: ignore[return-value]
         first_token = token_seq[0]
         work_in_progress = first_token == WIP_TAG
         sections = _tokens_to_sections(token_seq)
