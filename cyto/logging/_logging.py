@@ -1,33 +1,50 @@
 import logging
 import logging.handlers
 import os
+from collections.abc import Iterable
+from typing import Literal
 
 
-def initialize_logging(app_name: str | None = None) -> None:
+def initialize_logging(
+    *,
+    logger: logging.Logger | None = None,
+    app_name: str | None = None,
+    level: Literal["debug", "info", "warning", "error", "critical"] | None = None,
+    handlers: Iterable[Literal["stderr", "syslog"]] | None = None,
+) -> None:
     """Configure the global logging framework.
 
     Call this once during startup.
 
     TODO: Add config parameters to override the environment variables.
     """
-    root = logging.getLogger()
+    if logger is None:
+        logger = logging.getLogger()
 
     # Level
-    level = logging.DEBUG if "DEBUG" in os.environ else logging.INFO
-    root.setLevel(level)
+    if level is None:
+        if "DEBUG" in os.environ:
+            level = "debug"
+        else:
+            level = "info"
+    logger.setLevel(level.upper())
 
     # Warnings
     logging.captureWarnings(capture=True)
 
-    # Handler
-    handler_name = os.environ.get("LOG_HANDLER", "stderr")
-    match handler_name:
-        case "stderr":
-            _add_stderr_handler(root)
-        case "syslog":
-            _add_syslog_handler(root, app_name=app_name)
-        case other:
-            raise RuntimeError(f"Unknown '{other}' log handler")
+    # Handler (where to send the log messages to)
+    handlers_resolved: Iterable[str]
+    if handlers is None:
+        handler_name = os.environ.get("LOG_HANDLER", "stderr")
+        handlers_resolved = (handler_name,)
+    for handler_name in handlers_resolved:
+        match handler_name:
+            case "stderr":
+                _add_stderr_handler(logger)
+            case "syslog":
+                _add_syslog_handler(logger, app_name=app_name)
+            case other:
+                raise RuntimeError(f"Unknown '{other}' log handler")
 
 
 def _add_stderr_handler(logger: logging.Logger) -> None:
