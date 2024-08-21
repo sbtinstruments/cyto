@@ -27,20 +27,15 @@ pipeline {
             }
         }
         stage('Quality control') {
-            environment {
-                // Generate JUnit XML files that Jenkins can parse in a
-                // post section (see [1]).
-                PYTEST_ARGS='--junitxml=junit-{envname}.xml'
-            }
             stages {
                 stage('Test (pytest)') {
                     steps {
-                        sh 'poetry run pytest'
+                        sh 'poetry run pytest --junitxml=junit.xml'
                     }
                     post {
                         always {
                             // Parse JUnit XML files
-                            junit 'junit-*.xml'  // [1]
+                            junit 'junit.xml'
                         }
                     }
                 }
