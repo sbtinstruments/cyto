@@ -1,3 +1,5 @@
+# ruff: noqa: PLR2004
+#
 # We want to keep the tests very explicit and separate the context managers into
 # their own `with` statements. Therefore, we disable:
 #

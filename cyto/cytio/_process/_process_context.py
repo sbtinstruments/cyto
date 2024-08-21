@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 import os
-from collections.abc import Callable, Coroutine, Sequence
+from collections.abc import Awaitable, Callable, Coroutine, Sequence
 from contextlib import AsyncExitStack
 from functools import wraps
 from logging import Logger
@@ -18,7 +18,7 @@ from ._open_process import open_process
 T = TypeVar("T")
 _LOGGER = logging.getLogger(__name__)
 
-StreamReceiver = Callable[..., Coroutine[Any, Any, Any]]
+StreamReceiver = Callable[..., Awaitable[Any]]
 
 
 class ProcessContext(TaskContext[T], Generic[T]):
@@ -138,7 +138,7 @@ class ProcessContext(TaskContext[T], Generic[T]):
         if shield is None:
             shield = True
 
-        _receiver: Callable[[ByteReceiveStream], Coroutine[Any, Any, Any]]
+        _receiver: Callable[..., Awaitable[Any]]
         if shield:
 
             @wraps(receiver)

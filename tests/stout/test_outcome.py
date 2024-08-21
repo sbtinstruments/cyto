@@ -1,3 +1,4 @@
+# ruff: noqa: PLR2004
 from cyto.stout import Outcome, ResultMap
 from cyto.stout.keynote import (
     FinalItem,

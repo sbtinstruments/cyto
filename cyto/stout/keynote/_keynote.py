@@ -78,7 +78,7 @@ class Keynote(FrozenModel):
     @model_serializer()
     def _serialize(self) -> Sequence[str | dict[str, Any]]:
         # TODO: Add WIP tag as well based on `work_in_progress`
-        return self.to_raw_seq()
+        return self.to_raw_seq()  # type: ignore[call-arg]
 
     @property
     def finality(self) -> Finality:

@@ -3,7 +3,6 @@ from pathlib import Path
 from typing import Any, TypeVar
 
 from pydantic import BaseModel, Field, create_model
-from pydantic._internal._config import config_keys
 from pydantic_settings import BaseSettings as PydanticBaseSettings
 from pydantic_settings import CliSettingsSource, PydanticBaseSettingsSource
 from pydantic_settings import SettingsConfigDict as PydanticSettingsConfigDict
@@ -21,7 +20,7 @@ def cyto_defaults(
     name: str,
 ) -> Callable[[type[PydanticBaseSettings]], type[PydanticBaseSettings]]:
     def decorator(cls: type[PydanticBaseSettings]) -> type[PydanticBaseSettings]:
-        class _BaseSettings(cls):
+        class _BaseSettings(cls):  # type: ignore[valid-type,misc]
             cls.model_config = PydanticSettingsConfigDict(
                 env_prefix=f"{name}_",
                 cli_prog_name=name,
@@ -33,12 +32,18 @@ def cyto_defaults(
                 settings_cls: type[PydanticBaseSettings],
                 init_settings: PydanticBaseSettingsSource,
                 env_settings: PydanticBaseSettingsSource,
-                dotenv_settings: PydanticBaseSettingsSource,
+                dotenv_settings: PydanticBaseSettingsSource,  # noqa: ARG003
                 file_secret_settings: PydanticBaseSettingsSource,
             ) -> tuple[PydanticBaseSettingsSource, ...]:
+                # Many false-positives because we use code in the comments below.
+                # ruff: noqa: ERA001
+
                 # Note that the pydantic_settings-provided default is:
                 #
-                #     return init_settings, env_settings, dotenv_settings, file_secret_settings
+                #  1. init_settings
+                #  2. env_settings
+                #  3. dotenv_settings
+                #  4. file_secret_settings
                 #
                 return (
                     # First (highest precedence), settings given via the constructor

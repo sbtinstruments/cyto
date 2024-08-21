@@ -1,6 +1,5 @@
 try:
     from ._settings import cyto_defaults, register
-    # from ._settings_factory import settings_factory
 except ImportError as exc:
     from .._extra import ExtraImportError
 

@@ -30,7 +30,7 @@ class ProcessContext(  # pylint: disable=too-few-public-methods
 
 
 @asynccontextmanager
-async def open_process(
+async def open_process(  # noqa: PLR0913
     command: str | bytes | Sequence[str | bytes],
     *,
     stdin: int | IO[Any] | None = PIPE,

@@ -34,7 +34,7 @@ class Interval(PortionInterval, Generic[T]):  # type: ignore[misc]
         return core_schema.no_info_plain_validator_function(cls.validate_type)
 
     @classmethod
-    def validate_type(cls, val: Any) -> Interval:
+    def validate_type(cls, val: Any) -> Interval[T]:
         if isinstance(val, cls):
             return val
         if isinstance(val, str):

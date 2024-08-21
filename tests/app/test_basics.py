@@ -1,3 +1,4 @@
+# ruff: noqa: PLR2004
 from contextlib import AsyncExitStack
 
 import pytest
@@ -138,9 +139,8 @@ def test_tasks_raises() -> None:
     # pytest gets better ExceptionGroup support.
     #
     # See: https://github.com/pytest-dev/pytest/issues/11538
-    with pytest.raises(ExceptionGroup) as excinfo:
+    with pytest.raises(ExceptionGroup) as _excinfo:
         App.launch(main)
-    # assert str(failing_task) == str(excinfo.value)
 
 
 def test_custom_app_name() -> None:

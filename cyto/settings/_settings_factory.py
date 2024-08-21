@@ -42,7 +42,6 @@ def _get_all_settings(
 
 @cache
 def _get_auto_cls(
-    *, app_name: str, extra_sources: tuple[PydanticBaseSettingsSource, ...] = ()
+    *, _app_name: str, _extra_sources: tuple[PydanticBaseSettingsSource, ...] = ()
 ) -> type[BaseSettings]:
-    cls = get_base_settings_class()
-    return autofill(app_name, extra_sources=extra_sources)(cls)
+    return get_base_settings_class()

@@ -69,14 +69,8 @@ class GlobSource(PydanticBaseSettingsSource):
                 )
                 continue
             try:
-                match path.suffix:
-                    case ".json":
-                        settings = from_json(data)
-                    case ".toml":
-                        settings = tomllib.loads(data)
-                    case other:
-                        raise ValueError(f"Unknown file suffix: '{other}'")
-            except ValueError as exc:
+                settings = _load_data(path, data)
+            except (ValueError, TypeError) as exc:
                 _LOGGER.warning(
                     "We skip settings file '%s' because we can not parse it: %s",
                     path,
@@ -86,3 +80,16 @@ class GlobSource(PydanticBaseSettingsSource):
             _LOGGER.debug("Got %d setting(s) from '%s'", count_leaves(settings), path)
             self._update_func(result, settings)
         return result
+
+
+def _load_data(path: Path, data: str) -> dict[str, Any]:
+    match path.suffix:
+        case ".json":
+            result = from_json(data)
+            if not isinstance(result, dict):
+                raise TypeError("Invalid type returned from JSON loader")
+            return result
+        case ".toml":
+            return tomllib.loads(data)
+        case other:
+            raise ValueError(f"Unknown file suffix: '{other}'")
