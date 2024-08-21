@@ -30,17 +30,17 @@ _RAW_KEYNOTE = [
 
 def test_token_io() -> None:
     # Deserialize (from list)
-    token_seq = KeynoteTokenSeq.parse_obj(_RAW_KEYNOTE)
-    assert token_seq[0] == TagToken(__root__="[work-in-progress]")
+    token_seq = KeynoteTokenSeq.model_validate(_RAW_KEYNOTE)
+    assert token_seq[0] == TagToken(root="[work-in-progress]")
     assert token_seq[1] == Subset(
         lhs=FinalItem(key="intact cells/ml", value="12 000"),
         rhs=FinalItem(key="total particles/ml", value="50 000"),
     )
-    assert token_seq[2] == SectionBeginToken(__root__="# Some stuff")
+    assert token_seq[2] == SectionBeginToken(root="# Some stuff")
     assert token_seq[3] == TentativeItem(key="flow_rate", value=32.1)
     assert token_seq[4] == FinalItem(key="ID", value="A03")
     assert token_seq[5] == FinalItem(key="Meaning of Life", value=42)
-    assert token_seq[6] == SectionBeginToken(__root__="# Bonus slides")
+    assert token_seq[6] == SectionBeginToken(root="# Bonus slides")
     assert token_seq[7] == Subset(
         lhs=TentativeItem(key="red cards", value=3),
         rhs=FinalItem(key="all cards", value=52),
@@ -55,26 +55,26 @@ def test_token_io() -> None:
 
 
 def test_work_in_progress_token() -> None:
-    keynote = KeynoteTokenSeq.parse_obj(["[work-in-progress]", {"ID": "A03"}])
-    assert keynote[0] == TagToken(__root__="[work-in-progress]")
+    keynote = KeynoteTokenSeq.model_validate(["[work-in-progress]", {"ID": "A03"}])
+    assert keynote[0] == TagToken(root="[work-in-progress]")
 
     with pytest.raises(
         ValidationError,
         match=r"The '\[work-in-progress\]' tag must be the first token",
     ):
-        KeynoteTokenSeq.parse_obj([{"ID": "A03"}, "[work-in-progress]"])
+        KeynoteTokenSeq.model_validate([{"ID": "A03"}, "[work-in-progress]"])
 
     with pytest.raises(
         ValidationError,
         match=r"The '\[work-in-progress\]' tag must be the first token",
     ):
-        KeynoteTokenSeq.parse_obj(["# Bonus slides", "[work-in-progress]"])
+        KeynoteTokenSeq.model_validate(["# Bonus slides", "[work-in-progress]"])
 
     with pytest.raises(
         ValidationError,
         match=r"There can only be one '\[work-in-progress\]' tag",
     ):
-        KeynoteTokenSeq.parse_obj(
+        KeynoteTokenSeq.model_validate(
             ["[work-in-progress]", {"ID": "A03"}, "[work-in-progress]"]
         )
 
@@ -82,7 +82,7 @@ def test_work_in_progress_token() -> None:
         ValidationError,
         match=r"There can only be one '\[work-in-progress\]' tag",
     ):
-        KeynoteTokenSeq.parse_obj(
+        KeynoteTokenSeq.model_validate(
             ["[work-in-progress]", "[work-in-progress]", {"ID": "A03"}]
         )
 
@@ -92,13 +92,13 @@ def test_bonus_slides_token() -> None:
         ValidationError,
         match="The '# Bonus slides' section must be the last section",
     ):
-        KeynoteTokenSeq.parse_obj(["# Bonus slides", "# My section"])
+        KeynoteTokenSeq.model_validate(["# Bonus slides", "# My section"])
 
     with pytest.raises(
         ValidationError,
         match="There can only be one '# Bonus slides' section",
     ):
-        KeynoteTokenSeq.parse_obj(["# Bonus slides", "# Bonus slides"])
+        KeynoteTokenSeq.model_validate(["# Bonus slides", "# Bonus slides"])
 
 
 def test_keynote_io() -> None:
@@ -282,9 +282,9 @@ def test_keynote_to_token_seq() -> None:
     assert isinstance(token_seq[1], SectionBeginToken)
     assert isinstance(token_seq[2], FinalItem)
     assert keynote.to_token_seq() == KeynoteTokenSeq(
-        __root__=(
+        root=(
             WIP_TAG,
-            SectionBeginToken(__root__="# Metadata"),
+            SectionBeginToken(root="# Metadata"),
             FinalItem(finality="final", key="ID", value="S87"),
         )
     )
@@ -308,7 +308,5 @@ def test_keynote_get_values() -> None:
     # >    {"red cards? ⊆ all cards": "3 ⊆ 52"},
     # >    {"red cards ⊆ all cards": "26 ⊆ 52"},
     #
-    # TODO: Change it so that they parser converts from string to int/float as
-    # appropriate. For now, we just use strings.
-    assert tuple(keynote.get_values("red cards")) == ("3",)
-    assert tuple(keynote.get_values("all cards")) == ("52",)
+    assert tuple(keynote.get_values("red cards")) == (3,)
+    assert tuple(keynote.get_values("all cards")) == (52,)

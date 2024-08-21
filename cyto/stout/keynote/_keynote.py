@@ -2,9 +2,14 @@ from __future__ import annotations
 
 from collections import defaultdict
 from collections.abc import Iterable, Sequence
-from typing import Any, Literal, TypeVar
+from typing import Annotated, Any, Literal, Self
 
-from pydantic import validator
+from pydantic import (
+    AfterValidator,
+    ValidatorFunctionWrapHandler,
+    model_serializer,
+    model_validator,
+)
 
 from cyto.model import FrozenModel
 
@@ -35,8 +40,20 @@ class KeynoteSection(FrozenModel):
         return bool(self.slides)
 
 
-SectionSeq = tuple[KeynoteSection, ...]
-Self = TypeVar("Self", bound="Keynote")
+def _validate_section_seq(
+    section_seq: tuple[KeynoteSection, ...],
+) -> tuple[KeynoteSection, ...]:
+    names = tuple(section.name for section in section_seq)
+    if len(names) != len(frozenset(names)):
+        raise ValueError("Sections must have unique names")
+    if names and "Bonus slides" in names and names[-1] != "Bonus slides":
+        raise ValueError("The 'Bonus slides' section must come last")
+    return section_seq
+
+
+SectionSeq = Annotated[
+    tuple[KeynoteSection, ...], AfterValidator(_validate_section_seq)
+]
 
 
 class Keynote(FrozenModel):
@@ -51,14 +68,17 @@ class Keynote(FrozenModel):
     work_in_progress: bool = False
     sections: SectionSeq = ()
 
-    @validator("sections")
-    def _validate_sections(cls, value: Any) -> Any:
-        names = tuple(section.name for section in value)
-        if len(names) != len(frozenset(names)):
-            raise ValueError("Sections must have unique names")
-        if names and "Bonus slides" in names and names[-1] != "Bonus slides":
-            raise ValueError("The 'Bonus slides' section must come last")
-        return value
+    @model_validator(mode="wrap")
+    @classmethod
+    def _validate(cls, data: Any, handler: ValidatorFunctionWrapHandler) -> Any:
+        if isinstance(data, Sequence):
+            return cls.from_token_seq(data)
+        return handler(data)
+
+    @model_serializer()
+    def _serialize(self) -> Sequence[str | dict[str, Any]]:
+        # TODO: Add WIP tag as well based on `work_in_progress`
+        return self.to_raw_seq()
 
     @property
     def finality(self) -> Finality:
@@ -152,7 +172,7 @@ class Keynote(FrozenModel):
         would do.
         """
         if not isinstance(token_seq, KeynoteTokenSeq):
-            token_seq = KeynoteTokenSeq.parse_obj(token_seq)
+            token_seq = KeynoteTokenSeq.model_validate(token_seq)
         if not token_seq:
             return Keynote()  # type: ignore[return-value]
         first_token = token_seq[0]
@@ -169,14 +189,14 @@ class Keynote(FrozenModel):
 
     def to_token_seq(self) -> KeynoteTokenSeq:
         """Convert to token sequence."""
-        return KeynoteTokenSeq(__root__=self._to_tokens())
+        return KeynoteTokenSeq(root=tuple(self._to_tokens()))
 
     def _to_tokens(self) -> Iterable[Token]:
         if self.work_in_progress:
             yield WIP_TAG
         for section in self.sections:
             if section.name != "__anon__":
-                yield SectionBeginToken(__root__=f"# {section.name}")
+                yield SectionBeginToken(root=f"# {section.name}")
             yield from section.slides
 
     def get_values(self, *keys: str) -> Iterable[ValueType | None]:

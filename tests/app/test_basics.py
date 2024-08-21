@@ -1,17 +1,10 @@
-# pylint: disable=missing-function-docstring,missing-class-docstring
-
-# pytest fixtures may have effects just by their mere presence. E.g., the
-# `Argv` fixture that clears all arguments per default. Since this is the case,
-# the "unused argument" warning is moot.
-# pylint: disable=unused-argument
-
 from contextlib import AsyncExitStack
 
 import pytest
 from anyio import sleep
 from anyio.abc import TaskGroup
 
-from cyto.app import App, Settings
+from cyto.app import App, AppBaseSettings
 
 
 def test_inject_nothing() -> None:
@@ -22,8 +15,8 @@ def test_inject_nothing() -> None:
 
 
 def test_injection_settings() -> None:
-    async def main(settings: Settings) -> None:
-        assert isinstance(settings, Settings)
+    async def main(settings: AppBaseSettings) -> None:
+        assert isinstance(settings, AppBaseSettings)
 
     App.launch(main)
 
@@ -45,8 +38,10 @@ def test_inject_stack() -> None:
 def test_inject_multiple() -> None:
     # Note that the argument names can be anything. We inject solely based
     # on the type annotation.
-    async def main(apple: TaskGroup, banana: AsyncExitStack, grape: Settings) -> None:
-        assert isinstance(grape, Settings)
+    async def main(
+        apple: TaskGroup, banana: AsyncExitStack, grape: AppBaseSettings
+    ) -> None:
+        assert isinstance(grape, AppBaseSettings)
         assert isinstance(apple, TaskGroup)
         assert isinstance(banana, AsyncExitStack)
 
@@ -82,7 +77,7 @@ def test_inject_unknown_anno() -> None:
 
 
 def test_custom_settings() -> None:
-    class FooBarSettings(Settings):
+    class FooBarSettings(AppBaseSettings):
         is_meringue_burnt: bool = False
 
     async def main(settings: FooBarSettings) -> None:
@@ -139,9 +134,13 @@ def test_tasks_raises() -> None:
         for i in range(num_tasks):
             tg.start_soon(_sleep, i)
 
-    with pytest.raises(RuntimeError) as excinfo:
+    # TODO: Replace with something that targets the `RuntimeError` when
+    # pytest gets better ExceptionGroup support.
+    #
+    # See: https://github.com/pytest-dev/pytest/issues/11538
+    with pytest.raises(ExceptionGroup) as excinfo:
         App.launch(main)
-    assert str(failing_task) == str(excinfo.value)
+    # assert str(failing_task) == str(excinfo.value)
 
 
 def test_custom_app_name() -> None:

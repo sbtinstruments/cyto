@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections.abc import Callable, Coroutine
 from contextlib import AbstractAsyncContextManager
 from types import TracebackType
-from typing import Any
+from typing import Any, Self
 
 import anyio
 from anyio.abc import TaskGroup
@@ -139,8 +139,7 @@ class ReusableTaskGroup(AbstractAsyncContextManager["ReusableTaskGroup"]):
                 # None.
                 await self.__aenter__()  # pylint: disable=unnecessary-dunder-call
 
-    # TODO: Replace return type with `typing.Self` in python 3.11
-    async def __aenter__(self) -> ReusableTaskGroup:
+    async def __aenter__(self) -> Self:
         if self._tg is not None:
             raise RuntimeError("ReusableTaskGroup is not reentrant")
         self._tg = await anyio.create_task_group().__aenter__()

@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from collections.abc import Iterable, Iterator
 from contextlib import contextmanager
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta, timezone
 from types import TracebackType
-from typing import Literal
+from typing import Literal, Self
 
 from pydantic import BaseModel, Field
 
@@ -16,9 +16,7 @@ SectionHint = Literal["may-end-early", "indeterminate-indicator"]
 class _MutableSection(BaseModel):
     name: str
     actual: time_interval.ClosedOpen = Field(
-        default_factory=lambda: time_interval.closed_open(
-            lower=datetime.now(timezone.utc)
-        )
+        default_factory=lambda: time_interval.closed_open(lower=datetime.now(UTC))
     )
     planned_duration: timedelta | None = None
     hints: set[SectionHint] = Field(default_factory=set)
@@ -65,7 +63,7 @@ class _MutableSection(BaseModel):
         finally:
             self.active_child = None
 
-    def __enter__(self) -> _MutableSection:
+    def __enter__(self) -> Self:
         self.is_entered = True
         return self
 
@@ -76,6 +74,4 @@ class _MutableSection(BaseModel):
         traceback: TracebackType | None,
     ) -> bool | None:
         self.is_entered = False
-        self.actual = time_interval.closed_open(
-            self.actual.lower, datetime.now(timezone.utc)
-        )
+        self.actual = time_interval.closed_open(self.actual.lower, datetime.now(UTC))

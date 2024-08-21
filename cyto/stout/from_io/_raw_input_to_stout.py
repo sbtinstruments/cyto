@@ -7,7 +7,7 @@ from anyio import IncompleteRead
 from anyio.abc import ByteReceiveStream
 from anyio.streams.buffered import BufferedByteReceiveStream
 from anyio.streams.text import TextReceiveStream
-from pydantic import parse_raw_as
+from pydantic import TypeAdapter
 
 from cyto.cytio import io_to_async_iterable
 
@@ -58,9 +58,7 @@ async def raw_input_to_stout(
                 line_limit,
             )
         try:
-            # mypy see `Swig` as "<typing special form>", which mypy apparently doesn't
-            # think fits with `parse_raw_as`. We ignore the error for now.
-            yield parse_raw_as(Swig, line)  # type: ignore[arg-type]
+            yield TypeAdapter(Swig).validate_json(line)
         except ValueError as exc:
             _log_start_of_string_as_binary(line)
             raise RuntimeError(

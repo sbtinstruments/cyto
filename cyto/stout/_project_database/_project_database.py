@@ -30,7 +30,7 @@ class ProjectDatabase:
         self._db = TinyDB(storage=MemoryStorage)
 
     def add_project(self, project: Project) -> int:
-        doc_id = self._db.insert(project.dict())
+        doc_id = self._db.insert(project.model_dump())
         assert isinstance(doc_id, int)
         return doc_id
 

@@ -16,7 +16,7 @@ from cyto.cytio.tree.section import Section, section
 pytestmark = pytest.mark.anyio
 
 
-@pytest.fixture()
+@pytest.fixture
 def anyio_backend() -> str:
     return "asyncio"
 

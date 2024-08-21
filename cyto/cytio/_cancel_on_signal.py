@@ -28,7 +28,7 @@ async def cancel_on_signal(
     This overrides any existing signal handler.
     """
     signal_actions = _get_signal_actions(ignore=ignore)
-    async with anyio.create_task_group() as tg:
+    async with anyio.create_task_group() as tg:  # noqa: SIM117
         # Listen for signals for the duration of this context manager.
         # If we receive a signal, we call `tg.cancel_scope.cancel`.
         # This cancels both the listener task (`_cancel_on_signal`)

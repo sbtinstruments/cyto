@@ -1,23 +1,55 @@
 from __future__ import annotations
 
-from typing import Any, ClassVar, Literal, get_args
+from turtle import title
+from typing import Annotated, Any, ClassVar, Literal, get_args
 
-from pydantic import StrictFloat, StrictInt, constr, root_validator, schema_of
+from pydantic import (
+    ConfigDict,
+    Field,
+    RootModel,
+    SerializationInfo,
+    StrictFloat,
+    StrictInt,
+    TypeAdapter,
+    model_serializer,
+    model_validator,
+)
 
 from ...model import FrozenModel
 
-ValueType = StrictInt | StrictFloat | str
+ValueType = Annotated[int | float | str, Field(union_mode="left_to_right")]
 
 Finality = Literal["tentative", "final"]
 
 
+def _tentative_item_json_schema(schema: dict[str, Any]) -> None:
+    """Override the schema entirely."""
+    schema.clear()
+    schema.update(
+        {
+            "type": "object",
+            # Anything that ends with "?"
+            "patternProperties": {"^.*\\?$": TypeAdapter(ValueType).json_schema()},
+            "minProperties": 1,
+            "maxProperties": 1,
+            "additionalProperties": False,
+        }
+    )
+
+
 class TentativeItem(FrozenModel):
+    model_config: ClassVar[ConfigDict] = ConfigDict(
+        json_schema_extra=_tentative_item_json_schema
+    )
+
     finality: Finality = "tentative"  # Never serialized. Just for run-time distinction.
     key: str
     value: ValueType
 
-    @root_validator(pre=True)
-    def _validate(cls, values: dict[str, Any]) -> dict[str, Any]:
+    @model_validator(mode="before")
+    @classmethod
+    def _validate(cls, values: Any) -> dict[str, Any]:
+        assert isinstance(values, dict)
         # Early out if we get each field directly
         if "key" in values and "value" in values:
             assert values.get("finality") in (None, "tentative")
@@ -31,36 +63,39 @@ class TentativeItem(FrozenModel):
             "value": value,
         }
 
-    # A003: We have to use `dict` since pydantic choose this name.
-    def dict(self, **_kwargs: Any) -> dict[str, Any]:  # noqa: A003
+    @model_serializer()
+    def _serialize(self) -> dict[str, Any]:
         return {f"{self.key}?": self.value}
 
-    class Config:
-        @staticmethod
-        def schema_extra(schema: dict[str, Any]) -> None:
-            """Override the schema entirely."""
-            schema.clear()
-            schema.update(
-                {
-                    "type": "object",
-                    # Anything that ends with "?"
-                    "patternProperties": {
-                        "^.*\\?$": schema_of(ValueType, title="Value")
-                    },
-                    "minProperties": 1,
-                    "maxProperties": 1,
-                    "additionalProperties": False,
-                }
-            )
+
+def _final_item_json_schema(schema: dict[str, Any]) -> None:
+    """Override the schema entirely."""
+    schema.clear()
+    schema.update(
+        {
+            "type": "object",
+            # Anything that does *not* end with "?"
+            "patternProperties": {"^.*[^\\?]$": TypeAdapter(ValueType).json_schema()},
+            "minProperties": 1,
+            "maxProperties": 1,
+            "additionalProperties": False,
+        }
+    )
 
 
 class FinalItem(FrozenModel):
+    model_config: ClassVar[ConfigDict] = ConfigDict(
+        json_schema_extra=_final_item_json_schema
+    )
+
     finality: Finality = "final"  # Never serialized. Just for run-time distinction.
     key: str
     value: ValueType
 
-    @root_validator(pre=True)
-    def _validate(cls, values: dict[str, Any]) -> dict[str, Any]:
+    @model_validator(mode="before")
+    @classmethod
+    def _validate(cls, values: Any) -> dict[str, Any]:
+        assert isinstance(values, dict)
         # Early out if we get each field directly
         if "key" in values and "value" in values:
             assert values.get("finality") in (None, "final")
@@ -73,36 +108,43 @@ class FinalItem(FrozenModel):
             "value": value,
         }
 
-    # A003: We have to use `dict` since pydantic choose this name.
-    def dict(self, **_kwargs: Any) -> dict[str, Any]:  # noqa: A003
+    @model_serializer()
+    def _serialize(self) -> dict[str, Any]:
         return {self.key: self.value}
 
-    class Config:
-        @staticmethod
-        def schema_extra(schema: dict[str, Any]) -> None:
-            """Override the schema entirely."""
-            schema.clear()
-            schema.update(
-                {
-                    "type": "object",
-                    # Anything that does *not* end with "?"
-                    "patternProperties": {
-                        "^.*[^\\?]$": schema_of(ValueType, title="Value")
-                    },
-                    "minProperties": 1,
-                    "maxProperties": 1,
-                    "additionalProperties": False,
+
+def _subset_json_schema(schema: dict[str, Any]) -> None:
+    """Override the schema."""
+    schema.update(
+        {
+            "patternProperties": {
+                # Both key and value *must* contain the delimiter.
+                f"^.*{Subset.delimiter}.*$": {
+                    "type": "string",
+                    "pattern": f"^.*{Subset.delimiter}.*$",
                 }
-            )
+            },
+            "minProperties": 1,
+            "maxProperties": 1,
+        }
+    )
+    schema.pop("required")
+    schema.pop("properties")
 
 
 class Subset(FrozenModel):
+    model_config: ClassVar[ConfigDict] = ConfigDict(
+        json_schema_extra=_subset_json_schema
+    )
+
     lhs: TentativeItem | FinalItem
     rhs: TentativeItem | FinalItem
     delimiter: ClassVar[str] = " ⊆ "
 
-    @root_validator(pre=True)
-    def _validate(cls, values: dict[str, Any]) -> dict[str, Any]:
+    @model_validator(mode="before")
+    @classmethod
+    def _validate(cls, values: Any) -> dict[str, Any]:
+        assert isinstance(values, dict)
         # Early out if we get each field directly
         if "lhs" in values and "rhs" in values:
             return values
@@ -118,8 +160,8 @@ class Subset(FrozenModel):
             "rhs": {key_operands[1]: value_operands[1]},
         }
 
-    # A003: We have to use `dict` since pydantic choose this name.
-    def dict(self, **_kwargs: Any) -> dict[str, Any]:  # noqa: A003
+    @model_serializer()
+    def _serialize(self) -> dict[str, Any]:
         lhs_suffix = "?" if isinstance(self.lhs, TentativeItem) else ""
         rhs_suffix = "?" if isinstance(self.rhs, TentativeItem) else ""
         key = f"{self.lhs.key}{lhs_suffix}{self.delimiter}{self.rhs.key}{rhs_suffix}"
@@ -131,26 +173,6 @@ class Subset(FrozenModel):
         if self.lhs.finality == "tentative" or self.rhs.finality == "tentative":
             return "tentative"
         return "final"
-
-    class Config:
-        @staticmethod
-        def schema_extra(schema: dict[str, Any]) -> None:
-            """Override the schema."""
-            schema.update(
-                {
-                    "patternProperties": {
-                        # Both key and value *must* contain the delimiter.
-                        f"^.*{Subset.delimiter}.*$": {
-                            "type": "string",
-                            "pattern": f"^.*{Subset.delimiter}.*$",
-                        }
-                    },
-                    "minProperties": 1,
-                    "maxProperties": 1,
-                }
-            )
-            schema.pop("required")
-            schema.pop("properties")
 
 
 def _exactly_one_item(values: dict[str, Any]) -> tuple[str, Any]:
@@ -166,22 +188,22 @@ def _exactly_one_item(values: dict[str, Any]) -> tuple[str, Any]:
     raise ValueError("There must not be more than one item in values")
 
 
-class TagToken(FrozenModel):
-    __root__: constr(strict=True, regex=r"\[[\w_\-]+\]")  # type: ignore[valid-type]
+class TagToken(RootModel[str], frozen=True):
+    root: Annotated[str, Field(strict=True, pattern=r"^\[[\w_\-]+\]$")]
 
     @property
     def name(self) -> str:
-        assert isinstance(self.__root__, str)
-        return self.__root__[1:-1]
+        assert isinstance(self.root, str)
+        return self.root[1:-1]
 
 
-class SectionBeginToken(FrozenModel):
-    __root__: constr(strict=True, regex=r"# [\w _\-]+")  # type: ignore[valid-type]
+class SectionBeginToken(RootModel[str], frozen=True):
+    root: Annotated[str, Field(strict=True, pattern=r"^# [\w _\-]+$")]
 
     @property
     def name(self) -> str:
-        assert isinstance(self.__root__, str)
-        return self.__root__[2:]
+        assert isinstance(self.root, str)
+        return self.root[2:]
 
 
 # Order matters here!
@@ -200,17 +222,18 @@ SentinelToken = TagToken | SectionBeginToken
 #
 # Note that the `dict`
 #
-# >    {"__root__": "[work-in-progress]"}
+# >    {"root": "[work-in-progress]"}
 #
 # has two possible interpretations in the `Token` union:
 #
-#  * `TagToken(__root__="[work-in-progress]")`
-#  * `FinalItem(key="__root__", value="[work-in-progress]")`
+#  * `TagToken(root="[work-in-progress]")`
+#  * `FinalItem(key="root", value="[work-in-progress]")`
 #
 # Therefore, it's important that `TagToken` comes before `FinalItem`.
-Token = SentinelToken | ItemToken | str
+_Token = SentinelToken | ItemToken | str
+Token = Annotated[_Token, Field(union_mode="left_to_right")]
 # Make sure that our types add up.
-assert {*get_args(SlideToken), *get_args(SentinelToken)} == {*get_args(Token)}
+assert {*get_args(SlideToken), *get_args(SentinelToken)} == {*get_args(_Token)}
 
 
 # TODO: Do we still need this?

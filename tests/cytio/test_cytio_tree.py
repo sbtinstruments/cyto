@@ -17,7 +17,7 @@ from cyto.model import FrozenModel
 pytestmark = pytest.mark.anyio
 
 
-@pytest.fixture()
+@pytest.fixture
 def anyio_backend() -> str:
     return "asyncio"
 
@@ -28,7 +28,7 @@ class UnitValue(FrozenModel):
 
 
 class ScrollWheel(FrozenModel):
-    mileage = UnitValue(unit="km", value=0)
+    mileage: UnitValue = UnitValue(unit="km", value=0)
 
 
 class Mouse(FrozenModel):
@@ -133,22 +133,22 @@ async def test_erroneous_patch() -> None:
         with pytest.raises(
             ValueError,
             match=(
-                r"1 validation error for Mouse\nclicks\n  value is not a "
-                r"valid integer"
+                r"1 validation error for Mouse\nclicks\n  Input should be a valid "
+                r"integer,.*"
             ),
         ):
             with patch(Mouse, clicks="sure, why not"):
                 pass
 
-        with pytest.raises(ValueError, match=r"value is not a valid dict"):
+        with pytest.raises(ValueError, match=r"Input should be a valid dictionary"):
             with patch(Mouse, wheel={"mileage": 73.1}):
                 pass
 
         with pytest.raises(
             ValueError,
             match=(
-                r"1 validation error for Mouse\nwheel -> mileage -> unit\n  "
-                r"str type expected"
+                r"1 validation error for Mouse\nwheel\.mileage\.unit\n  "
+                r"Input should be a valid string"
             ),
         ):
             with patch(Mouse, wheel={"mileage": {"unit": datetime}}):

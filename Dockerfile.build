@@ -1,12 +1,11 @@
-FROM python:3.10.10-slim-buster
+FROM python:3.12.5-slim-bookworm
 
 ENV PYTHONFAULTHANDLER=1 \
     PYTHONUNBUFFERED=1 \
     PYTHONHASHSEED=random \
     PIP_NO_CACHE_DIR=off \
     PIP_DISABLE_PIP_VERSION_CHECK=on \
-    PIP_DEFAULT_TIMEOUT=100 \
-    POETRY_VERSION=1.1.12
+    PIP_DEFAULT_TIMEOUT=100
 
 # System deps:
 RUN apt update && apt install -y curl
@@ -24,10 +23,7 @@ USER jenkins
 ENV HOME /home/jenkins
 
 # Install poetry for modern python depency management
-RUN curl -sSL https://install.python-poetry.org | python3 - --version 1.4.2
+RUN curl -sSL https://install.python-poetry.org | python3 - --version 1.8.2
 ENV PATH="$HOME/.local/bin:$PATH"
-
-# Install tox
-RUN python3 -m pip install tox --user
 
 CMD ["bash"]

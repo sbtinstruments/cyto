@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from itertools import pairwise
-from typing import Any, cast
+from typing import Any, Self, cast
 
-from pydantic import root_validator
+from pydantic import model_validator
 
 from ..interval import time_interval
 from ..model import FrozenModel
@@ -23,7 +23,7 @@ class TrailSection(FrozenModel):
         Returns the entire duration of the interval if this section is in the future.
         Returns zero if this section is in the past.
         """
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         if now < self.interval.lower:
             return timedelta()
         if self.interval.upper <= now:
@@ -36,21 +36,20 @@ class Trail(FrozenModel):
 
     sections: tuple[TrailSection, ...] = ()
 
-    @root_validator
-    def _consecutive_sections(cls, values: dict[str, Any]) -> dict[str, Any]:
-        sections = cast(tuple[TrailSection, ...], values.get("sections"))
-        if len(sections) > 1 and not all(
-            s0.interval.upper <= s1.interval.lower for s0, s1 in pairwise(sections)
+    @model_validator(mode="after")
+    def _consecutive_sections(self) -> Self:
+        if len(self.sections) > 1 and not all(
+            s0.interval.upper <= s1.interval.lower for s0, s1 in pairwise(self.sections)
         ):
             raise ValueError(
                 "We require that sections are consecutive (but not contiguous) and"
                 " without overlap"
             )
-        return values
+        return self
 
     def current_section(self) -> TrailSection | None:
         """Return the section that corresponds to the current time (if any)."""
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         for section in self.sections:
             if now in section.interval:
                 return section

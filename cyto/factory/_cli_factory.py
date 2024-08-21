@@ -1,7 +1,7 @@
 import sys
 from typing import TypeVar
 
-from pydantic import parse_raw_as
+from pydantic import TypeAdapter
 
 from ._product_registry import CanNotProduce, ProductSpec
 
@@ -19,4 +19,4 @@ def cli_factory(spec: ProductSpec[T]) -> T:
     except StopIteration as exc:
         raise CanNotProduce from exc
     cli_value = arg.removeprefix(cli_name)
-    return parse_raw_as(spec.annotation, cli_value)  # type: ignore[no-any-return]
+    return TypeAdapter(spec.annotation).validate_json(cli_value)  # type: ignore[no-any-return]

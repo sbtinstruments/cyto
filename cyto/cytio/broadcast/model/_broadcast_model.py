@@ -30,7 +30,7 @@ class BroadcastModel(BroadcastValue[T]):
                 "You must initialize this broadcast before you can mutate it"
             )
         assert isinstance(self.latest_value, FrozenModel)
-        mutable_value = self.latest_value.dict()
+        mutable_value = self.latest_value.model_dump()
         try:
             yield mutable_value
         finally:

@@ -1,15 +1,15 @@
 from collections.abc import AsyncIterable, Iterable
 from contextlib import AbstractAsyncContextManager
-from typing import Any
+from typing import Annotated, Any
 
-from pydantic import Field, constr
+from pydantic import Field
 
 from ..model import FrozenModel
 from ._message import Message
 from ._result_map import ResultMap
 from .keynote import Keynote
 
-Code = constr(regex="^[0-9]{4}$")
+Code = Annotated[str, Field(pattern="^[0-9]{4}$")]
 
 
 # Result may be anything but *usually* it's a mapping that contains a `Keynote`.
@@ -36,7 +36,7 @@ class Outcome(FrozenModel):
         """
         if not isinstance(self.result, ResultMap):
             return Keynote()
-        return self.result.keynote()
+        return self.result.keynote
 
     def result_is_final(self) -> bool:
         """There is a result (of a known type) in a final state (no further changes).

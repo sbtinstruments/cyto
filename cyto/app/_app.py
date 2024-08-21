@@ -4,13 +4,13 @@ import inspect
 import logging
 from contextlib import AbstractContextManager, ExitStack
 from types import TracebackType
-from typing import Any, TypeVar, cast
+from typing import Any, Self, TypeVar, cast
 
 from anyio import run
 
 from ..basic import get_app_name
 from ._inject import Func, inject
-from ._settings import Settings, autofill
+from ._settings import AppBaseSettings
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -21,7 +21,7 @@ ReturnT = TypeVar("ReturnT")
 class App(AbstractContextManager["App"]):
     """Useful defaults for applications."""
 
-    def __init__(self, name: str, settings: Settings) -> None:
+    def __init__(self, name: str, settings: AppBaseSettings) -> None:
         self._name = name
         self._settings = settings
         self._stack = ExitStack()
@@ -32,7 +32,7 @@ class App(AbstractContextManager["App"]):
         return self._name
 
     @property
-    def settings(self) -> Settings:
+    def settings(self) -> AppBaseSettings:
         """Application settings."""
         return self._settings
 
@@ -42,7 +42,7 @@ class App(AbstractContextManager["App"]):
         func: Func[ReturnT],
         *,
         name: str | None = None,
-        settings_class: type[Settings] | None = None,
+        settings_class: type[AppBaseSettings] | None = None,
     ) -> ReturnT:
         """Create app instance and run the given coroutine function."""
         # Set defaults for optional arguments
@@ -50,10 +50,8 @@ class App(AbstractContextManager["App"]):
             name = get_app_name(func)
         if settings_class is None:
             settings_class = get_settings_class(func)
-        # Automatically fill in missing settings (e.g., from settings files)
-        settings_class = autofill(name)(settings_class)
         # Create settings instance
-        settings: Settings = settings_class()
+        settings: AppBaseSettings = settings_class()
         # Create and run app instance
         with cls(name, settings) as app:
             return app.run(func)
@@ -72,11 +70,11 @@ class App(AbstractContextManager["App"]):
         """
         if issubclass(annotation, App):
             return self
-        if issubclass(annotation, Settings):
+        if issubclass(annotation, AppBaseSettings):
             return self._settings
         raise ValueError
 
-    def __enter__(self) -> App:
+    def __enter__(self) -> Self:
         try:
             self._stack.__enter__()
         except Exception as error:
@@ -101,7 +99,7 @@ class App(AbstractContextManager["App"]):
         return suppress_exc
 
 
-def get_settings_class(func: Func[ReturnT]) -> type[Settings]:
+def get_settings_class(func: Func[ReturnT]) -> type[AppBaseSettings]:
     """Try to get the settings class from the function signature."""
     spec = inspect.getfullargspec(func)
     for arg_name in spec.args:
@@ -109,10 +107,10 @@ def get_settings_class(func: Func[ReturnT]) -> type[Settings]:
             annotation = spec.annotations[arg_name]
         except KeyError:
             continue
-        if issubclass(annotation, Settings):
+        if issubclass(annotation, AppBaseSettings):
             # Strangely, mypy can't infer that `annotation` has the right
             # type from the `issubclass` call. We explicitly cast as a
             # work-around to this.
-            return cast(type[Settings], annotation)
+            return cast(type[AppBaseSettings], annotation)
     # Default to the base settings class
-    return Settings
+    return AppBaseSettings

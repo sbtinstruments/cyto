@@ -1,8 +1,6 @@
 *.pyc
 .vscode/*
 !.vscode/settings.default.json
-.tox
 .coverage
 htmlcov
 dist
-poetry.toml

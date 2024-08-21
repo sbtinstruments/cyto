@@ -7,7 +7,7 @@ from contextlib import contextmanager
 from typing import Any
 
 from anyio.streams.memory import MemoryObjectReceiveStream
-from pydantic import validate_arguments
+from pydantic import validate_call
 
 from ...cytio.broadcast import BroadcastValue
 from ...stout import Message, ResultMap
@@ -41,7 +41,7 @@ class LayerMap(OutcomeLayerMap):
         # is a `defaultdict` that may mutate on access.
         return self._data[layer_name]
 
-    @validate_arguments
+    @validate_call
     def __setitem__(self, layer_name: str, value: ResultMap) -> None:
         self._data[layer_name] = value
         self._broadcast.publish(self)
@@ -58,11 +58,11 @@ class LayerMap(OutcomeLayerMap):
 
     @contextmanager
     def mutate(self, layer_name: str) -> Iterator[dict[str, Any]]:
-        mutable_layer = self[layer_name].dict()
+        mutable_layer = self[layer_name].model_dump()
         try:
             yield mutable_layer
         finally:
-            self[layer_name] = ResultMap.parse_obj(mutable_layer)
+            self[layer_name] = ResultMap.model_validate(mutable_layer)
 
 
 class MessageMap(MutableMapping[str, Message]):

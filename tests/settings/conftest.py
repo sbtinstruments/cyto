@@ -1,15 +1,12 @@
-import pytest
-from pydantic import BaseModel, BaseSettings
+from pydantic import BaseModel
+from pydantic_settings import BaseSettings
 
-from cyto.settings import autofill
+from cyto.settings import cyto_defaults
 
 
-class Track(BaseModel):
+class Track(BaseModel, extra="forbid"):
     title: str
     is_remix: bool = False
-
-    class Config:  # pylint: disable=too-few-public-methods
-        extra = "forbid"
 
 
 class Album(BaseModel):
@@ -25,6 +22,7 @@ class Selection(BaseModel):
     metadata: dict[str, str] = {}
 
 
+@cyto_defaults(name="mytunes")
 class MyTunesSettings(BaseSettings):
     theme: str
     volume: int = 80
@@ -35,30 +33,18 @@ class MyTunesSettings(BaseSettings):
     }
 
 
-@pytest.fixture()
-def mytunes_settings() -> type[MyTunesSettings]:
-    return autofill(name="mytunes")(MyTunesSettings)
-
-
+@cyto_defaults(name="winlamp")
 class WinLampSettings(BaseSettings):
     favourite_genres: list[str] = ["Classical", "Electronic"]
     version_info: tuple[str, int, int, int] = ("1.2.0", 1, 2, 0)
 
 
-@pytest.fixture()
-def winlamp_settings() -> type[WinLampSettings]:
-    return autofill(name="winlamp")(WinLampSettings)
-
-
+@cyto_defaults(name="dotify")
 class DotifySettings(BaseSettings):
     featured_album: Album
 
 
-@pytest.fixture()
-def dotify_settings() -> type[DotifySettings]:
-    return autofill(name="dotify")(DotifySettings)
-
-
+@cyto_defaults(name="zoobar2000")
 class Zoobar2000Settings(BaseSettings):
     playlist: list[Track] = [
         Track(title="Eine Kleine Nachtmusik"),
@@ -81,20 +67,11 @@ class Zoobar2000Settings(BaseSettings):
     )
 
 
-@pytest.fixture()
-def zoobar2000_settings() -> type[Zoobar2000Settings]:
-    return autofill(name="zoobar2000")(Zoobar2000Settings)
-
-
+@cyto_defaults(name="nodefault")
 class NoDefaultSettings(BaseSettings):
     flag: bool
     numbers: list[int]
     strings: dict[str, str]
-
-
-@pytest.fixture()
-def nodefault_settings() -> type[NoDefaultSettings]:
-    return autofill(name="nodefault")(NoDefaultSettings)
 
 
 #################################################
@@ -112,18 +89,21 @@ class Cake(BaseModel):
     price: int
 
 
+@cyto_defaults(name="foobar")
 class DefaultSettings(BaseSettings):
     my_bool: bool = False
     my_int: int = 42
     my_string: str = "Hello test suite"
 
 
+@cyto_defaults(name="foobar")
 class PartialSettings(BaseSettings):
     my_bool: bool = False
     my_int: int
     my_string: str
 
 
+@cyto_defaults(name="foobar")
 class NestedSettings(BaseSettings):
     store_is_open: bool = True
     cake: Cake = Cake(
@@ -134,18 +114,3 @@ class NestedSettings(BaseSettings):
         ],
         price=23,
     )
-
-
-@pytest.fixture()
-def default_settings() -> type[DefaultSettings]:
-    return autofill(name="foobar")(DefaultSettings)
-
-
-@pytest.fixture()
-def partial_settings() -> type[PartialSettings]:
-    return autofill(name="foobar")(PartialSettings)
-
-
-@pytest.fixture()
-def nested_settings() -> type[NestedSettings]:
-    return autofill(name="foobar")(NestedSettings)

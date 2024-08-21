@@ -1,18 +1,22 @@
 from __future__ import annotations
 
 from collections.abc import Iterable, Iterator, Sequence
-from typing import Any, overload
+from typing import Annotated, Any, Self, overload
 
-from pydantic import parse_obj_as, root_validator
+from pydantic import (
+    Field,
+    RootModel,
+    TypeAdapter,
+    model_validator,
+)
 
-from ...model import FrozenModel
 from ._keynote_tokens import SectionBeginToken, TagToken, Token
 
-WIP_TAG = TagToken(__root__="[work-in-progress]")
-BONUS_SECTION = SectionBeginToken(__root__="# Bonus slides")
+WIP_TAG = TagToken(root="[work-in-progress]")
+BONUS_SECTION = SectionBeginToken(root="# Bonus slides")
 
 
-class KeynoteTokenSeq(FrozenModel, Sequence[Token]):
+class KeynoteTokenSeq(RootModel[tuple[Token, ...]], Sequence[Token], frozen=True):
     """Sequence of keynote tokens.
 
     Serializes to something like this:
@@ -51,18 +55,18 @@ class KeynoteTokenSeq(FrozenModel, Sequence[Token]):
 
     """
 
-    __root__: tuple[Token, ...] = ()
+    root: tuple[Token, ...] = ()
 
-    @root_validator()
-    def _validate_sentinels(cls, values: dict[str, Any]) -> dict[str, Any]:
-        root = values["__root__"]
-
+    @model_validator(mode="after")
+    def _validate_sentinels(self) -> Self:
         ## The `[work-in-progress]` tag
         wip_tags = tuple(
-            token for token in root if isinstance(token, TagToken) and token == WIP_TAG
+            token
+            for token in self.root
+            if isinstance(token, TagToken) and token == WIP_TAG
         )
         # "[work-in-progress]" tag MUST be the first token
-        if wip_tags and root[0] != WIP_TAG:
+        if wip_tags and self.root[0] != WIP_TAG:
             raise ValueError("The '[work-in-progress]' tag must be the first token")
         # "[work-in-progress]" tag MUST be unique
         if len(wip_tags) > 1:
@@ -70,7 +74,7 @@ class KeynoteTokenSeq(FrozenModel, Sequence[Token]):
 
         ## The `# Bonus slides` section
         sections = tuple(
-            token for token in root if isinstance(token, SectionBeginToken)
+            token for token in self.root if isinstance(token, SectionBeginToken)
         )
         bonus_sections = tuple(
             section for section in sections if section == BONUS_SECTION
@@ -81,25 +85,23 @@ class KeynoteTokenSeq(FrozenModel, Sequence[Token]):
         # `# Bonus slides` section MUST be unique
         if len(bonus_sections) > 1:
             raise ValueError("There can only be one '# Bonus slides' section")
-        return values
+        return self
 
     @overload
-    def __getitem__(self, item: int) -> Token:
-        ...
+    def __getitem__(self, item: int) -> Token: ...
 
     @overload
-    def __getitem__(self, _slice: slice) -> Sequence[Token]:
-        ...
+    def __getitem__(self, _slice: slice) -> Sequence[Token]: ...
 
     def __getitem__(self, item: Any) -> Any:
-        return self.__root__[item]
+        return self.root[item]
 
     # TODO: Use the `override` decorator when we get python 3.12
     def __iter__(self) -> Iterator[Token]:  # type: ignore[override]
-        return iter(self.__root__)
+        return iter(self.root)
 
     def __len__(self) -> int:
-        return len(self.__root__)
+        return len(self.root)
 
     def __add__(self, rhs: Any) -> KeynoteTokenSeq:
         """Return a copy with the given tokens appended.
@@ -107,12 +109,12 @@ class KeynoteTokenSeq(FrozenModel, Sequence[Token]):
         Returns a copy. Does *not* mutate this instance.
         """
         if isinstance(rhs, Iterable):
-            return KeynoteTokenSeq(__root__=(*self.__root__, *rhs))
-        token = parse_obj_as(Token, rhs)  # type: ignore[var-annotated, arg-type]
-        return KeynoteTokenSeq(__root__=(*self.__root__, token))
+            return KeynoteTokenSeq(root=(*self.root, *rhs))
+        token = TypeAdapter(Token).validate_python(rhs)  # type: ignore[var-annotated, arg-type]
+        return KeynoteTokenSeq(root=(*self.root, token))
 
     def to_raw_seq(self) -> Sequence[str | dict[str, Any]]:
         """Convert to sequence of raw tokens."""
-        result = self.dict()["__root__"]
-        assert isinstance(result, Sequence)
-        return result
+        return tuple(
+            token if isinstance(token, str) else token.model_dump() for token in self
+        )

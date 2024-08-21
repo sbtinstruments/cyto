@@ -23,10 +23,7 @@ def initialize_logging(
 
     # Level
     if level is None:
-        if "DEBUG" in os.environ:
-            level = "debug"
-        else:
-            level = "info"
+        level = "debug" if "DEBUG" in os.environ else "info"
     logger.setLevel(level.upper())
 
     # Warnings

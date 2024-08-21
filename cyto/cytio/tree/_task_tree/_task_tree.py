@@ -4,6 +4,7 @@ from collections.abc import Iterator
 from contextlib import AbstractContextManager, contextmanager
 from itertools import pairwise
 from types import TracebackType
+from typing import Self
 
 import networkx as nx
 from anyio.streams.memory import MemoryObjectReceiveStream, MemoryObjectSendStream
@@ -84,7 +85,7 @@ class TaskTree(AbstractContextManager["TaskTree"]):
     def _broadcast_change(self) -> None:
         self._change_broadcast.publish(self)
 
-    def __enter__(self) -> TaskTree:
+    def __enter__(self) -> Self:
         self._broadcast_change()
         return self
 

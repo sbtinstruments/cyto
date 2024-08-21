@@ -1,27 +1,23 @@
-# pylint: disable=missing-function-docstring,missing-class-docstring
-
-# pytest fixtures may have effects just by their mere presence. E.g., the
-# `Argv` fixture that clears all arguments per default. Since this is the case,
-# the "unused argument" warning is moot.
-# pylint: disable=unused-argument
-
 from pydantic import BaseModel
 
-from cyto.app import App, Settings
+from cyto.app import App, AppBaseSettings
 
 from ..conftest import Argv
 
 
 def test_flat_args(argv: Argv) -> None:
     argv.append(
-        "--cream-and-sugar",
+        "--cream_and_sugar",
+        "True",
         "--debug",
-        "--foreground",
-        "--roast-level",
-        42,
+        "True",
+        "--background",
+        "False",
+        "--roast_level",
+        "42",
     )
 
-    class FooBarSettings(Settings):
+    class FooBarSettings(AppBaseSettings):
         cream_and_sugar: bool
         roast_level: int = 3
 
@@ -37,16 +33,16 @@ def test_flat_args(argv: Argv) -> None:
 def test_nested_args(argv: Argv) -> None:
     argv.append(
         "--duration",
-        42,
+        "42",
         "--roast.heat",
-        12,
+        "12",
     )
 
     class Roast(BaseModel):
         duration: int = 60
         heat: int = 30
 
-    class CoffeeMateSettings(Settings):
+    class CoffeeMateSettings(AppBaseSettings):
         roast: Roast = Roast()
         # Let's try to confuse it with these top-level fields with
         # the exact same names as in `Roast`.

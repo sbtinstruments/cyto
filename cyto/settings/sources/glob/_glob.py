@@ -1,42 +1,38 @@
 from __future__ import annotations
 
 import logging
-from collections.abc import Callable, MutableMapping
+import tomllib
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Protocol
+from typing import Any
 
-from pydantic import BaseSettings
+from pydantic.fields import FieldInfo
+from pydantic_core import from_json
+from pydantic_settings import (
+    BaseSettings,
+    PydanticBaseSettingsSource,
+)
 
 from ....basic import count_leaves
 from ....basic import deep_update as dict_deep_update
 
 _LOGGER = logging.getLogger(__name__)
 
-# Note that we disable D102 for `Protocol`s since it's redundant documentation.
-# Similarly, we disable too-few-public-methods since it doesn't make sense for
-# `Protocol`s. Hopefully, both pydocstyle and pylint will special-case `Protocol`s
-# soon enough.
 
-
-class Loader(Protocol):  # pylint: disable=too-few-public-methods
-    """Given raw file content, return a settings dict."""
-
-    def __call__(self, __data: str) -> MutableMapping[str, Any]:
-        ...
-
-
-# We don't need that many public methods for this small utility class.
-# Maybe we can replace it with a function that returns a function.
-# I'm just not sure that this is a better approach.
-class GlobSource:  # pylint: disable=too-few-public-methods
+class GlobSource(PydanticBaseSettingsSource):
     """Find setting files in a directory with a glob pattern."""
 
     def __init__(
-        self, directory: Path, pattern: str, loader: Loader, *, deep_update: bool = True
+        self,
+        settings_cls: type[BaseSettings],
+        directory: Path,
+        pattern: str,
+        *,
+        deep_update: bool = True,
     ):
+        super().__init__(settings_cls)
         self._dir = directory
         self._pattern = pattern
-        self._loader = loader
         # We can't do better than `[Any, Any]` for now because of `dict.update`'s
         # lacking signature.
         self._update_func: Callable[[Any, Any], None]
@@ -46,7 +42,16 @@ class GlobSource:  # pylint: disable=too-few-public-methods
         else:
             self._update_func = dict.update
 
-    def __call__(self, _: BaseSettings) -> dict[str, Any]:
+    # We must implement `get_field_value` since it's an abstract method.
+    # It is never used in practice, however, so we simply return literals.
+    #
+    # See: https://github.com/pydantic/pydantic-settings/issues/102
+    def get_field_value(
+        self, _field: FieldInfo, _field_name: str
+    ) -> tuple[Any, str, bool]:
+        return None, "", False
+
+    def __call__(self) -> dict[str, Any]:
         """Return a dict with settings from the globbed files."""
         result: dict[str, Any] = {}
         for path in sorted(self._dir.glob(self._pattern)):
@@ -64,7 +69,13 @@ class GlobSource:  # pylint: disable=too-few-public-methods
                 )
                 continue
             try:
-                settings = dict(self._loader(data))
+                match path.suffix:
+                    case ".json":
+                        settings = from_json(data)
+                    case ".toml":
+                        settings = tomllib.loads(data)
+                    case other:
+                        raise ValueError(f"Unknown file suffix: '{other}'")
             except ValueError as exc:
                 _LOGGER.warning(
                     "We skip settings file '%s' because we can not parse it: %s",

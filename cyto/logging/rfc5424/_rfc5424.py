@@ -19,8 +19,7 @@ class RFC5424Formatter(RFC5424FormatterBase):  # type: ignore[misc]
             app_name = get_app_name()
         self._app_name = app_name
 
-    # A003: We have to use `format` since `logging` chose this name
-    def format(self, record: LogRecord) -> str:  # noqa: A003
+    def format(self, record: LogRecord) -> str:
         """Return the given log record as a formatted string.
 
         We (cyto team) encourage the use of this pattern:

@@ -5,7 +5,7 @@ from collections import defaultdict
 from collections.abc import Iterator
 from contextlib import ExitStack, contextmanager, suppress
 from types import TracebackType
-from typing import Any, TypedDict, cast
+from typing import Any, Self, TypedDict, cast
 
 from mergedeep import Strategy
 
@@ -61,7 +61,7 @@ class OutcomeBuilder(BroadcastModel[Outcome]):
     ) -> None:
         for layer_name, outcome in layers.items():
             self._layers[layer_name] = self._layers[layer_name].update(
-                strategy, **outcome.dict()
+                strategy, **outcome.model_dump()
             )
         self._push()
 
@@ -78,11 +78,11 @@ class OutcomeBuilder(BroadcastModel[Outcome]):
         if layer_name is None:
             layer_name = OutcomeBuilder.default_layer_name
         layer = self._layers[layer_name]
-        mutable_layer = layer.dict()
+        mutable_layer = layer.model_dump()
         try:
             yield cast(MutableOutcome, mutable_layer)
         finally:
-            self[layer_name] = Outcome.parse_obj(mutable_layer)
+            self[layer_name] = Outcome.model_validate(mutable_layer)
 
     @contextmanager
     def catch_message(self) -> Iterator[None]:
@@ -110,7 +110,7 @@ class OutcomeBuilder(BroadcastModel[Outcome]):
             _LOGGER.info("Stop now because of message in outcome")
             raise _StopNow("Message in outcome")
 
-    def __enter__(self) -> OutcomeBuilder:
+    def __enter__(self) -> Self:
         assert self._stack is None
         with ExitStack() as stack:
             super().__enter__()
@@ -135,5 +135,5 @@ def _flatten(layers: dict[str, Outcome]) -> Outcome:
     sorted_layers = (layers[layer_name] for layer_name in sorted(layers))
     res = Outcome()
     for layer in sorted_layers:
-        res = res.update(**layer.dict())
+        res = res.update(**layer.model_dump())
     return res

@@ -1,7 +1,6 @@
 try:
-    from ._autofill import autofill
-    from ._settings import BaseSettings, register
-    from ._settings_factory import settings_factory
+    from ._settings import cyto_defaults, register
+    # from ._settings_factory import settings_factory
 except ImportError as exc:
     from .._extra import ExtraImportError
 
@@ -9,8 +8,6 @@ except ImportError as exc:
 
 
 __all__ = (
-    "autofill",
-    "BaseSettings",
+    "cyto_defaults",
     "register",
-    "settings_factory",
 )

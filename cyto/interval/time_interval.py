@@ -1,8 +1,8 @@
 # Inspired by `portion`'s API but with types
 from datetime import datetime, timedelta
-from typing import Any, overload
+from typing import Self, overload
 
-from pydantic import root_validator
+from pydantic import model_validator
 
 from ..model import FrozenModel
 
@@ -17,14 +17,11 @@ class ClosedOpenFin(FrozenModel):
     lower: datetime
     upper: datetime
 
-    @root_validator
-    def _lower_before_upper(cls, values: dict[str, Any]) -> dict[str, Any]:
-        lower, upper = values.get("lower"), values.get("upper")
-        assert isinstance(lower, datetime)
-        assert isinstance(upper, datetime)
-        if lower > upper:
+    @model_validator(mode="after")
+    def _lower_before_upper(self) -> Self:
+        if self.lower > self.upper:
             raise ValueError('"lower" must come before "upper"')
-        return values
+        return self
 
     def duration(self) -> timedelta:
         """Return the time between lower and upper."""
@@ -38,13 +35,11 @@ ClosedOpen = ClosedOpenInf | ClosedOpenFin
 
 
 @overload
-def closed_open(lower: datetime, upper: None = None) -> ClosedOpenInf:
-    ...
+def closed_open(lower: datetime, upper: None = None) -> ClosedOpenInf: ...
 
 
 @overload
-def closed_open(lower: datetime, upper: datetime) -> ClosedOpenFin:
-    ...
+def closed_open(lower: datetime, upper: datetime) -> ClosedOpenFin: ...
 
 
 def closed_open(lower: datetime, upper: datetime | None = None) -> ClosedOpen:

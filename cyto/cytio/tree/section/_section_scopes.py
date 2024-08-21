@@ -144,7 +144,7 @@ def section(name: str, *, hints: Iterable[SectionHint] | None = None) -> Iterato
         update_section()
 
 
-def _normalize_timedelta(value: timedelta | float | int) -> timedelta:
+def _normalize_timedelta(value: timedelta | float) -> timedelta:
     if isinstance(value, timedelta):
         return value
     if isinstance(value, float | int):

@@ -12,36 +12,30 @@ repository = "https://github.com/sbtinstruments/cyto"
 version = "0.0.0"                                                        # TODO: Get version from git
 
 [tool.poetry.dependencies]
-python = "^3.10"
+python = ">=3.12,<4.0"
 # Make sure that all dependencies are optional!
 # This allows our users to opt-in via "extras".
-anyio = { version = "^3.7.0", optional = true }
-click = { version = "^8.1.3", optional = true }
+anyio = { version = "^4.4.0", optional = true }
 mergedeep = { version = "^1.3.4", optional = true }
-networkx = { version = "^3.0", optional = true }
-pydantic = { version = "^1.10.5", optional = true }
-redis = { version = "^4.5.1", optional = true }
-toml = { version = "^0.10.2", optional = true }
+networkx = { version = "^3.3", optional = true }
+pydantic = { version = "^2.8.2", optional = true }
+pydantic-settings = { version = "^2.4.0", optional = true }
+redis = { version = "^5.0.8", optional = true }
 syslog-rfc5424-formatter = { version = "^1.2.3", optional = true }
-portion = { version = "^2.4.0", optional = true }
-tinydb = { version = "^4.7.1", optional = true }
-rich-click = { version = "^1.6.1", optional = true }
-mypy = "^1.4.1"
+portion = { version = "^2.4.2", optional = true }
+tinydb = { version = "^4.8.0", optional = true }
 
 [tool.poetry.group.dev.dependencies]
-black = "^23.1.0"
-pyfakefs = "^5.1.0"
-pytest = "^7.2.1"
-pytest-cov = "^4.0.0"
-taskipy = "^1.10.3"
-mypy = "^1.0.1"
-pre-commit = "^3.1.1"
-pylint = "^2.16.2"
-pylint-pydantic = "^0.1.8"
-ruff = "^0.0.270"
+pyfakefs = "^5.6.0"
+pytest = "^8.3.2"
+pytest-cov = "^5.0.0"
+taskipy = "^1.13.0"
+pre-commit = "^3.8.0"
+ruff = "^0.6.1"
+mypy = "^1.11.1"
 
 [tool.poetry.extras]
-"app" = ["anyio", "pydantic"]
+"app" = ["anyio", "pydantic", "pydantic-settings"]
 "cytio" = ["anyio"]
 "cytio-tree" = ["anyio", "networkx", "pydantic"]
 "cytio-tree-outline-redis" = ["anyio", "networkx", "pydantic", "redis"]
@@ -49,89 +43,23 @@ ruff = "^0.0.270"
 "interval" = ["portion", "pydantic"]
 "logging-rfc5424" = ["syslog-rfc5424-formatter"]
 "model" = ["mergedeep", "pydantic"]
-"settings" = ["pydantic"]
-"settings-sources-cli" = ["click"]
-"settings-sources-cli-rich" = ["rich-click"]
-"settings-sources-toml" = ["toml"]
+"settings" = ["pydantic", "pydantic-settings"]
 "stout" = ["portion", "pydantic", "tinydb"]
 
 [tool.taskipy.tasks]
-black = "black cyto tests"
-ruff = "ruff cyto tests"
-mypy = "mypy --show-error-codes cyto tests"
+ruff = "ruff check cyto tests"
+mypy = "mypy cyto tests"
 pre-commit = "pre-commit run --all-files"
-pylint = "pylint cyto tests"
 
 [tool.pytest.ini_options]
 testpaths = 'tests'
 
-[tool.tox]
-legacy_tox_ini = """
-[tox]
-isolated_build = true
-# TODO: Use `py{310,311}`
-envlist = clean,py{310}-{app,app_cli,settings,settings_source_toml},coverage
-requires =
-    tox-poetry-installer[poetry] == 0.10.3
-
-[testenv]
-require_locked_deps = true
-locked_deps =
-    # All tests requires the following dev-dependencies:
-    pytest
-    pytest-cov
-    # Furthermore. some tests depend on specific pytest plug-ins:
-    settings: pyfakefs
-    settings_source_toml: pyfakefs
-# Everything in cyto is an extra. No dependencies install per default.
-# Therefore, we must specify the extras that we need for each test.
-extras =
-    app: app
-    app_cli: app
-    app_cli: settings-sources-cli
-    settings: settings
-    settings_source_toml: settings
-    settings_source_toml: settings-sources-toml
-# We specify the test files that we run in each test environment.
-setenv =
-    app: PYTEST_TEST_PATHS = tests/app/test_basics.py
-    app_cli: PYTEST_TEST_PATHS = tests/app/test_cli.py
-    settings: PYTEST_TEST_PATHS = tests/settings/test_autofill.py tests/settings/test_precedence.py
-    settings_source_toml: PYTEST_TEST_PATHS = tests/settings/sources/test_source_toml.py
-# For parallel mode, we ensure that tox runs the environments in the right order.
-depends =
-    # Run "clean" before all the actual tests
-    {app,app_cli,settings,settings_source_toml}: clean
-    # Run "coverage" after all the actual tests
-    coverage: py{310}-{app,app_cli,settings,settings_source_toml}
-
-# This is a dummy environment that clears the code coverage data
-[testenv:clean]
-basepython = python3.10
-skip_install = true
-commands = coverage erase
-
-# These are the actual test environments
-[testenv:py{310}-{app,app_cli,settings,settings_source_toml}]
-commands =
-    pytest --cov=cyto --cov-append --cov-report=term-missing \
-      {env:PYTEST_ARGS:} {env:PYTEST_TEST_PATHS}
-
-# This is a dummy environment that generates a code coverage report
-[testenv:coverage]
-basepython = python3.10
-skip_install = true
-commands =
-    coverage html --precision=2
-    # TODO: Increase "--fail-under" to something like 80 when we have
-    # the resources to enforce code coverage.
-    coverage report --precision=2 --fail-under=0
-"""
 
 [tool.ruff]
-target-version = "py310"
-select = ["ALL"]
-ignore = [
+target-version = "py312"
+line-length = 88
+lint.select = ["ALL"]
+lint.ignore = [
     # "flake8-annotations". mypy does our type checking.
     "ANN",
     # "flake8-commas (COM)". We use black instead.
@@ -145,17 +73,15 @@ ignore = [
     "FBT002",
     # "pydocstyle (D)". We *should* do this. It's just a large effort. Maybe later.
     "D",
-    # "First argument of a method should be named self".
-    # Too many false-positives with `pydantic.root_validator`. If pydantic 2.0 changes
-    # things, we can reconsider this rule.
-    "N805",
-    # "Pylint (PL)". We still use pylint until ruff reaches feature parity.
-    # See: https://github.com/charliermarsh/ruff/issues/970
-    "PL",
+    # Allow ourselves to just import stuff in __init__ files.
+    "F401",
     # "Use of assert detected". We like `assert`.
     "S101",
     # "flake8-type-checking". Too little gained for the effort. Maybe later.
     "TCH",
+    # We have TODO's and HACK's throughout as reminders for later. That is okay.
+    "FIX002",
+    "FIX004",
     # "TD002 Missing author in TODO".
     # "TD003 Missing issue link on the line following this TODO".
     # That's not how we use TODO.
@@ -167,17 +93,16 @@ ignore = [
     # Apparently, any string that contains a space is "too long". That's a bit too
     # strict for us.
     "TRY003",
+    # We prefer a combination of `error` and debug` to log the error message and
+    # exception (including stack trace), respectively. We do *not* want to use
+    # `exception` since it outputs both at the ERROR log level.
+    "TRY400",
 ]
-# Same as Black
-line-length = 88
-
-[tool.black]
-target-version = ['py310']
 
 [tool.mypy]
 strict = true
-# Enabled by "strict = true"
-no_implicit_reexport = false
+no_implicit_reexport = false # Enabled by "strict = true"
+show_error_codes = true
 
 plugins = ["pydantic.mypy"]
 # Unfortunately, this does not work for top-level ignores.
@@ -209,60 +134,3 @@ ignore_missing_imports = true
 # TODO: Replace with tomllib from Python 3.11 
 module = "toml.*"
 ignore_missing_imports = true
-
-[tool.pylint.master]
-# i,j,k: You can use this for an integer index in a loop.
-# db: For a database instance (or database client instance).
-# fs: We use this in the tests to get a pyfakefs file system reference.
-#     Since pytest's dependency injection is name based, we have to use
-#     this exact argument name.
-# io: You can use this for a `TextIO`, `BinaryIO`, etc
-# tg: You can use this for an `anyio.TaskGroup`.
-good-names = 'i,j,k,db,fs,io,tg' # Default is 'i,j,k,ex,Run,_'
-# Increase the default values a bit. Yes, this may hurt maintainability
-# ever so slightly but it increases the speed of development.
-max-args = '7'        # Default is 5
-max-attributes = '12' # Default is 7
-# Match black's default max line length
-max-line-length = '88' # Default is 100
-# Avoid `no-name-in-module` errors for pydantic
-extension-pkg-whitelist = 'pydantic'
-load-plugins = "pylint_pydantic"
-
-[tool.pylint.similarities]
-# Imports are often duplicated. If two different files use a lot of
-# the same imports, there is just no way around it. Therefore, we
-# simply ignore import statements completely when we look for duplicate
-# code.
-ignore-imports = 'y'
-
-[tool.pylint.'messages control']
-# Note that there is an ongoing discussion about, the current
-# pylint defaults:
-#     https://github.com/PyCQA/pylint/issues/3512
-#
-# It's also interesting to note that the pylint authors disable
-# some checks for the official pylint repo:
-#     https://github.com/PyCQA/pylint/blob/master/pylintrc#L56
-
-### IF YOU ENABLE A PYLINT CHECK THEN EXPLAIN WHY BELOW
-enable = '''
-'''
-
-### IF YOU DISABLE A PYLINT CHECK THEN EXPLAIN WHY BELOW
-#
-# fixme: We use "TODO: " to note areas that we can improve.
-#     It's nice to have this directly in the code in a way that
-#     we can easily search for.
-#     Related to: https://github.com/PyCQA/pylint/issues/2874
-#
-# missing-module-docstring,
-# missing-class-docstring,
-# missing-function-docstring: pydocstyle handles all this
-#     See: https://pylint.readthedocs.io/en/latest/faq.html#i-am-using-another-popular-linter-alongside-pylint-which-messages-should-i-disable-to-avoid-duplicates
-disable = '''
-  fixme,
-  missing-module-docstring,
-  missing-class-docstring,
-  missing-function-docstring,
-'''

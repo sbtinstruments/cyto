@@ -1,3 +1,3 @@
-from ._glob import GlobSource, Loader
+from ._glob import GlobSource
 
-__all__ = ("GlobSource", "Loader")
+__all__ = "GlobSource"

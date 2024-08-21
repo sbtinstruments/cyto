@@ -2,18 +2,16 @@ from collections.abc import Callable, Iterable
 from functools import cache
 from typing import TypeVar
 
-from pydantic import BaseSettings
-from pydantic.env_settings import SettingsSourceCallable
+from pydantic_settings import BaseSettings, PydanticBaseSettingsSource
 
 from ..factory import CanNotProduce, ProductSpec
-from ._autofill import autofill
 from ._settings import get_base_settings_class
 
 T = TypeVar("T")
 
 
 def settings_factory(
-    *, app_name: str, extra_sources: Iterable[SettingsSourceCallable] = ()
+    *, app_name: str, extra_sources: Iterable[PydanticBaseSettingsSource] = ()
 ) -> Callable[[ProductSpec[T]], T]:
     frozen_extra_sources = tuple(extra_sources)
     all_settings = _get_all_settings(
@@ -36,7 +34,7 @@ def settings_factory(
 
 @cache
 def _get_all_settings(
-    *, app_name: str, extra_sources: tuple[SettingsSourceCallable, ...] = ()
+    *, app_name: str, extra_sources: tuple[PydanticBaseSettingsSource, ...] = ()
 ) -> BaseSettings:
     auto_cls = _get_auto_cls(app_name=app_name, extra_sources=extra_sources)
     return auto_cls()
@@ -44,7 +42,7 @@ def _get_all_settings(
 
 @cache
 def _get_auto_cls(
-    *, app_name: str, extra_sources: tuple[SettingsSourceCallable, ...] = ()
+    *, app_name: str, extra_sources: tuple[PydanticBaseSettingsSource, ...] = ()
 ) -> type[BaseSettings]:
     cls = get_base_settings_class()
     return autofill(app_name, extra_sources=extra_sources)(cls)
