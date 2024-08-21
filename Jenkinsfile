@@ -49,7 +49,9 @@ pipeline {
                         // Get total coverage for the badge
                         TOTAL_COVERAGE=sh(script: 'poetry run pytest --cov=cyto tests | grep TOTAL | awk \'{print $4 "\\t"}\'', returnStdout: true).trim()
                     }
-                    steps {}
+                    steps {
+                        sh ''
+                    }
                     post {
                         always {
                             addShortText text: "Coverage: ${env.TOTAL_COVERAGE}"
