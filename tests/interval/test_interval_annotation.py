@@ -60,6 +60,11 @@ def test_interval_adapter_validate() -> None:
     assert interval == portion.empty()
 
     with pytest.raises(ValidationError):
+        IntIntervalAdapter.validate_python(
+            {"intervals": [Atomic(CLOSED, 2.72, 3.14, OPEN)]}
+        )
+
+    with pytest.raises(ValidationError):
         IntIntervalAdapter.validate_python({"hi": "there"})
 
     ### Instance of portion.Interval

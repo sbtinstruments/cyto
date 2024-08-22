@@ -22,8 +22,6 @@ def _create_io_annotation(*, type_: type, conv: Conv | None = None) -> type[Base
     if conv is None:
         conv = _create_conv(type_)
 
-    Atomic = tuple[portion.Bound, type_, type_, portion.Bound]  # type: ignore[valid-type]  # noqa: N806
-
     def _validate_portion_interval(interval: portion.Interval) -> portion.Interval:
         for atomic in interval._intervals:  # noqa: SLF001
             assert isinstance(atomic, portion.interval.Atomic)
@@ -32,7 +30,7 @@ def _create_io_annotation(*, type_: type, conv: Conv | None = None) -> type[Base
         return interval
 
     class IntervalAnnotation(BaseModel, frozen=True, extra="forbid"):
-        intervals: tuple[Atomic, ...] = ()
+        intervals: tuple[portion.interval.Atomic, ...] = ()
 
         @model_validator(mode="wrap")
         @classmethod
@@ -73,7 +71,7 @@ def _create_io_annotation(*, type_: type, conv: Conv | None = None) -> type[Base
                 # ruff: noqa: ERA001
                 #
                 # TypeError: If data contains an item that we can not unpack into
-                # for elements. Inside `portion.from_data`, we have this:
+                # four elements. Inside `portion.from_data`, we have this:
                 #
                 #     for item in data:
                 #         left, lower, upper, right = item
