@@ -106,7 +106,7 @@ def _create_conv(type_: type) -> Conv:
             return type_adapter.validate_strings(value)  # type: ignore[no-any-return]
         return type_adapter.validate_python(value)  # type: ignore[no-any-return]
 
-    _validate.__name__ = f"_validate_{type_}"
+    _validate.__name__ = f"_validate_{type_.__name__}"
 
     return _validate
 
