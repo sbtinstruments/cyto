@@ -154,3 +154,11 @@ def test_type_strictness() -> None:
     assert interval == portion.closedopen(
         datetime(1989, 5, 28, tzinfo=UTC), datetime(2024, 12, 1, tzinfo=UTC)
     )
+    # Test with time
+    interval = TimeIntervalAdapter.validate_python(
+        "[1989-05-28T13:56:59.9876Z, 2024-12-01T00:01Z)"
+    )
+    assert interval == portion.closedopen(
+        datetime(1989, 5, 28, 13, 56, 59, 987600, tzinfo=UTC),
+        datetime(2024, 12, 1, 0, 1, tzinfo=UTC),
+    )
