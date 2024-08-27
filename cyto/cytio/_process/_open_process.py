@@ -49,7 +49,7 @@ async def open_process(  # noqa: PLR0913
      * Waits for the process on normal `__aexit__` (i.e., when there is no exception)
      * Terminates the process on exception:
         * Starts gracefully with a SIGTERM
-        * Closes stdin (let the process now that we have no more input for it)
+        * Closes stdin (let the process know that we have no more input for it)
         * Waits `kill_delay` seconds for the process to wind down (e.g., write it's
           last items on stdout/stderr).
         * If the process is still up, we now send SIGKILL (immediate shutdown)
