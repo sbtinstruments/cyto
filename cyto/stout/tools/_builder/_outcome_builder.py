@@ -56,14 +56,14 @@ class OutcomeBuilder(BroadcastModel[Outcome]):
         self._layers.update(layers)
         self._push()
 
-    def merge_with(
-        self, layers: dict[str, Outcome], *, strategy: Strategy | None = None
-    ) -> None:
-        for layer_name, outcome in layers.items():
-            self._layers[layer_name] = self._layers[layer_name].update(
-                strategy, **outcome.model_dump()
-            )
-        self._push()
+    def merge_with(self, layers: dict[str, Outcome]) -> None:
+        raise NotImplementedError
+        # ruff: noqa: ERA001
+        # for layer_name, outcome in layers.items():
+        #     self._layers[layer_name] = self._layers[layer_name].update(
+        #         strategy, **outcome.model_dump()
+        #     )
+        # self._push()
 
     # TODO: Use the `override` decorator when we get python 3.12
     @contextmanager
@@ -130,10 +130,11 @@ class OutcomeBuilder(BroadcastModel[Outcome]):
         return self._stack.__exit__(exc_type, exc_value, traceback)
 
 
-def _flatten(layers: dict[str, Outcome]) -> Outcome:
+def _flatten(_layers: dict[str, Outcome]) -> Outcome:
     """Return all the layers merged together into a single result."""
-    sorted_layers = (layers[layer_name] for layer_name in sorted(layers))
-    res = Outcome()
-    for layer in sorted_layers:
-        res = res.update(**layer.model_dump())
-    return res
+    raise NotImplementedError
+    # sorted_layers = (layers[layer_name] for layer_name in sorted(layers))
+    # res = Outcome()
+    # for layer in sorted_layers:
+    #     res = res.update(**layer.model_dump())
+    # return res

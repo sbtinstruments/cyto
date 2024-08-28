@@ -58,7 +58,7 @@ def patch(type_: type[FM], *args: Any, **kwargs: Any) -> Iterator[FM]:
     """
     original = fetch(type_)
     try:
-        patched = original.update(*args, **kwargs)
+        patched = original.frozen_patch(*args, **kwargs)
         current_task.instances().setauto(patched)
         yield patched
     finally:

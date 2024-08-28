@@ -77,8 +77,8 @@ async def test_fetch_produce_without_store() -> None:
 
 async def test_noop_patch() -> None:
     with plant_tree():
-        # With no arguments, patch acts like a regular `fetch`
-        with patch(Mouse) as mouse1:
+        # With the empty dict, patch acts like a regular `fetch`
+        with patch(Mouse, {}) as mouse1:
             isinstance(mouse1, Mouse)
             assert mouse1.clicks == 0
             # Note that we get the very same instance back on a subsequent `fetch`
@@ -91,7 +91,7 @@ async def test_simple_patch() -> None:
     with plant_tree():
         mouse1 = fetch(Mouse)
         assert mouse1.clicks == 0
-        with patch(Mouse, clicks=42) as mouse2:
+        with patch(Mouse, {"clicks": 42}) as mouse2:
             assert mouse2.clicks == 42
             mouse3 = fetch(Mouse)
             assert mouse3.clicks == 42
@@ -104,7 +104,7 @@ async def test_nested_patch_of_leaf_field() -> None:
         mouse1 = fetch(Mouse)
         assert mouse1.wheel.mileage.value == 0
         # Nested patch that goes all the way to a "leaf" field
-        with patch(Mouse, wheel={"mileage": {"value": 133.7}}) as mouse2:
+        with patch(Mouse, {"wheel.mileage.value": 133.7}) as mouse2:
             assert mouse2.wheel.mileage.value == 133.7
             mouse3 = fetch(Mouse)
             assert mouse3.wheel.mileage.value == 133.7
@@ -118,7 +118,7 @@ async def test_nested_patch_of_submodel() -> None:
         assert mouse1.wheel.mileage.unit == "km"
         assert mouse1.wheel.mileage.value == 0
         with patch(
-            Mouse, wheel={"mileage": UnitValue(unit="cm", value=73.0)}
+            Mouse, {"wheel.mileage": UnitValue(unit="cm", value=73.0)}
         ) as mouse2:
             assert mouse2.wheel.mileage.unit == "cm"
             assert mouse2.wheel.mileage.value == 73.0
@@ -139,11 +139,11 @@ async def test_erroneous_patch() -> None:
                 r"integer,.*"
             ),
         ):
-            with patch(Mouse, clicks="sure, why not"):
+            with patch(Mouse, {"clicks": "sure, why not"}):
                 pass
 
         with pytest.raises(ValueError, match=r"Input should be a valid dictionary"):
-            with patch(Mouse, wheel={"mileage": 73.1}):
+            with patch(Mouse, {"wheel.mileage": 73.1}):
                 pass
 
         with pytest.raises(
@@ -153,5 +153,5 @@ async def test_erroneous_patch() -> None:
                 r"Input should be a valid string"
             ),
         ):
-            with patch(Mouse, wheel={"mileage": {"unit": datetime}}):
+            with patch(Mouse, {"wheel.mileage.unit": datetime}):
                 pass
