@@ -53,7 +53,7 @@ def test_inject_missing_anno() -> None:
     # We purposely omit the annotation, hence the "type: ignore" comment
     # Likewise, we purposely don't use the argument for anything. We just
     # want to test the inject semantics.
-    async def main(stack) -> None:
+    async def main(stack) -> None:  # type: ignore[no-untyped-def]
         pass
 
     with pytest.raises(
