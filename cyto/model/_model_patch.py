@@ -51,7 +51,7 @@ class Stitch:
         # Give a nice error message if the field is not present in the model
         if first_field not in model.model_fields:
             raise PatchError(
-                f"{type(model).__name__} does not have a '{first_field}' field"
+                f"{type(model).__name__} does not have the '{first_field}' field"
             )
 
         # Base case

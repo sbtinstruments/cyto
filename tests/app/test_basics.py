@@ -1,4 +1,4 @@
-# ruff: noqa: PLR2004
+# ruff: noqa: PLR2004, ARG001
 from contextlib import AsyncExitStack
 
 import pytest
@@ -53,7 +53,7 @@ def test_inject_missing_anno() -> None:
     # We purposely omit the annotation, hence the "type: ignore" comment
     # Likewise, we purposely don't use the argument for anything. We just
     # want to test the inject semantics.
-    async def main(stack) -> None:  # type: ignore[no-untyped-def] # noqa: ARG001
+    async def main(stack) -> None:
         pass
 
     with pytest.raises(
@@ -66,7 +66,7 @@ def test_inject_unknown_anno() -> None:
     # Note that we inject arguments based on the type annotation and not
     # the argument name.
     async def main(
-        stack: int,  # pylint: disable=unused-argument # noqa: ARG001
+        stack: int,
     ) -> None:
         pass
 
