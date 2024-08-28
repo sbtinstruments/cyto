@@ -37,7 +37,6 @@ class GlobSource(PydanticBaseSettingsSource):
         # lacking signature.
         self._update_func: Callable[[Any, Any], None]
         if deep_update:
-            # TODO: Replace with `mergedeep`
             self._update_func = dict_deep_update
         else:
             self._update_func = dict.update
