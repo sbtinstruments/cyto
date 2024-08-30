@@ -1,8 +1,14 @@
 # ruff: noqa: PLR2004, N806
-from typing import Annotated
+from typing import Annotated, Literal
 
 import pytest
-from pydantic import AfterValidator, Field, NonNegativeInt, ValidationError
+from pydantic import (
+    AfterValidator,
+    Discriminator,
+    Field,
+    NonNegativeInt,
+    ValidationError,
+)
 
 from cyto.model import AssignOp, FrozenModel, Patch, PatchError, Stitch
 
@@ -161,6 +167,16 @@ def test_frozen_patch_with_mutating_validator() -> None:
     patched_model = my_model.frozen_patch({"my_first_square": 5})
     assert patched_model.my_int == 2
     assert patched_model.my_first_square == 5**2
+    # Note that we validate the default value, which applies `Squared` to it.
+    # This is the expected behaviour of `validation="full"` (the default).
+    assert patched_model.my_second_square == 7**2
+
+    # We can use `validation="immutable"` to avoid this behaviour
+    patched_model = my_model.frozen_patch(
+        {"my_first_square": 5}, validation="immutable"
+    )
+    assert patched_model.my_int == 2
+    assert patched_model.my_first_square == 5
     assert patched_model.my_second_square == 7
 
     # No change to the original
@@ -186,3 +202,44 @@ def test_frozen_patch_with_mutating_validator() -> None:
     assert twice_patched_model.my_first_square == 5**2
     # Note that the validator is applied *again*
     assert twice_patched_model.my_second_square == 16777216
+
+
+def test_frozen_patch_with_discriminated_union() -> None:
+    """This test is in response to a specific issue.
+
+    We got this error from within `frozen_patch`:
+
+        pydantic_core._pydantic_core.ValidationError: 1 validation error for DspSettings
+        method
+          Unable to extract tag using discriminator 'name' [type=union_tag_not_found,
+          input_value={}, input_type=dict]
+            For further information visit https://errors.pydantic.dev/2.8/v/union_tag_not_found
+
+    Turns out to be because we used `exclude_unset=True` inside `Patch.apply`. This
+    was in an effort to avoid applying mutating validators to unset fields.
+    Unfortunately, this doesn't work well together with the "discriminator" used
+    with tagged unions. In practice, `exclude_unset=True` always removes the `name`
+    field (the union discriminator). In turn, we get a ValidationError because said
+    field is missing.
+
+    The fix is simply to remove `exclude_unset=True`. If our users want to disable
+    the effects of mutating validators, they can use the `validation="immutable"`
+    option.
+    """
+
+    class CommonModeRejection(FrozenModel):
+        name: Literal["common-mode-rejection"] = "common-mode-rejection"
+        common_filter: str = "250-350hz--23khz--fir--32coeffs--v0.1.0"
+
+    class CustomFunction(FrozenModel):
+        name: Literal["custom-function"] = "custom-function"
+        function_name: str
+
+    DspMethod = Annotated[CommonModeRejection | CustomFunction, Discriminator("name")]
+
+    class DspSettings(FrozenModel):
+        method: DspMethod
+
+    my_settings = DspSettings(method=CustomFunction(function_name="my_func"))
+    patched_settings = my_settings.frozen_patch({"method": CommonModeRejection()})
+    assert patched_settings.method == CommonModeRejection()

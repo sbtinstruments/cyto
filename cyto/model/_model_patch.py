@@ -93,9 +93,6 @@ class Patch:
         if validation != "none":
             validated_model = model.__pydantic_validator__.validate_python(
                 model.model_dump(
-                    # Exclude unset values to avoid surprises with mutating validators
-                    # on unused fields.
-                    exclude_unset=True,
                     # We know that some fields may be invalid (which also causes
                     # serialization warnings) but that's the entire point.
                     # The `validate_python` raises the proper ValidationError.
