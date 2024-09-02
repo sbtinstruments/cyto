@@ -34,6 +34,8 @@ def initialize_logging(
     if handlers is None:
         handler_name = os.environ.get("LOG_HANDLER", "stderr")
         handlers_resolved = (handler_name,)
+    else:
+        handlers_resolved = handlers
     for handler_name in handlers_resolved:
         match handler_name:
             case "stderr":
