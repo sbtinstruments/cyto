@@ -68,7 +68,9 @@ def _add_syslog_handler(logger: logging.Logger, *, app_name: str | None = None) 
     try:
         from .rfc5424 import RFC5424Formatter  # pylint: disable=import-outside-toplevel
     except ImportError:
-        pass
+        fmt = f"{app_name}" + "[{process}] [{name}] {message}"
+        syslog_formatter = logging.Formatter(fmt=fmt, style="{")
+        syslog_handler.setFormatter(syslog_formatter)
     else:
         syslog_handler.setFormatter(RFC5424Formatter(app_name=app_name))
     logger.addHandler(syslog_handler)
