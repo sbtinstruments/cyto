@@ -22,14 +22,14 @@ def test_missing() -> None:
             "loc": ("my_int",),
             "msg": "Field required",
             "type": "missing",
-            "url": "https://errors.pydantic.dev/2.8/v/missing",
+            "url": "https://errors.pydantic.dev/2.9/v/missing",
         },
         {
             "input": {},
             "loc": ("my_string",),
             "msg": "Field required",
             "type": "missing",
-            "url": "https://errors.pydantic.dev/2.8/v/missing",
+            "url": "https://errors.pydantic.dev/2.9/v/missing",
         },
     ]
 

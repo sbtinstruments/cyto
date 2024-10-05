@@ -89,7 +89,7 @@ def cyto_defaults(
                         #
                         CliSettingsSource(
                             settings_cls, cli_parse_args=True, cli_exit_on_error=False
-                        ),
+                        )
                     )
                 result.extend(
                     [
