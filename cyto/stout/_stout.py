@@ -25,6 +25,7 @@ Where `message_type` is the discriminated value. This is too verbose for our
 liking and we don't gain anything *as long as the messages are distinct in their
 own right*. That's the case so far.
 """
+
 from __future__ import annotations
 
 import os

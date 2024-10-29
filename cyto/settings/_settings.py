@@ -1,27 +1,28 @@
 from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Literal, TypeVar
+from typing import Literal, TypeVar
 
-from pydantic import BaseModel, Field, create_model
 from pydantic_settings import BaseSettings as PydanticBaseSettings
 from pydantic_settings import CliSettingsSource, PydanticBaseSettingsSource
 from pydantic_settings import SettingsConfigDict as PydanticSettingsConfigDict
 
 from .sources.glob import GlobSource
 
-_SETTINGS: dict[str, type[BaseModel]] = {}
-
-
-T = TypeVar("T", bound=BaseModel)
+T = TypeVar("T", bound=PydanticBaseSettings)
 
 
 def cyto_defaults(
-    *, name: str | None = None, cli_source: Literal["built-in", "disable"] | None = None
-) -> Callable[[type[PydanticBaseSettings]], type[PydanticBaseSettings]]:
+    *,
+    name: str | None = None,
+    cli_source: Literal["built-in", "disable"] | None = None,
+    extra_sources: tuple[type[PydanticBaseSettingsSource], ...] | None = None,
+) -> Callable[[type[T]], type[T]]:
     if cli_source is None:
         cli_source = "built-in"
+    if extra_sources is None:
+        extra_sources = ()
 
-    def decorator(cls: type[PydanticBaseSettings]) -> type[PydanticBaseSettings]:
+    def decorator(cls: type[T]) -> type[T]:
         nonlocal name
         if name is None:
             # E.g.: "FooBarSettings" -> "foobar"
@@ -62,6 +63,7 @@ def cyto_defaults(
                 dotenv_settings: PydanticBaseSettingsSource,
                 file_secret_settings: PydanticBaseSettingsSource,
             ) -> tuple[PydanticBaseSettingsSource, ...]:
+                assert extra_sources is not None
                 # Many false-positives because we use code in the comments below.
                 # ruff: noqa: ERA001
 
@@ -125,6 +127,8 @@ def cyto_defaults(
                         # Note that we apply multiple setting files in alphanumeric
                         # order.
                         GlobSource(settings_cls, Path(f"/etc/{name}"), "*.*"),
+                        # User-provided settings sources (if any)
+                        *(source_cls(settings_cls) for source_cls in extra_sources),
                     ]
                 )
                 return tuple(result)
@@ -140,51 +144,3 @@ def cyto_defaults(
         return _BaseSettings
 
     return decorator
-
-
-def register(
-    name: str, *, override: bool | None = None
-) -> Callable[[type[T]], type[T]]:
-    """Register application-wide settings class.
-
-    Raises `RuntimeError` if there already is a settings class for the given name
-    *unless* `override=True`.
-    Analogously, raises `RuntimeError` if there is no existing settings class for
-    the given name *and* `override=True`.
-    In other words, we are very strict about the use of the `override` paramater.
-    This is an effort to avoid common pitfalls such as accidental overrides or
-    non-effectual overrides.
-    """
-
-    if override is None:
-        override = False
-
-    def _register(settings: type[T]) -> type[T]:
-        if name in _SETTINGS:
-            if not override:
-                raise RuntimeError(
-                    "There is already a settings class registered under the "
-                    f"'{name}' name. Use 'override=True' to suppress this error."
-                )
-        elif override:
-            raise RuntimeError(
-                "There is no existing settings class registered under the "
-                f"'{name}' name. In this case, it's an error to use 'override=True' "
-                "since there is nothing to override."
-            )
-        _SETTINGS[name] = settings
-        return settings
-
-    return _register
-
-
-def get_base_settings_class() -> type[PydanticBaseSettings]:
-    """Return class for the application-wide settings."""
-    field_definitions: dict[str, Any] = {
-        name: (cls, Field(default_factory=cls)) for name, cls in _SETTINGS.items()
-    }
-    return create_model(
-        "Settings",
-        __base__=cyto_defaults(name="TODO")(PydanticBaseSettings),
-        **field_definitions,
-    )

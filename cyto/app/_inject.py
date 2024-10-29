@@ -26,15 +26,13 @@ Func = Callable[..., Coroutine[Any, Any, ReturnT_co]]
 class InjectedFunc(Protocol[ReturnT_co]):  # pylint: disable=too-few-public-methods
     """`Func` after we apply `inject` to it."""
 
-    async def __call__(self) -> ReturnT_co:
-        ...
+    async def __call__(self) -> ReturnT_co: ...
 
 
 class Factory(Protocol):  # pylint: disable=too-few-public-methods
     """Given a type, return an instance of said type."""
 
-    async def __call__(self, __annotation: type[Any]) -> Any:
-        ...
+    async def __call__(self, __annotation: type[Any]) -> Any: ...
 
 
 async def _basic_factory(annotation: type[Any]) -> Any:

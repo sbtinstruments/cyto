@@ -6,8 +6,6 @@ from cyto.stout.keynote import (
     Keynote,
     KeynoteSection,
     KeynoteTokenSeq,
-    MutableKeynote,
-    MutableKeynoteSection,
     Subset,
     TentativeItem,
 )
@@ -223,43 +221,6 @@ def test_finality() -> None:
     assert (
         Keynote.from_token_seq(["[work-in-progress]", "# Bonus slides"]).finality
         == "tentative"
-    )
-
-
-def test_mutable_keynote() -> None:
-    keynote = Keynote.from_token_seq([{"ID": "A03"}])
-    mutable_keynote = MutableKeynote.unfreeze(keynote)
-    assert mutable_keynote.freeze() == keynote
-    mutable_keynote.sections[0].slides = [{"ID": "B96"}]  # type: ignore[misc,list-item]
-    assert mutable_keynote.freeze() == Keynote.from_token_seq([{"ID": "B96"}])
-
-    keynote = Keynote.from_token_seq(
-        [{"ID": "A03"}, "# Bonus slides", {"flow_rate?": 32.1}]
-    )
-    mutable_keynote = MutableKeynote.unfreeze(keynote)
-    # We append a new section
-    mutable_keynote.set_section(
-        MutableKeynoteSection(name="My new section", slides=["It's a great message"])
-    )
-    # We override an existing section ("Bonus slides")
-    # Note that we provide an immutable `KeynoteSection`. That's allowed.
-    mutable_keynote.set_section(
-        KeynoteSection(name="Bonus slides", slides=[{"flow_rate": 40.1}])
-    )
-
-    assert mutable_keynote.freeze() == Keynote.from_token_seq(
-        [
-            {"ID": "A03"},
-            "# My new section",
-            "It's a great message",
-            "# Bonus slides",
-            {"flow_rate": 40.1},
-        ]
-    )
-    # Even though we provided an immutable `KeynoteSection` to `set_section`, the
-    # corresponding section is still mutable. This is how it should be.
-    assert mutable_keynote.sections[-1] == MutableKeynoteSection(
-        name="Bonus slides", slides=[FinalItem(key="flow_rate", value=40.1)]
     )
 
 

@@ -1,5 +1,5 @@
 # ruff: noqa: PLR2004, N806
-from typing import Annotated, Literal
+from typing import Annotated, Any, Literal
 
 import pytest
 from pydantic import (
@@ -243,3 +243,22 @@ def test_frozen_patch_with_discriminated_union() -> None:
     my_settings = DspSettings(method=CustomFunction(function_name="my_func"))
     patched_settings = my_settings.frozen_patch({"method": CommonModeRejection()})
     assert patched_settings.method == CommonModeRejection()
+
+
+def test_frozen_patch_with_new_dict_item() -> None:
+    from cyto.stout import Message, Outcome
+
+    # Empty outcome
+    outcome = Outcome()
+    message = Message.error(
+        tech_cause=(
+            "Conductivity is too low (value is 123 µS/cm but minimum is 1000 µS/cm)"
+        ),
+        user_cause="The conductivity is lower than 1000 µS/cm",
+        user_consequence="Sample cannot be measured",
+        user_suggestion=("Conductivity was 123 µS/cm—adjust to 1000-2000 µS/cm"),
+    )
+
+    # We can not (yet) add items to a dictionary.
+    with pytest.raises(PatchError):
+        outcome = outcome.frozen_patch({"messages.1200": message})

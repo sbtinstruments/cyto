@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
 from itertools import pairwise
-from typing import Any, Self, cast
+from typing import Self
 
 from pydantic import model_validator
 

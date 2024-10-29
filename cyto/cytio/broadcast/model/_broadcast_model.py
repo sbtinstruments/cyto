@@ -1,11 +1,9 @@
 from __future__ import annotations
 
 import logging
-from collections.abc import Iterator
-from contextlib import contextmanager
 from typing import Any, TypeVar
 
-from ....model import FrozenModel
+from ....model import FrozenModel, ValidationMode
 from .._broadcast_value import BroadcastValue, MaybeValue, NoValue
 
 _LOGGER = logging.getLogger(__name__)
@@ -19,20 +17,20 @@ class BroadcastModel(BroadcastValue[T]):
     def __init__(self, value: MaybeValue[T] = NoValue) -> None:
         super().__init__(value=value)
 
-    @contextmanager
-    def mutate(self) -> Iterator[dict[str, Any]]:
+    def frozen_patch(
+        self,
+        patch: dict[str, Any],
+        *,
+        validation: ValidationMode | None = None,
+    ) -> None:
         """Make changes to this model.
 
-        Automatically publishes the changes when you exit the context manager.
+        Automatically publishes the changes.
         """
         if self.latest_value is NoValue:
             raise RuntimeError(
                 "You must initialize this broadcast before you can mutate it"
             )
         assert isinstance(self.latest_value, FrozenModel)
-        mutable_value = self.latest_value.model_dump()
-        try:
-            yield mutable_value
-        finally:
-            new_value = type(self.latest_value)(**mutable_value)
-            self.publish(new_value)  # type: ignore[arg-type]
+        new_value = self.latest_value.frozen_patch(patch, validation=validation)
+        self.publish(new_value)  # type: ignore[arg-type]

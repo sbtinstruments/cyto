@@ -1,4 +1,5 @@
 """Various ReactiveX-inspired functions."""
+
 from collections.abc import AsyncIterable, AsyncIterator
 from typing import TypeVar
 

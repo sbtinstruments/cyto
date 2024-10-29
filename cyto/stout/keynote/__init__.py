@@ -8,15 +8,12 @@ from ._keynote_tokens import (
     Token,
     ValueType,
 )
-from ._mutable_keynote import MutableKeynote, MutableKeynoteSection
 
 __all__ = (
     "FinalItem",
     "Keynote",
     "KeynoteSection",
     "KeynoteTokenSeq",
-    "MutableKeynote",
-    "MutableKeynoteSection",
     "Token",
     "SlideToken",
     "Subset",

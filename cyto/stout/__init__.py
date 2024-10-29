@@ -1,4 +1,5 @@
 """STOUT (STructured OUTput) is a structured stream that "tracks" an execution."""
+
 try:
     from ._message import Message, MessageSeverity
     from ._outcome import Outcome

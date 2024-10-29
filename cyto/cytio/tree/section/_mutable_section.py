@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable, Iterator
 from contextlib import contextmanager
-from datetime import UTC, datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from types import TracebackType
 from typing import Literal, Self
 

@@ -1,6 +1,6 @@
 try:
     from ._frozen_model import FrozenModel
-    from ._model_patch import AssignOp, Patch, PatchError, Stitch
+    from ._model_patch import AssignOp, Patch, PatchError, Stitch, ValidationMode
 except ImportError as exc:
     from .._extra import ExtraImportError
 
@@ -12,4 +12,5 @@ __all__ = (
     "AssignOp",
     "Stitch",
     "PatchError",
+    "ValidationMode",
 )

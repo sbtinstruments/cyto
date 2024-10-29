@@ -34,9 +34,10 @@ class Outcome(FrozenModel):
 
         Returns the empty keynote if there is no result.
         """
-        if not isinstance(self.result, ResultMap):
+        try:
+            return self.result.keynote
+        except (TypeError, AttributeError):
             return Keynote()
-        return self.result.keynote
 
     def result_is_final(self) -> bool:
         """There is a result (of a known type) in a final state (no further changes).

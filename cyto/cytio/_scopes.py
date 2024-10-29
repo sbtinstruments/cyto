@@ -19,6 +19,7 @@ If the wrapped code is faster than the time limit, we wait until the time limit.
 If the wrapped code is slower than the time limit, we wait until said code is done.
 If the wrapped code is faster than the time limit, we wait until the time limit.
 """
+
 from __future__ import annotations
 
 import logging

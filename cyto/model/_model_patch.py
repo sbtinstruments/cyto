@@ -61,7 +61,11 @@ class Stitch:
 
         # Recursive case
         child_model = getattr(model, first_field)
-        assert isinstance(child_model, BaseModel)
+        if not isinstance(child_model, BaseModel):
+            raise PatchError(
+                f"The {type(model).__name__}.{first_field} field is not a "
+                "BaseModel instance"
+            )
         return model.model_copy(
             update={first_field: self._apply(child_model, fields=rest)}
         )

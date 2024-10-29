@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections import defaultdict
 from collections.abc import Iterable, Sequence
-from typing import Annotated, Any, Literal, Self
+from typing import Annotated, Any, ClassVar, Literal, Self
 
 from pydantic import (
     AfterValidator,
@@ -66,6 +66,7 @@ class Keynote(FrozenModel):
     """
 
     work_in_progress: bool = False
+    section_type: ClassVar[type] = KeynoteSection
     sections: SectionSeq = ()
 
     @model_validator(mode="wrap")
@@ -177,7 +178,7 @@ class Keynote(FrozenModel):
             return Keynote()  # type: ignore[return-value]
         first_token = token_seq[0]
         work_in_progress = first_token == WIP_TAG
-        sections = _tokens_to_sections(token_seq)
+        sections = _tokens_to_sections(token_seq, section_type=cls.section_type)
         return cls(work_in_progress=work_in_progress, sections=sections)
 
     def to_raw_seq(self) -> Sequence[str | dict[str, Any]]:
@@ -288,7 +289,7 @@ def _remove_empty_sections(sections: SectionSeq) -> SectionSeq:
     return tuple(section for section in sections if section)
 
 
-def _tokens_to_sections(token_seq: KeynoteTokenSeq) -> SectionSeq:
+def _tokens_to_sections(token_seq: KeynoteTokenSeq, section_type: type) -> SectionSeq:
     result: defaultdict[str, list[SlideToken]] = defaultdict(list)
     section_name = "__anon__"
     for token in token_seq:
@@ -301,5 +302,5 @@ def _tokens_to_sections(token_seq: KeynoteTokenSeq) -> SectionSeq:
             case _:
                 result[section_name].append(token)
     return tuple(
-        KeynoteSection(name=name, slides=slides) for name, slides in result.items()
+        section_type(name=name, slides=slides) for name, slides in result.items()
     )
