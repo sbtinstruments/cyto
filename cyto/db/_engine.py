@@ -18,6 +18,16 @@ def create_engine(engine_type: type[EngineT], *, db_url: str) -> EngineT:
     if url.drivername == "postgresql" and issubclass(engine_type, sqlalchemy.Engine):
         url = url.set(drivername="postgresql+psycopg")
 
+    if url.drivername == "sqlite":
+        # Since we use BEGIN IMMEDIATE at [1], concurrent access produces
+        # SQLITE_BUSY (https://sqlite.org/rescode.html#busy) that, in turn,
+        # results in a similar runtime error. We get around this by setting
+        # a timeout (blocking the pending processes while the database is
+        # locked).
+        #
+        # Note that the default timeout seems to be zero (or close to it).
+        connect_args["timeout"] = 60  # [s]
+
     # Unfortunately, SQLAlchemy does not provide a direct way to specify,
     # which *database driver* that we want (e.g., `psycopg2` or `asyncpg`).
     # The only way to do so is to via the connection URL. Therefore, we have
@@ -48,7 +58,55 @@ def create_engine(engine_type: type[EngineT], *, db_url: str) -> EngineT:
 
     match engine_type:
         case ext_asyncio.AsyncEngine:
-            return ext_asyncio.create_async_engine(url, **engine_kwargs)
+            engine = ext_asyncio.create_async_engine(url, **engine_kwargs)
         case sqlalchemy.Engine:
-            return sqlalchemy.create_engine(url, **engine_kwargs)
-    raise TypeError(f"Unknown engine type '{engine_type.__name__}'")
+            engine = sqlalchemy.create_engine(url, **engine_kwargs)
+
+        case _:
+            raise TypeError(f"Unknown engine type '{engine_type.__name__}'")
+
+    if url.drivername == "sqlite":
+        _fix_transaction_semantics(engine)
+
+    return engine
+
+
+def _fix_transaction_semantics(db_engine: sqlalchemy.Engine) -> None:
+    # See the SQLAlchemy documentation for details:
+    #
+    #     https://docs.sqlalchemy.org/en/20/dialects/sqlite.html#serializable-isolation-savepoints-transactional-ddl
+    #
+    # Here is an excerpt from said documentation:
+    #
+    # > The pysqlite DBAPI driver has several long-standing bugs which impact the
+    # > correctness of its transactional behavior. In its default mode of operation,
+    # > SQLite features such as SERIALIZABLE isolation, transactional DDL, and
+    # > SAVEPOINT support are non-functional, and in order to use these features
+    # > workarounds must be taken.
+    #
+    @sqlalchemy.event.listens_for(db_engine, "connect")
+    def do_connect(dbapi_connection: Any, _connection_record: Any) -> None:
+        # disable pysqlite's emitting of the BEGIN statement entirely.
+        # also stops it from emitting COMMIT before any DDL.
+        dbapi_connection.isolation_level = None
+
+    @sqlalchemy.event.listens_for(db_engine, "begin")
+    def do_begin(conn: sqlalchemy.Connection) -> None:
+        # emit our own BEGIN
+        #
+        # See: https://sqlite.org/lang_transaction.html
+        #
+        # Here is an excerpt:
+        #
+        # > IMMEDIATE causes the database connection to start a new write
+        # > immediately, without waiting for a write statement. The
+        # > BEGIN IMMEDIATE might fail with SQLITE_BUSY if another write
+        # > transaction is already active on another database connection.
+        #
+        # Note that the default behaviour (BEGIN DEFERRED) seemingly does
+        # not work well with concurrent database writes. At leas that is
+        # my (FPA) conclusion at the time of writing. Try to set it to
+        # DEFERRED and see if the tests in baxter still fails with an
+        # empty (uninitialized) database. Remember to run the tests in
+        # parallel (e.g., `pytest -n auto`).
+        conn.exec_driver_sql("BEGIN IMMEDIATE")  # [1]
