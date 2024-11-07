@@ -1,15 +1,14 @@
-from typing import Any, TypedDict, TypeVar
+from typing import Any, TypedDict, TypeVar, Unpack, overload
 
 import sqlalchemy.ext.asyncio as ext_asyncio
 from sqlalchemy import Engine, orm
 
-from ._engine import create_engine
 
-
-class SessionKwargs(TypedDict):
+class SessionKwargs(TypedDict, total=False):
     autoflush: bool
     autobegin: bool
     close_resets_only: bool
+    class_: type
 
 
 _SESSION_KWARGS: SessionKwargs = {
@@ -28,18 +27,53 @@ _SESSION_KWARGS: SessionKwargs = {
     "close_resets_only": False,
 }
 
-SessionT = TypeVar("SessionT", bound=type)
+SessionT = TypeVar("SessionT", bound=orm.Session)
+AsyncSessionT = TypeVar("AsyncSessionT", bound=ext_asyncio.AsyncSession)
+
+
+@overload
+def sessionmaker(
+    bind: Engine,
+    **session_kwargs: Unpack[SessionKwargs],
+) -> orm.sessionmaker[orm.Session]: ...
+
+
+@overload
+def sessionmaker(  # type: ignore[misc]
+    bind: Engine,
+    *,
+    class_: SessionT,
+    **session_kwargs: Unpack[SessionKwargs],
+) -> orm.sessionmaker[SessionT]: ...
+
+
+@overload
+def sessionmaker(
+    bind: ext_asyncio.AsyncEngine,
+    **session_kwargs: Unpack[SessionKwargs],
+) -> ext_asyncio.async_sessionmaker[ext_asyncio.AsyncSession]: ...
+
+
+@overload
+def sessionmaker(  # type: ignore[misc]
+    bind: ext_asyncio.AsyncEngine,
+    *,
+    class_: AsyncSessionT,
+    **session_kwargs: Unpack[SessionKwargs],
+) -> ext_asyncio.async_sessionmaker[AsyncSessionT]: ...
 
 
 def sessionmaker(
-    session_type: type[SessionT], *, db_url: str, **kwargs: Any
-) -> SessionT:
-    session_kwargs = {**_SESSION_KWARGS, **kwargs}
-    match session_type:
-        case ext_asyncio.AsyncSession:
-            db_engine = create_engine(ext_asyncio.AsyncEngine, db_url=db_url)
-            return ext_asyncio.async_sessionmaker(bind=db_engine, **session_kwargs)
-        case orm.Session:
-            db_engine = create_engine(Engine, db_url=db_url)
-            return orm.sessionmaker(bind=db_engine, **session_kwargs)
-    raise TypeError(f"Unknown session type '{session_type.__name__}'")
+    bind: Engine | ext_asyncio.AsyncEngine,
+    **session_kwargs: Any,
+) -> Any:
+    session_kwargs = {
+        **_SESSION_KWARGS,
+        **(session_kwargs if session_kwargs else {}),
+    }
+    match bind:
+        case ext_asyncio.AsyncEngine():
+            return ext_asyncio.async_sessionmaker(bind=bind, **session_kwargs)
+        case Engine():
+            return orm.sessionmaker(bind=bind, **session_kwargs)
+    raise TypeError(f"Unknown engine type '{type(bind).__name__}'")

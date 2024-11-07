@@ -1,5 +1,5 @@
 import logging
-from typing import Any, TypeVar
+from typing import Any, TypedDict, TypeVar
 
 import sqlalchemy
 import sqlalchemy.ext.asyncio as ext_asyncio
@@ -8,7 +8,11 @@ from sqlalchemy.engine.url import make_url
 
 _LOGGER = logging.getLogger(__name__)
 
-EngineT = TypeVar("EngineT", bound=type)
+EngineT = TypeVar("EngineT")
+
+
+class EngineKwargs(TypedDict, total=False):
+    db_url: str
 
 
 def create_engine(engine_type: type[EngineT], *, db_url: str) -> EngineT:
@@ -56,6 +60,7 @@ def create_engine(engine_type: type[EngineT], *, db_url: str) -> EngineT:
         "json_deserializer": lambda val: from_json(val),
     }
 
+    engine: sqlalchemy.Engine | ext_asyncio.AsyncEngine
     match engine_type:
         case ext_asyncio.AsyncEngine:
             engine = ext_asyncio.create_async_engine(url, **engine_kwargs)
@@ -66,9 +71,11 @@ def create_engine(engine_type: type[EngineT], *, db_url: str) -> EngineT:
             raise TypeError(f"Unknown engine type '{engine_type.__name__}'")
 
     if url.drivername == "sqlite":
+        if not isinstance(engine, sqlalchemy.Engine):
+            raise NotImplementedError
         _fix_transaction_semantics(engine)
 
-    return engine
+    return engine  # type: ignore[return-value]
 
 
 def _fix_transaction_semantics(db_engine: sqlalchemy.Engine) -> None:
