@@ -2,7 +2,7 @@
 
 try:
     from ._message import Message, MessageSeverity
-    from ._outcome import Outcome
+    from ._outcome import Code, Outcome
     from ._outline import Outline
     from ._project_database import Project, ProjectDatabase
     from ._result_map import ResultMap
@@ -25,6 +25,7 @@ except ImportError as exc:
 __all__ = (
     "Message",
     "MessageSeverity",
+    "Code",
     "Outcome",
     "Outline",
     "Project",
