@@ -24,7 +24,7 @@ def initialize_logging(
     # Level
     if level is None:
         level = "debug" if "DEBUG" in os.environ else "info"
-    logger.setLevel(level.upper())
+    logger.setLevel(level.upper())  # type: ignore[union-attr]
 
     # Warnings
     logging.captureWarnings(capture=True)

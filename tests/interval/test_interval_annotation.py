@@ -93,23 +93,23 @@ def test_interval_adapter_serialize() -> None:
 
 def test_interval_in_model() -> None:
     class MyCriteria(BaseModel):
-        good: IntInterval = "(6, 8)"
-        bad: IntInterval = [(CLOSED, 50, 60, CLOSED)]
+        interval_a: IntInterval = "(6, 8)"
+        interval_b: IntInterval = [(CLOSED, 50, 60, CLOSED)]
 
     my_criteria = MyCriteria()
-    assert my_criteria.good == portion.open(6, 8)
-    assert my_criteria.bad == portion.closed(50, 60)
+    assert my_criteria.interval_a == portion.open(6, 8)
+    assert my_criteria.interval_b == portion.closed(50, 60)
     assert my_criteria.model_dump() == {
-        "good": [(False, 6, 8, False)],
-        "bad": [(True, 50, 60, True)],
+        "interval_a": [(False, 6, 8, False)],
+        "interval_b": [(True, 50, 60, True)],
     }
 
-    my_criteria = MyCriteria(good="[7,10)", bad="[1,7)")
-    assert my_criteria.good == portion.closedopen(7, 10)
-    assert my_criteria.bad == portion.closedopen(1, 7)
+    my_criteria = MyCriteria(interval_a="[7,10)", interval_b="[1,7)")
+    assert my_criteria.interval_a == portion.closedopen(7, 10)
+    assert my_criteria.interval_b == portion.closedopen(1, 7)
     assert my_criteria.model_dump() == {
-        "good": [(True, 7, 10, False)],
-        "bad": [(True, 1, 7, False)],
+        "interval_a": [(True, 7, 10, False)],
+        "interval_b": [(True, 1, 7, False)],
     }
 
 

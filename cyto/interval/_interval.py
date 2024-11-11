@@ -115,8 +115,8 @@ def _create_interval_annotation(type_: type) -> Any:
     # Allows us to specify default values using, e.g., strings. Example:
     #
     #     class MyCriteria(BaseModel):
-    #         good: IntInterval = "(6, 8)"
-    #         bad: IntInterval = [(CLOSED, 50, 60, CLOSED)]
+    #         interval_a: IntInterval = "(6, 8)"
+    #         interval_b: IntInterval = [(CLOSED, 50, 60, CLOSED)]
     #
     yield Field(validate_default=True)
 
