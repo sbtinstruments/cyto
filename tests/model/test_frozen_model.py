@@ -7,6 +7,7 @@ from pydantic import (
     Discriminator,
     Field,
     NonNegativeInt,
+    RootModel,
     ValidationError,
 )
 
@@ -262,3 +263,43 @@ def test_frozen_patch_with_new_dict_item() -> None:
     # We can not (yet) add items to a dictionary.
     with pytest.raises(PatchError):
         outcome = outcome.frozen_patch({"messages.1200": message})
+
+
+def test_frozen_patch_with_set() -> None:
+    class Idea(FrozenModel):
+        desc: str
+
+    class Brainstorm(FrozenModel):
+        me_gusta: frozenset[Idea]
+
+    orig_bs = Brainstorm(me_gusta=[Idea(desc="cars"), Idea(desc="tea")])
+
+    ### Patch given as a list of ideas
+    patched_bs = orig_bs.frozen_patch({"me_gusta": [Idea(desc="computers")]})
+    assert isinstance(patched_bs.me_gusta, frozenset)
+    assert patched_bs.me_gusta == {Idea(desc="computers")}
+
+    ### Patch given as a frozenset directly
+    # Note that `BaseModel.model_dump()` raises TypeError.
+    # This is a known issue: https://github.com/pydantic/pydantic/issues/8016
+    # As of this writing (2024-11-13) there is no plan to fix this
+    # in pydantic.
+    with pytest.raises(TypeError, match="unhashable type: 'dict'"):
+        orig_bs.model_dump()
+
+    # An early implementation of `frozen_patch` used `model_dump` internally.
+    # This caused issues due to the `TypeError` mentioned above. This is no
+    # longer the case with the latest implementation of `frozen_patch`. However,
+    # we keep this test around to avoid regressions.
+    patched_bs = orig_bs.frozen_patch({"me_gusta": frozenset([Idea(desc="computers")])})
+    assert isinstance(patched_bs.me_gusta, frozenset)
+    assert patched_bs.me_gusta == {Idea(desc="computers")}
+
+
+def test_frozen_patch_with_type_fields() -> None:
+    class NumberFactory(FrozenModel):
+        result_type: type[Any] = float
+
+    orig_factory = NumberFactory()
+    patched_factory = orig_factory.frozen_patch({"result_type": int})
+    assert patched_factory.result_type is int

@@ -95,15 +95,10 @@ class Patch:
         # The `stitch.apply` method does not validate the result. Therefore,
         # we (optionally) validate the resulting model here.
         if validation != "none":
-            validated_model = model.__pydantic_validator__.validate_python(
-                model.model_dump(
-                    # We know that some fields may be invalid (which also causes
-                    # serialization warnings) but that's the entire point.
-                    # The `validate_python` raises the proper ValidationError.
-                    # Therefore, we can safely disable the serialization warnings.
-                    warnings="none",
-                )
-            )
+            # Note that `model.model_validate(model)` only works when
+            # `revalidate_instances="always"`. See the `FrozenModel` class
+            # for details.
+            validated_model = model.model_validate(model)
             if validation == "full":
                 model = validated_model
 

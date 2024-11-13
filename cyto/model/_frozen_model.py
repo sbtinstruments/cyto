@@ -18,6 +18,13 @@ class FrozenModel(BaseModel):
         # default. It adds another layer of "strictness" that we expect in the context
         # of immutability.
         extra="forbid",
+        # In `frozen_patch`, we want to validate the result. To do so, we use
+        # this trick: `model.model_validate(model)`. However,
+        # this trick only works if we also set `revalidate_instances="always"`.
+        #
+        # See the pydantic documentation for details:
+        # https://docs.pydantic.dev/latest/concepts/models/#error-handling
+        revalidate_instances="always",
     )
 
     # TODO: Add model validator that ensure that all members are frozen as well
