@@ -303,3 +303,15 @@ def test_frozen_patch_with_type_fields() -> None:
     orig_factory = NumberFactory()
     patched_factory = orig_factory.frozen_patch({"result_type": int})
     assert patched_factory.result_type is int
+
+
+def test_frozen_patch_with_root_model() -> None:
+    class MetricGroup(RootModel[list[int]]):
+        pass
+
+    class MyResult(FrozenModel):
+        metrics: MetricGroup
+
+    orig_metrics = MyResult(metrics=[1, 2, 3, 4])
+    new_metrics = orig_metrics.frozen_patch({"metrics": [6, 7, 8]})
+    assert new_metrics.metrics.root == [6, 7, 8]
