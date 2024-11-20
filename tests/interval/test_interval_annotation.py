@@ -1,12 +1,14 @@
 from datetime import UTC, datetime
+from typing import Annotated
 
 import portion
 import pytest
 from portion import CLOSED, OPEN
 from portion.interval import Atomic
-from pydantic import BaseModel, ValidationError
+from pydantic import BaseModel, Field, ValidationError
 
 from cyto.interval import (
+    FloatInterval,
     FloatIntervalAdapter,
     IntInterval,
     IntIntervalAdapter,
@@ -167,3 +169,78 @@ def test_type_strictness() -> None:
         datetime(1989, 5, 28, 13, 56, 59, 987600, tzinfo=UTC),
         datetime(2024, 12, 1, 0, 1, tzinfo=UTC),
     )
+
+
+def test_float_interval_field_with_int_default() -> None:
+    class MyModel(BaseModel):
+        bacteria_bounds: FloatInterval = portion.closedopen(0, 3.14)
+        object_bounds: Annotated[
+            FloatInterval,
+            Field(default=..., default_factory=lambda: portion.closedopen(1.5, 3)),
+        ]
+
+    my_model = MyModel()  # type: ignore[call-arg]
+
+    assert isinstance(my_model.bacteria_bounds.lower, float)
+    assert isinstance(my_model.bacteria_bounds.upper, float)
+    assert my_model.bacteria_bounds.lower == 0
+    assert my_model.bacteria_bounds.upper == 3.14  # noqa: PLR2004
+
+    assert isinstance(my_model.object_bounds.lower, float)
+    assert isinstance(my_model.object_bounds.upper, float)
+    assert my_model.object_bounds.lower == 1.5  # noqa: PLR2004
+    assert my_model.object_bounds.upper == 3  # noqa: PLR2004
+
+
+def test_int_interval_field_with_float_default() -> None:
+    class MyModel(BaseModel):
+        my_interval: IntInterval = portion.closedopen(-3, 2.72)
+
+    with pytest.raises(
+        ValidationError,
+        match="Input should be a valid integer, got a number with a fractional part",
+    ):
+        MyModel()
+
+
+def test_int_interval_field_with_strings() -> None:
+    # Bogus values: "A", "B"
+    class MyModelAB(BaseModel):
+        my_interval: IntInterval = portion.closedopen("A", "B")
+
+    with pytest.raises(
+        ValidationError,
+        match="Input should be a valid integer, unable to parse string as an integer",
+    ):
+        MyModelAB()
+
+    # Bogus values: "B", "A"
+    class MyModelBA(BaseModel):
+        my_interval: IntInterval = portion.closedopen("B", "A")
+
+    # Surprisingly, we can actually create an instance!
+    # This is because portion determines that the interval is actually
+    # empty. E.g., assume that B=1 and A=0, then the interval [1,0) is
+    # of size zero. I (FPA) guess that this is a feature and not a bug.
+    my_model_ba = MyModelBA()
+    assert my_model_ba.my_interval == portion.empty()
+
+    # Good values: "1", "2"
+    class MyModel12(BaseModel):
+        my_interval: IntInterval = portion.closedopen("1", "2")
+
+    my_model_12 = MyModel12()
+    assert isinstance(my_model_12.my_interval.lower, int)
+    assert isinstance(my_model_12.my_interval.upper, int)
+    assert my_model_12.my_interval.lower == 1
+    assert my_model_12.my_interval.upper == 2  # noqa: PLR2004
+
+    # Bad values: "3.14", "5"
+    class MyModelPi5(BaseModel):
+        my_interval: IntInterval = portion.closedopen("3.14", "5")
+
+    with pytest.raises(
+        ValidationError,
+        match="Input should be a valid integer, unable to parse string as an integer",
+    ):
+        MyModelPi5()

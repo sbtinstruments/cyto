@@ -18,16 +18,9 @@ from pydantic import (
 Conv = Callable[[Any], Any]
 
 
-def _create_io_annotation(*, type_: type, conv: Conv | None = None) -> type[BaseModel]:  # noqa: C901
+def _create_io_annotation(*, type_: type, conv: Conv | None = None) -> type[BaseModel]:
     if conv is None:
         conv = _create_conv(type_)
-
-    def _validate_portion_interval(interval: portion.Interval) -> portion.Interval:
-        for atomic in interval._intervals:  # noqa: SLF001
-            assert isinstance(atomic, portion.interval.Atomic)
-            assert isinstance(atomic.lower, type_)
-            assert isinstance(atomic.upper, type_)
-        return interval
 
     class IntervalAnnotation(BaseModel, frozen=True, extra="forbid"):
         intervals: tuple[portion.interval.Atomic, ...] = ()
@@ -39,15 +32,20 @@ def _create_io_annotation(*, type_: type, conv: Conv | None = None) -> type[Base
         ) -> portion.Interval:
             # Early out if there is nothing to do
             if isinstance(data, portion.Interval):
-                # Normally, we would just return `data` directly and be done with it.
-                # However, since `portion.Interval` does not type-check at all, we want
-                # to apply a little more due diligence on top via
-                # `_validate_portion_interval`. E.g., to catch cases like this:
+                # Normally, we would just return `data` directly since it's already
+                # of the right type and be done with it. However, since
+                # `portion.Interval` does not type-check at all, we want to apply a
+                # little more due diligence on top. E.g., to catch cases like this:
                 #
                 #     IntIntervalAdapter.validate_python(portion.closedopen(2.72, 3.14))
                 #
                 # Note how we use `float`s together with `IntInterval`. That's a no-go.
-                return _validate_portion_interval(data)
+                #
+                # There are many ways to implement this check. For now, we simply
+                # convert `data` back into a raw list of tuples (using
+                # `portion.to_data`). In turn, the validation logic below takes care
+                # of the rest (specifically, the `if isinstance(data, Iterable)` part).
+                data = portion.to_data(data)
 
             # If we get a dict, we let the normal pydantic logic (e.g., `handler`)
             # take care of it.
