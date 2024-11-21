@@ -1,9 +1,11 @@
 # ruff: noqa: PLR2004, N806
+from functools import cached_property
 from typing import Annotated, Any, Literal
 
 import pytest
 from pydantic import (
     AfterValidator,
+    ConfigDict,
     Discriminator,
     Field,
     NonNegativeInt,
@@ -315,3 +317,40 @@ def test_frozen_patch_with_root_model() -> None:
     orig_metrics = MyResult(metrics=[1, 2, 3, 4])
     new_metrics = orig_metrics.frozen_patch({"metrics": [6, 7, 8]})
     assert new_metrics.metrics.root == [6, 7, 8]
+
+
+# ruff: noqa: E501
+def test_frozen_patch_with_cached_property() -> None:
+    """Addresses an issue that we saw with cached_property.
+
+
+    Used to trigger:
+
+        pydantic_core._pydantic_core.ValidationError: 1 validation error for ValidFlowCell
+        has_passed_qc
+          Extra inputs are not permitted [type=extra_forbidden, input_value=False, input_type=bool]
+            For further information visit https://errors.pydantic.dev/2.9/v/extra_forbidden
+
+    Related issues on the pydantic bug tracker:
+
+     * Cached property erroneously included in model export
+       https://github.com/pydantic/pydantic/issues/10477
+
+    Workaround: Don't use `cached_property`. Bummer.
+    Hopefully, pydantic fixes this issue soon.
+    """
+
+    class ValidFlowCell(FrozenModel):
+        @cached_property
+        def has_passed_qc(self) -> bool:
+            return False
+
+    fc = ValidFlowCell()
+
+    # This seeds the error (accessing the property so that it
+    # goes into the cache)
+    fc.has_passed_qc  # noqa: B018
+
+    # Now, even an empty patch triggers the error
+    with pytest.raises(ValidationError):
+        fc.frozen_patch({})
