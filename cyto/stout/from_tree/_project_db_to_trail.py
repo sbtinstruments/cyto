@@ -57,7 +57,7 @@ def _project_db_to_trail_sections(db: ProjectDatabase) -> Iterator[TrailSection]
         except IndexError:
             continue
         yield TrailSection(
-            name=marker_project.project_name,
+            name=config.rename(marker_project.project_name),
             interval=time_interval.ClosedOpenFin(
                 lower=marker_first.time, upper=marker_second.time
             ),
