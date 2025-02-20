@@ -29,7 +29,7 @@ def cyto_defaults(
             name = cls.__name__.removesuffix("Settings").lower()
 
         class _BaseSettings(cls):  # type: ignore[valid-type,misc]
-            cls.model_config = PydanticSettingsConfigDict(
+            model_config = PydanticSettingsConfigDict(
                 # ## Priority
                 #
                 # > If you need to load multiple dotenv files, you can pass multiple
