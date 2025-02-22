@@ -73,6 +73,14 @@ lint.ignore = [
     # We have TODO's and HACK's throughout as reminders for later. That is okay.
     "FIX002",
     "FIX004",
+    # useless-import-alias (PLC0414)
+    # The idiomatic way to export things from `__init__` files is:
+    #
+    #     from ._pedb_row import PedbRow as PedbRow
+    #
+    # This, however, does not place nicely together with PLC0414.
+    # See: https://github.com/astral-sh/ruff/issues/6294
+    "PLC0414",
     # "TD002 Missing author in TODO".
     # "TD003 Missing issue link on the line following this TODO".
     # That's not how we use TODO.

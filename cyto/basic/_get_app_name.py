@@ -1,6 +1,29 @@
 from collections.abc import Callable
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
+
+_ROOT_APP_NAME: str | None = None
+
+
+def set_root_app_name(
+    app_name: str, *, mode: Literal["set-of-none", "force"] | None = None
+) -> None:
+    if mode is None:
+        mode = "set-of-none"
+    global _ROOT_APP_NAME  # noqa: PLW0603
+
+    match mode:
+        case "set-of-none":
+            if _ROOT_APP_NAME is None:
+                _ROOT_APP_NAME = app_name
+        case "force":
+            _ROOT_APP_NAME = app_name
+        case _:
+            raise ValueError(f"Unknown mode '{mode}'")
+
+
+def get_root_app_name() -> str | None:
+    return _ROOT_APP_NAME
 
 
 def get_app_name(main_func: Callable[..., Any] | None = None) -> str:

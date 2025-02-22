@@ -6,6 +6,7 @@ from pydantic_settings import BaseSettings as PydanticBaseSettings
 from pydantic_settings import CliSettingsSource, PydanticBaseSettingsSource
 from pydantic_settings import SettingsConfigDict as PydanticSettingsConfigDict
 
+from ..basic import get_root_app_name
 from .sources.glob import GlobSource
 
 T = TypeVar("T", bound=PydanticBaseSettings)
@@ -14,11 +15,11 @@ T = TypeVar("T", bound=PydanticBaseSettings)
 def cyto_defaults(
     *,
     name: str | None = None,
-    cli_source: Literal["built-in", "disable"] | None = None,
+    cli_source: Literal["only-if-root-app", "built-in", "disable"] | None = None,
     extra_sources: tuple[type[PydanticBaseSettingsSource], ...] | None = None,
 ) -> Callable[[type[T]], type[T]]:
     if cli_source is None:
-        cli_source = "built-in"
+        cli_source = "only-if-root-app"
     if extra_sources is None:
         extra_sources = ()
 
@@ -83,7 +84,10 @@ def cyto_defaults(
                     #
                     init_settings,
                 ]
-                if cli_source == "built-in":
+                if cli_source == "built-in" or (
+                    cli_source == "only-if-root-app"
+                    and get_root_app_name() in (name, None)
+                ):
                     result.append(
                         # CLI settings (if you enable this extra). E.g.:
                         #
