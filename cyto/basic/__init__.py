@@ -7,11 +7,11 @@ from ._get_app_name import get_app_name
 from ._mapping import count_leaves
 
 __all__ = (
-    "distinct_until_changed",
-    "start_with",
     "AsyncContextStack",
     "ReentrantAsyncContextStack",
-    "deep_update",
-    "get_app_name",
     "count_leaves",
+    "deep_update",
+    "distinct_until_changed",
+    "get_app_name",
+    "start_with",
 )

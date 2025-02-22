@@ -44,7 +44,7 @@ def test_basic_field(argv: Argv) -> None:
             "loc": ("theme",),
             "msg": "Field required",
             "type": "missing",
-            "url": "https://errors.pydantic.dev/2.9/v/missing",
+            "url": "https://errors.pydantic.dev/2.10/v/missing",
         },
     ]
     # Set the required field
@@ -199,7 +199,7 @@ def test_list_of_models(argv: Argv) -> None:
             "loc": ("playlist", 0, "rating"),
             "msg": "Extra inputs are not permitted",
             "type": "extra_forbidden",
-            "url": "https://errors.pydantic.dev/2.9/v/extra_forbidden",
+            "url": "https://errors.pydantic.dev/2.10/v/extra_forbidden",
         },
     ]
     # Invalid JSON is an error as well (note the use of the single quote character)

@@ -14,9 +14,9 @@ __all__ = (
     "Keynote",
     "KeynoteSection",
     "KeynoteTokenSeq",
-    "Token",
     "SlideToken",
     "Subset",
     "TentativeItem",
+    "Token",
     "ValueType",
 )

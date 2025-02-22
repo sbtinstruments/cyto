@@ -6,7 +6,7 @@ from pydantic import model_validator
 
 from ..model import FrozenModel
 
-__all__ = ["ClosedOpenInf", "ClosedOpenFin", "ClosedOpen", "closed_open"]
+__all__ = ["ClosedOpen", "ClosedOpenFin", "ClosedOpenInf", "closed_open"]
 
 
 class ClosedOpenInf(FrozenModel):

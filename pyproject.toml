@@ -1,59 +1,49 @@
 [build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
+requires = ["pdm-backend"]
+build-backend = "pdm.backend"
 
-[tool.poetry]
-authors = ["Frederik Peter Aalund <fpa@sbtinstruments.com>"]
+[project]
+authors = [{ name = "Frederik Peter Aalund", email = "fpa@sbtinstruments.com" }]
+license = { text = "MIT" }
+requires-python = "<4.0,>=3.12"
+dependencies = []
 description = "SBT Instruments' framework for Python-based applications"
-license = "MIT"
 name = "cyto"
 readme = "README.md"
+version = "0.0.0"
+
+[project.urls]
 repository = "https://github.com/sbtinstruments/cyto"
-version = "0.0.0"                                                        # TODO: Get version from git
 
-[tool.poetry.dependencies]
-python = ">=3.12,<4.0"
-# Make sure that all dependencies are optional!
-# This allows our users to opt-in via "extras".
-anyio = { version = "^4.4.0", optional = true }
-networkx = { version = "^3.3", optional = true }
-pydantic = { version = "^2.9.2", optional = true }
-pydantic-settings = { version = "^2.4.0", optional = true }
-redis = { version = "^5.0.8", optional = true }
-syslog-rfc5424-formatter = { version = "^1.2.3", optional = true }
-portion = { version = "^2.4.2", optional = true }
-tinydb = { version = "^4.8.0", optional = true }
-sqlalchemy = { version = "^2.0.35", optional = true }
+[project.optional-dependencies]
+app = [
+    "anyio<5.0.0,>=4.4.0",
+    "pydantic<3.0.0,>=2.9.2",
+    "pydantic-settings<3.0.0,>=2.4.0",
+]
+cytio-tree = ["networkx<4.0,>=3.3"]
+cytio-tree-outline-redis = ["redis<6.0.0,>=5.0.8"]
+logging-rfc5424 = ["syslog-rfc5424-formatter<2.0.0,>=1.2.3"]
+interval = ["portion<3.0.0,>=2.4.2"]
+stout = ["tinydb<5.0.0,>=4.8.0"]
+db = ["sqlalchemy<3.0.0,>=2.0.35"]
 
-[tool.poetry.group.dev.dependencies]
-pyfakefs = "^5.6.0"
-pytest = "^8.3.2"
-pytest-cov = "^5.0.0"
-taskipy = "^1.13.0"
-pre-commit = "^3.8.0"
-ruff = "^0.6.1"
-mypy = "^1.13.0"
+[dependency-groups]
+dev = [
+    "pyfakefs<6.0.0,>=5.6.0",
+    "pytest<9.0.0,>=8.3.2",
+    "pytest-cov<6.0.0,>=5.0.0",
+    "taskipy<2.0.0,>=1.13.0",
+    "pre-commit<4.0.0,>=3.8.0",
+    "ruff<1.0.0,>=0.6.1",
+    "mypy<2.0.0,>=1.13.0",
+]
 
-[tool.poetry.extras]
-"app" = ["anyio", "pydantic", "pydantic-settings"]
-"cytio" = ["anyio"]
-"cytio-tree" = ["anyio", "networkx", "pydantic"]
-"cytio-tree-outline-redis" = ["anyio", "networkx", "pydantic", "redis"]
-"factory" = ["pydantic"]
-"interval" = ["portion", "pydantic"]
-"logging-rfc5424" = ["syslog-rfc5424-formatter"]
-"model" = ["pydantic"]
-"settings" = ["pydantic", "pydantic-settings"]
-"stout" = ["portion", "pydantic", "tinydb"]
-"db" = ["sqlalchemy", "pydantic"]
 
 [tool.taskipy.tasks]
 ruff = "ruff check cyto tests"
 mypy = "mypy cyto tests"
 pre-commit = "pre-commit run --all-files"
-
-[tool.pytest.ini_options]
-testpaths = 'tests'
 
 
 [tool.ruff]
@@ -127,3 +117,7 @@ ignore_missing_imports = true
 [[tool.mypy.overrides]]
 module = ["syslog_rfc5424_formatter.*"]
 ignore_missing_imports = true
+
+
+[tool.pytest.ini_options]
+testpaths = 'tests'

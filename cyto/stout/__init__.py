@@ -23,20 +23,20 @@ except ImportError as exc:
 
 
 __all__ = (
+    "Code",
     "Message",
     "MessageSeverity",
-    "Code",
     "Outcome",
+    "OutcomeSwig",
     "Outline",
+    "OutlineSwig",
     "Project",
     "ProjectDatabase",
     "ResultMap",
-    "OutcomeSwig",
-    "OutlineSwig",
     "Status",
     "StatusSwig",
     "Swig",
-    "is_status_current",
     "Trail",
     "TrailSection",
+    "is_status_current",
 )

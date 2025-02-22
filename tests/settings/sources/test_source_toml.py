@@ -5,7 +5,7 @@ from ..conftest import Album, MyTunesSettings, Track, Zoobar2000Settings
 
 
 def test_set_basic_field(fs: FakeFilesystem) -> None:
-    fs.create_file("/etc/mytunes/first.toml", contents='theme = "dark"')
+    fs.create_file("/etc/mytunes/first.mytunes.toml", contents='theme = "dark"')
     fs.create_file("./second.mytunes.toml", contents="volume = 81")
     settings = MyTunesSettings()
     assert settings.theme == "dark"
@@ -41,7 +41,7 @@ def test_complex_hierarchy(fs: FakeFilesystem) -> None:
         author = "My own mix"
 
     """
-    fs.create_file("/etc/zoobar2000/a.toml", contents=contents)
+    fs.create_file("/etc/zoobar2000/a.zoobar2000.toml", contents=contents)
     settings = Zoobar2000Settings()
     assert settings.user_favourites.name == "My favs"
     assert settings.user_favourites.albums[0] == Album(
@@ -69,7 +69,7 @@ def test_merging(fs: FakeFilesystem) -> None:
         author = "Caribou"
         title = "Swim"
     """
-    fs.create_file("/etc/zoobar2000/a.toml", contents=contents)
+    fs.create_file("/etc/zoobar2000/a.zoobar2000.toml", contents=contents)
     settings = Zoobar2000Settings()
     assert settings.user_favourites.name == "My favs"
     assert settings.user_favourites.albums == [
@@ -90,7 +90,7 @@ def test_merging(fs: FakeFilesystem) -> None:
         [user_favourites]
         name = "Top tracks"
     """
-    fs.create_file("/etc/zoobar2000/b.toml", contents=contents)
+    fs.create_file("/etc/zoobar2000/b.zoobar2000.toml", contents=contents)
     settings = Zoobar2000Settings()
     # As expected, the settings file now reflects the new `Selection` instance
     assert settings.user_favourites.name == "Top tracks"
@@ -110,7 +110,7 @@ def test_merging(fs: FakeFilesystem) -> None:
         [[user_favourites.albums]]
         author = "Swae Lee"
     """
-    fs.create_file("/etc/zoobar2000/c.toml", contents=contents)
+    fs.create_file("/etc/zoobar2000/c.zoobar2000.toml", contents=contents)
     settings = Zoobar2000Settings()
     # We still see the untouched remnants from `b.toml`
     assert settings.user_favourites.name == "Top tracks"

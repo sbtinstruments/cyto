@@ -14,10 +14,10 @@ except ImportError as exc:
 
 
 __all__ = (
-    "cli_factory",
     "FACTORY",
     "CanNotProduce",
     "ProductFactory",
     "ProductRegistry",
     "ProductSpec",
+    "cli_factory",
 )

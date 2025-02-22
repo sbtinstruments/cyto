@@ -1,4 +1,5 @@
 from datetime import UTC, datetime
+from types import EllipsisType
 from typing import Annotated
 
 import portion
@@ -176,7 +177,7 @@ def test_float_interval_field_with_int_default() -> None:
         bacteria_bounds: FloatInterval = portion.closedopen(0, 3.14)
         object_bounds: Annotated[
             FloatInterval,
-            Field(default=..., default_factory=lambda: portion.closedopen(1.5, 3)),
+            Field(default=portion.closedopen(1.5, 3)),
         ]
 
     my_model = MyModel()  # type: ignore[call-arg]

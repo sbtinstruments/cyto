@@ -17,8 +17,9 @@ class ExtraImportError(ExtraError, ImportError):
     def __init__(self, extra_name: str) -> None:
         msg = (
             f'The "{extra_name}" extra depends on a component that isn\'t available. '
-            f'Did you forget to specify the "{extra_name}" extra during install? '
-            f'Try again with, e.g., "poetry install --extras {extra_name}"'
+            f'Did you forget to specify the "{extra_name}" extra during sync? '
+            f'Try again with, e.g., "uv sync --extra {extra_name}" or '
+            '"uv sync --all-extras"'
         )
         super().__init__(extra_name, msg)
 

@@ -7,21 +7,19 @@ pipeline {
     stages {
         stage('Install') {
             steps {
-                // Install all extras along with the dependencies in
-                // poetry's virtual environment.
-                sh 'poetry install --all-extras'
+                sh 'uv sync --all-extras'
             }
         }
         stage('Quality assurance') {
             parallel {
                 stage('Lint (ruff)') {
                     steps {
-                        sh 'poetry run task ruff'
+                        sh 'uv run task ruff'
                     }
                 }
                 stage('Check types (mypy)') {
                     steps {
-                        sh 'poetry run task mypy'
+                        sh 'uv run task mypy'
                     }
                 }
             }
@@ -30,7 +28,7 @@ pipeline {
             stages {
                 stage('Test (pytest)') {
                     steps {
-                        sh 'poetry run pytest --junitxml=junit.xml'
+                        sh 'uv run pytest --junitxml=junit.xml'
                     }
                     post {
                         always {
@@ -42,7 +40,7 @@ pipeline {
                 stage('Coverage (pytest-cov)') {
                     environment {
                         // Get total coverage for the badge
-                        TOTAL_COVERAGE=sh(script: 'poetry run pytest --cov=cyto tests | grep TOTAL | awk \'{print $4 "\\t"}\'', returnStdout: true).trim()
+                        TOTAL_COVERAGE=sh(script: 'uv run pytest --cov=cyto tests | grep TOTAL | awk \'{print $4 "\\t"}\'', returnStdout: true).trim()
                     }
                     steps {
                         sh ''
@@ -57,7 +55,7 @@ pipeline {
         }
         stage('Build') {
             steps {
-                sh 'poetry build'
+                sh 'uv build'
             }
         }
     }

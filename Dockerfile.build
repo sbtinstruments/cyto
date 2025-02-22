@@ -1,29 +1,28 @@
-FROM python:3.12.5-slim-bookworm
+FROM python:3.12.6-slim-bookworm
 
-ENV PYTHONFAULTHANDLER=1 \
-    PYTHONUNBUFFERED=1 \
-    PYTHONHASHSEED=random \
-    PIP_NO_CACHE_DIR=off \
-    PIP_DISABLE_PIP_VERSION_CHECK=on \
-    PIP_DEFAULT_TIMEOUT=100
+# Additional packages
+RUN apt-get update && apt-get install -y \
+    curl git linux-headers-generic build-essential git-lfs libmagic1
 
-# System deps:
-RUN apt update && apt install -y curl
-
-# Make user for jenkins
+# Make user
 ARG JENKINS_UID=1000
 ARG JENKINS_GID=1000
-
 RUN groupadd --gid ${JENKINS_GID} jenkins
 RUN adduser --disabled-password --gecos '' \
     --uid ${JENKINS_UID} \
     --gid ${JENKINS_GID} \
     jenkins
 USER jenkins
-ENV HOME /home/jenkins
+ENV HOME=/home/jenkins
 
-# Install poetry for modern python depency management
-RUN curl -sSL https://install.python-poetry.org | python3 - --version 1.8.2
+# Install uv
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh
 ENV PATH="$HOME/.local/bin:$PATH"
+
+# Enable GitHub access without prompts such as "Host key verification failed."
+RUN mkdir -p $HOME/.ssh
+RUN chmod 700 $HOME/.ssh
+RUN ssh-keyscan github.com >> $HOME/.ssh/known_hosts
+RUN chmod 644 $HOME/.ssh/known_hosts
 
 CMD ["bash"]

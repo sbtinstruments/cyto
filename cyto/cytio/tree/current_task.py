@@ -9,7 +9,7 @@ from .current_tree import add_root_path
 
 T = TypeVar("T")
 
-__all__ = ["instances", "data"]
+__all__ = ["data", "instances"]
 
 
 def instances() -> InstanceMapping:

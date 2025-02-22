@@ -27,7 +27,7 @@ T = TypeVar("T")
 class ProductFactory(Generic[T], Protocol):  # pylint: disable=too-few-public-methods
     """Given a produc spec, return the corresponding product."""
 
-    def __call__(self, __spec: ProductSpec[T]) -> T: ...
+    def __call__(self, /, __spec: ProductSpec[T]) -> T: ...
 
 
 # N818: This exception an actual error. It's a signal/sentinel.

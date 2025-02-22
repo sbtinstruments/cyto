@@ -22,10 +22,10 @@ Install Cyto along with *all* extras:
 pip install cyto[all]
 ```
 
-Poetry has a specific `--all-extras` option to help you out:
+Or, using uv:
 
 ```
-poetry add cyto --all-extras
+uv add cyto[all]
 ```
 
 ### Choose specific extras
@@ -36,10 +36,10 @@ If you only want a specific extra, choose that when you install Cyto. E.g.:
 pip install cyto[settings]  # Automatically pulls in pydantic-settings
 ```
 
-Similar for poetry:
+Similar for uv:
 
 ```
-poetry add cyto[settings]  # Automatically pulls in pydantic-settings
+uv add cyto[settings]  # Automatically pulls in pydantic-settings
 ```
 
 ## Development
@@ -62,14 +62,14 @@ Do the following:
     ```shell
     git clone git@github.com:sbtinstruments/cyto.git
     ```
- 2. Install poetry (for dependency management)
+ 2. Install uv (for dependency management)
     ```shell
-    curl -sSL https://install.python-poetry.org | python3
+    curl -LsSf https://astral.sh/uv/install.sh | sh
     ```
- 3. Create poetry's virtual environment and get all dependencies
+ 3. Create virtual environment and get all dependencies
  and all extra features.
     ```shell
-    poetry install --extras all
+    uv sync --all-extras
     ```
 
 ### Quality Assurance (QA) Tools
@@ -89,8 +89,8 @@ don't want to install the `pre-commit` hooks.
 
 Run the QA basic tools manually with:
 ```shell
-poetry run task ruff
-poetry run task mypy
+uv run task ruff
+uv run task mypy
 ```
 
 #### QA Test Tools

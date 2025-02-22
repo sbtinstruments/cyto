@@ -7,10 +7,10 @@ except ImportError as exc:
     raise ExtraImportError.from_module_name(__name__) from exc
 
 __all__ = (
+    "AssignOp",
     "FrozenModel",
     "Patch",
-    "AssignOp",
-    "Stitch",
     "PatchError",
+    "Stitch",
     "ValidationMode",
 )

@@ -7,4 +7,4 @@ except ImportError as exc:
 
     raise ExtraImportError.from_module_name(__name__) from exc
 
-__all__ = ("App", "AppError", "AppBaseSettings")
+__all__ = ("App", "AppBaseSettings", "AppError")

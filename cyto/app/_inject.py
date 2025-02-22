@@ -32,7 +32,7 @@ class InjectedFunc(Protocol[ReturnT_co]):  # pylint: disable=too-few-public-meth
 class Factory(Protocol):  # pylint: disable=too-few-public-methods
     """Given a type, return an instance of said type."""
 
-    async def __call__(self, __annotation: type[Any]) -> Any: ...
+    async def __call__(self, /, __annotation: type[Any]) -> Any: ...
 
 
 async def _basic_factory(annotation: type[Any]) -> Any:

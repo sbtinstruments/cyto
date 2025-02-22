@@ -4,7 +4,7 @@ from ._builder import OutcomeError, OutcomeMessage
 __all__ = (
     "LayerMap",
     "MessageMap",
-    "OutcomeLayerMap",
     "OutcomeError",
+    "OutcomeLayerMap",
     "OutcomeMessage",
 )

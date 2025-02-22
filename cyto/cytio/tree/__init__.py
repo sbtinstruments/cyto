@@ -8,11 +8,11 @@ except ImportError as exc:
 
 
 __all__ = (
-    "fetch",
-    "override",
-    "patch",
     "InstanceMapping",
     "TaskTree",
     "TreeReceiveStream",
     "TreeSendStream",
+    "fetch",
+    "override",
+    "patch",
 )
