@@ -116,17 +116,17 @@ def cyto_defaults(
                         #
                         # Note that we apply multiple setting files in alphanumeric
                         # order.
-                        GlobSource(settings_cls, Path("./"), f"*.{name}.*"),
+                        GlobSource(settings_cls, Path("./"), f"*{name}.*"),
                         # Setting files from the system's settings
                         # directory. E.g.:
                         #
-                        #     /etc/appster/base-settings.toml
-                        #     /etc/appster/z10-relocate-db.toml
-                        #     /etc/appster/z99-disable-ssl.toml
+                        #     /etc/appster/base-settings.appster.toml
+                        #     /etc/appster/z10-relocate-db.appster.toml
+                        #     /etc/appster/z99-disable-ssl.appster.toml
                         #
                         # Note that we apply multiple setting files in alphanumeric
                         # order.
-                        GlobSource(settings_cls, Path(f"/etc/{name}"), "*.*"),
+                        GlobSource(settings_cls, Path(f"/etc/{name}"), f"*{name}.*"),
                         # User-provided settings sources (if any)
                         *(source_cls(settings_cls) for source_cls in extra_sources),
                     ]

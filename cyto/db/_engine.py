@@ -111,9 +111,9 @@ def _fix_transaction_semantics(db_engine: sqlalchemy.Engine) -> None:
         # > transaction is already active on another database connection.
         #
         # Note that the default behaviour (BEGIN DEFERRED) seemingly does
-        # not work well with concurrent database writes. At leas that is
+        # not work well with concurrent database writes. At least that is
         # my (FPA) conclusion at the time of writing. Try to set it to
-        # DEFERRED and see if the tests in baxter still fails with an
+        # DEFERRED and see if the tests in baxter still fail with an
         # empty (uninitialized) database. Remember to run the tests in
         # parallel (e.g., `pytest -n auto`).
         conn.exec_driver_sql("BEGIN IMMEDIATE")  # [1]
