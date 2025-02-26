@@ -6,7 +6,7 @@ from typing import Self
 
 from pydantic import model_validator
 
-from ..interval import time_interval
+from ..interval import TimeInterval
 from ..model import FrozenModel
 
 
@@ -14,7 +14,7 @@ class TrailSection(FrozenModel):
     """Subsection of an overall trail."""
 
     name: str
-    interval: time_interval.ClosedOpenFin
+    interval: TimeInterval
     hints: frozenset[str] = frozenset()
 
     def remaining(self) -> timedelta:
@@ -27,8 +27,12 @@ class TrailSection(FrozenModel):
         if now < self.interval.lower:
             return timedelta()
         if self.interval.upper <= now:
-            return self.interval.duration()
-        return self.interval.upper - now
+            result = self.interval.upper - self.interval.lower
+            assert isinstance(result, timedelta)
+            return result
+        result = self.interval.upper - now
+        assert isinstance(result, timedelta)
+        return result
 
 
 class Trail(FrozenModel):

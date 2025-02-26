@@ -1,14 +1,14 @@
 from __future__ import annotations
 
-from ....interval import time_interval
+from ....interval import TimeInterval
 from ....model import FrozenModel
 from ._mutable_section import SectionHint, _MutableSection
 
 
 class Section(FrozenModel):
     name: str
-    actual: time_interval.ClosedOpen
-    planned: time_interval.ClosedOpen
+    actual: TimeInterval
+    planned: TimeInterval
     hints: frozenset[SectionHint] = frozenset()
     children: tuple[Section, ...] = ()
 

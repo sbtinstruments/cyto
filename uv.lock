@@ -89,7 +89,6 @@ source = { editable = "." }
 [package.optional-dependencies]
 app = [
     { name = "anyio" },
-    { name = "pydantic" },
     { name = "pydantic-settings" },
 ]
 cytio = [
@@ -120,7 +119,6 @@ model = [
     { name = "pydantic" },
 ]
 settings = [
-    { name = "pydantic" },
     { name = "pydantic-settings" },
 ]
 stout = [
@@ -154,7 +152,6 @@ requires-dist = [
     { name = "portion", marker = "extra == 'interval'", specifier = ">=2.4.2,<3.0.0" },
     { name = "pydantic", marker = "extra == 'db'", specifier = ">=2.9.2,<3.0.0" },
     { name = "pydantic", marker = "extra == 'model'", specifier = ">=2.9.2,<3.0.0" },
-    { name = "pydantic", marker = "extra == 'settings'", specifier = ">=2.9.2,<3.0.0" },
     { name = "pydantic-settings", marker = "extra == 'settings'", specifier = ">=2.4.0,<3.0.0" },
     { name = "redis", marker = "extra == 'cytio-tree-outline-redis'", specifier = ">=5.0.8,<6.0.0" },
     { name = "sqlalchemy", marker = "extra == 'db'", specifier = ">=2.0.35,<3.0.0" },

@@ -6,8 +6,10 @@ from dataclasses import dataclass
 from datetime import datetime
 from itertools import pairwise
 
+import portion
+
 from ...cytio.tree import fetch
-from ...interval import time_interval
+from ...interval import TimeInterval
 from .._project_database import Project, ProjectDatabase
 from .._trail import Trail, TrailSection
 from ._project_db_to_trail_config import ProjectDatabaseToTrailConfig
@@ -58,7 +60,7 @@ def _project_db_to_trail_sections(db: ProjectDatabase) -> Iterator[TrailSection]
             continue
         yield TrailSection(
             name=config.rename(marker_project.project_name),
-            interval=time_interval.ClosedOpenFin(
+            interval=portion.closedopen(
                 lower=marker_first.time, upper=marker_second.time
             ),
             hints=marker_project.hints,
@@ -93,9 +95,9 @@ class _BeginMarker(_Marker):  # pylint: disable=too-few-public-methods
 class _EndMarker(_Marker):  # pylint: disable=too-few-public-methods
     @classmethod
     def from_project(cls, project: Project) -> _EndMarker | None:
-        if isinstance(project.actual, time_interval.ClosedOpenFin):
+        if isinstance(project.actual, portion.Interval):
             time = project.actual.upper
-        elif isinstance(project.planned, time_interval.ClosedOpenFin):
+        elif isinstance(project.planned, portion.Interval):
             time = project.planned.upper
         else:
             return None

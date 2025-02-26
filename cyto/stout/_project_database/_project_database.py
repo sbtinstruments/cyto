@@ -6,7 +6,7 @@ from anyio.streams.memory import MemoryObjectReceiveStream, MemoryObjectSendStre
 from tinydb.database import TinyDB
 from tinydb.storages import MemoryStorage
 
-from ...interval import time_interval
+from ...interval import TimeInterval
 from ...model import FrozenModel
 
 
@@ -14,8 +14,8 @@ class Project(FrozenModel):
     project_name: str  # Primary key
     assignee_id: int  # ID of a task/worker/thread/process/etc.
     assignee_name: str | None = None  # Name of a task/worker/thread/process/etc.
-    actual: time_interval.ClosedOpen | None = None
-    planned: time_interval.ClosedOpen | None = None
+    actual: TimeInterval | None = None
+    planned: TimeInterval | None = None
     hints: frozenset[str] = frozenset()
     parent: int | None = None  # Foreign key to another project
 

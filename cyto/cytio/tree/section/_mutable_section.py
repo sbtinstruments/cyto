@@ -6,17 +6,20 @@ from datetime import UTC, datetime, timedelta
 from types import TracebackType
 from typing import Literal, Self
 
+import portion
 from pydantic import BaseModel, Field
 
-from ....interval import time_interval
+from ....interval import TimeInterval
 
 SectionHint = Literal["may-end-early", "indeterminate-indicator"]
 
 
 class _MutableSection(BaseModel):
     name: str
-    actual: time_interval.ClosedOpen = Field(
-        default_factory=lambda: time_interval.closed_open(lower=datetime.now(UTC))
+    actual: TimeInterval = Field(
+        default_factory=lambda: portion.closedopen(
+            lower=datetime.now(UTC), upper=portion.inf
+        )
     )
     planned_duration: timedelta | None = None
     hints: set[SectionHint] = Field(default_factory=set)
@@ -25,13 +28,15 @@ class _MutableSection(BaseModel):
     is_entered: bool = False
 
     @property
-    def planned(self) -> time_interval.ClosedOpen:
+    def planned(self) -> TimeInterval:
         assert self.actual is not None
         lower = self.actual.lower
         upper = (
-            lower + self.planned_duration if self.planned_duration is not None else None
+            lower + self.planned_duration
+            if self.planned_duration is not None
+            else portion.inf
         )
-        return time_interval.closed_open(lower, upper)
+        return portion.closedopen(lower, upper)
 
     def innermost_active_child(self) -> _MutableSection:
         if self.active_child is not None:
@@ -74,4 +79,4 @@ class _MutableSection(BaseModel):
         traceback: TracebackType | None,
     ) -> bool | None:
         self.is_entered = False
-        self.actual = time_interval.closed_open(self.actual.lower, datetime.now(UTC))
+        self.actual = portion.closedopen(self.actual.lower, datetime.now(UTC))
