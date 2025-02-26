@@ -214,9 +214,9 @@ def test_finality() -> None:
         [{"ID": "A03"}, "# Bonus slides", {"flow_rate?": 32.1}]
     )
     # Finality with bonus slides
-    assert (
-        keynote_bonus_slides.finality == "final"
-    ), "Bonus slides does not count in terms of finality"
+    assert keynote_bonus_slides.finality == "final", (
+        "Bonus slides does not count in terms of finality"
+    )
     assert Keynote.from_token_seq(["# Bonus slides"]).finality == "final"
     assert (
         Keynote.from_token_seq(["[work-in-progress]", "# Bonus slides"]).finality

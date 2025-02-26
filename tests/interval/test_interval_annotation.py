@@ -1,4 +1,5 @@
 from datetime import UTC, datetime
+from math import inf
 from types import EllipsisType
 from typing import Annotated
 
@@ -169,6 +170,21 @@ def test_type_strictness() -> None:
     assert interval == portion.closedopen(
         datetime(1989, 5, 28, 13, 56, 59, 987600, tzinfo=UTC),
         datetime(2024, 12, 1, 0, 1, tzinfo=UTC),
+    )
+
+
+def test_datetime_interval_with_inf() -> None:
+    raw_interval = [[True, "2025-02-26T15:13:15.331522Z", inf, False]]
+    interval = TimeIntervalAdapter.validate_python(raw_interval)
+    assert interval == portion.closedopen(
+        datetime(2025, 2, 26, 15, 13, 15, 331522, tzinfo=UTC),
+        portion.inf,
+    )
+
+    # TODO: Can we make this serialize the upper bound as "inf"
+    # instead of "null"?
+    assert TimeIntervalAdapter.dump_json(interval) == (
+        b'[[true,"2025-02-26T15:13:15.331522Z",null,false]]'
     )
 
 

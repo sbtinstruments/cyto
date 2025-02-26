@@ -2,14 +2,14 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Iterable, Iterator
-from dataclasses import dataclass
 from datetime import datetime
 from itertools import pairwise
+from typing import Self
 
 import portion
 
 from ...cytio.tree import fetch
-from ...interval import TimeInterval
+from ...model import FrozenModel
 from .._project_database import Project, ProjectDatabase
 from .._trail import Trail, TrailSection
 from ._project_db_to_trail_config import ProjectDatabaseToTrailConfig
@@ -73,17 +73,14 @@ def _markers(project: Project) -> Iterator[_Marker]:
         yield end
 
 
-@dataclass(frozen=True)
-class _Marker:
+class _Marker(FrozenModel):
     time: datetime
     project: Project
 
 
-# For some reason, pylint fails to see that the `_Marker`-derived
-# classes are dataclasses.
-class _BeginMarker(_Marker):  # pylint: disable=too-few-public-methods
+class _BeginMarker(_Marker):
     @classmethod
-    def from_project(cls, project: Project) -> _BeginMarker:
+    def from_project(cls, project: Project) -> Self:
         if project.actual is not None:
             time = project.actual.lower
         else:
@@ -92,13 +89,21 @@ class _BeginMarker(_Marker):  # pylint: disable=too-few-public-methods
         return cls(time=time, project=project)
 
 
-class _EndMarker(_Marker):  # pylint: disable=too-few-public-methods
+class _EndMarker(_Marker):
     @classmethod
-    def from_project(cls, project: Project) -> _EndMarker | None:
-        if isinstance(project.actual, portion.Interval):
-            time = project.actual.upper
-        elif isinstance(project.planned, portion.Interval):
-            time = project.planned.upper
+    def from_project(cls, project: Project) -> Self | None:
+        # There is a _finite_ upper bound on the actual time spent
+        if (actual_upper := _get_finite_upper(project.actual)) is not None:
+            time = actual_upper
+        # There is a _finite_ upper bound on the planned time
+        elif (planned_upper := _get_finite_upper(project.planned)) is not None:
+            time = planned_upper
         else:
             return None
         return cls(time=time, project=project)
+
+
+def _get_finite_upper(interval: portion.Interval) -> datetime | None:
+    if isinstance(interval, portion.Interval) and isinstance(interval.upper, datetime):
+        return interval.upper
+    return None

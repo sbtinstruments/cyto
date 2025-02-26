@@ -1,13 +1,14 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Iterable
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Annotated, Any
 
 import portion
 import portion.interval
 from pydantic import (
     BaseModel,
+    ConfigDict,
     Field,
     TypeAdapter,
     ValidatorFunctionWrapHandler,
@@ -22,7 +23,9 @@ def _create_io_annotation(*, type_: type, conv: Conv | None = None) -> type[Base
     if conv is None:
         conv = _create_conv(type_)
 
-    class IntervalAnnotation(BaseModel, frozen=True, extra="forbid"):
+    class IntervalAnnotation(BaseModel):
+        model_config = ConfigDict(frozen=True, extra="forbid")
+
         intervals: tuple[portion.interval.Atomic, ...] = ()
 
         @model_validator(mode="wrap")
@@ -107,9 +110,9 @@ def _create_conv(type_: type) -> Conv:
     return _validate
 
 
-def _create_interval_annotation(type_: type) -> Any:
+def _create_interval_annotation(type_: type, conv: Conv | None = None) -> Any:
     # Provides validator and serializer
-    yield _create_io_annotation(type_=type_)
+    yield _create_io_annotation(type_=type_, conv=conv)
     # Allows us to specify default values using, e.g., strings. Example:
     #
     #     class MyCriteria(BaseModel):
