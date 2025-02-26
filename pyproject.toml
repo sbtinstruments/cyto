@@ -2,6 +2,24 @@
 requires = ["pdm-backend"]
 build-backend = "pdm.backend"
 
+[tool.pdm.build]
+# Sometimes, mypy creates a local .mypy_cache folder within the package directory.
+# E.g., this happens when you have the "baxter" source code open and choose
+# the "go to definition" action on a cyto object.
+#
+# These .mypy_cache files are _huge_. Worse so, they become part of the build!
+# In turn, our (SBT) rootfs image (for green mango devices) become way too large.
+#
+# In any case, the fix is simple: We instruct the build system to exclude
+# .mypy_cache folders wherever they may be.
+#
+# We'll keep this in place until we switch build system, or, until the pdm
+# build backend learns to use .gitignore files. Note that there always is
+# a `.mypy_cache/.gitignore` file.
+#
+# See: https://github.com/pdm-project/pdm-backend/issues/275
+excludes = ["**/.mypy_cache/**"]
+
 [project]
 authors = [{ name = "Frederik Peter Aalund", email = "fpa@sbtinstruments.com" }]
 license = { text = "MIT" }
