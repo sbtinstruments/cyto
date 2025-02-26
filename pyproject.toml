@@ -35,16 +35,18 @@ repository = "https://github.com/sbtinstruments/cyto"
 
 [project.optional-dependencies]
 app = [
+    "cyto[settings]",
     "anyio<5.0.0,>=4.4.0",
-    "pydantic<3.0.0,>=2.9.2",
-    "pydantic-settings<3.0.0,>=2.4.0",
 ]
-cytio-tree = ["networkx<4.0,>=3.3"]
-cytio-tree-outline-redis = ["redis<6.0.0,>=5.0.8"]
+cytio = ["cyto[model]", "anyio"]
+cytio-tree = ["cyto[cytio]", "networkx<4.0,>=3.3"]
+cytio-tree-outline-redis = ["cyto[cytio]", "redis<6.0.0,>=5.0.8"]
 logging-rfc5424 = ["syslog-rfc5424-formatter<2.0.0,>=1.2.3"]
 interval = ["portion<3.0.0,>=2.4.2"]
-stout = ["tinydb<5.0.0,>=4.8.0"]
-db = ["sqlalchemy<3.0.0,>=2.0.35"]
+model = ["pydantic<3.0.0,>=2.9.2"]
+settings = ["pydantic-settings<3.0.0,>=2.4.0"]
+stout = ["cyto[model]", "cyto[interval]", "tinydb<5.0.0,>=4.8.0"]
+db = ["pydantic<3.0.0,>=2.9.2", "sqlalchemy<3.0.0,>=2.0.35"]
 
 [dependency-groups]
 dev = [
