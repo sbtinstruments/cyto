@@ -14,7 +14,7 @@ T = TypeVar("T")
 StreamPair = tuple[MemoryObjectSendStream[T], MemoryObjectReceiveStream[T]]
 
 
-class NoValue:  # pylint: disable=too-few-public-methods
+class NoValue:
     pass
 
 

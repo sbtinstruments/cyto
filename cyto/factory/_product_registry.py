@@ -20,11 +20,7 @@ _LOGGER = logging.getLogger(__name__)
 T = TypeVar("T")
 
 
-# Note that we disable D102 for `Protocol`s since it's redundant documentation.
-# Similarly, we disable too-few-public-methods since it doens't make sense for
-# `Protocol`s. Hopefully, both pydocstyle and pylint will special-case `Protocol`s
-# soon enough.
-class ProductFactory(Generic[T], Protocol):  # pylint: disable=too-few-public-methods
+class ProductFactory(Generic[T], Protocol):
     """Given a produc spec, return the corresponding product."""
 
     def __call__(self, /, __spec: ProductSpec[T]) -> T: ...

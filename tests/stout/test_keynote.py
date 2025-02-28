@@ -253,9 +253,7 @@ def test_keynote_to_token_seq() -> None:
 
 def test_keynote_get_values() -> None:
     keynote = Keynote.from_token_seq(_RAW_KEYNOTE)
-    assert (  # pylint: disable=use-implicit-booleaness-not-comparison
-        tuple(keynote.get_values()) == ()
-    )
+    assert tuple(keynote.get_values()) == ()
     # Single, final item
     assert tuple(keynote.get_values("ID")) == ("A03",)
     # Multiple items: One tentative, one final

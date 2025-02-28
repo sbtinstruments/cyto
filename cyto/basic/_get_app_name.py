@@ -40,7 +40,7 @@ def get_app_name(main_func: Callable[..., Any] | None = None) -> str:
         return main_func.__name__
 
     # If the function name isn't desciptive, we query the main module
-    import __main__ as main  # pylint: disable=import-outside-toplevel
+    import __main__ as main
 
     # Use the module name if the application runs a module
     #

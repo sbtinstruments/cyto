@@ -66,7 +66,7 @@ def _add_syslog_handler(logger: logging.Logger, *, app_name: str | None = None) 
     syslog_handler.setLevel(logging.DEBUG)  # TODO: Can we leave it at NOTSET?
     # Optional: Use the RFC5424 format
     try:
-        from .rfc5424 import RFC5424Formatter  # pylint: disable=import-outside-toplevel
+        from .rfc5424 import RFC5424Formatter
     except ImportError:
         fmt = f"{app_name}" + "[{process}] [{name}] {message}"
         syslog_formatter = logging.Formatter(fmt=fmt, style="{")

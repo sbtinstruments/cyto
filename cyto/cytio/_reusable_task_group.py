@@ -137,7 +137,7 @@ class ReusableTaskGroup(AbstractAsyncContextManager["ReusableTaskGroup"]):
                 assert self._tg is None
                 # Never raises (unless cancelled) since we are sure that `_tg` is
                 # None.
-                await self.__aenter__()  # pylint: disable=unnecessary-dunder-call
+                await self.__aenter__()
 
     async def __aenter__(self) -> Self:
         if self._tg is not None:

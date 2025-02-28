@@ -6,7 +6,7 @@ from typing import TypeVar
 T = TypeVar("T")
 
 
-class _Sentinel:  # pylint: disable=too-few-public-methods
+class _Sentinel:
     pass
 
 
