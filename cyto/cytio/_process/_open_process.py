@@ -7,26 +7,12 @@ from datetime import timedelta
 from os import PathLike
 from subprocess import PIPE
 from time import perf_counter
-from typing import (
-    IO,
-    Any,
-    Generic,
-    TypeVar,
-)
+from typing import IO, Any
 
 import anyio
 from anyio.abc import Process
 
-from .._task_context import TaskContext
-
-T = TypeVar("T")
 _LOGGER = logging.getLogger(__name__)
-
-
-class ProcessContext(  # pylint: disable=too-few-public-methods
-    TaskContext[T], Generic[T]
-):
-    """This is a workaround for mypy to get proper typing in derived classes."""
 
 
 @asynccontextmanager

@@ -1,19 +1,15 @@
 from __future__ import annotations
 
 from contextlib import AsyncExitStack
-from typing import Generic, TypeVar
+from typing import Self
 
 import anyio
 from anyio.abc import TaskGroup
 
 from ..basic import AsyncContextStack
 
-T = TypeVar("T")
 
-
-class TaskContext(  # pylint: disable=too-few-public-methods
-    AsyncContextStack[T], Generic[T]
-):
+class TaskContext(AsyncContextStack):
     """`AsyncContextStack` with a built-in `TaskGroup` for background work.
 
     That's it. Don't need the `TaskGroup`? Just use a regular `AsyncContextStack`.
@@ -39,8 +35,6 @@ class TaskContext(  # pylint: disable=too-few-public-methods
         await super()._aenter_stack(stack)
         self._tg = await stack.enter_async_context(anyio.create_task_group())
 
-    # TODO: Remove when `AsyncContextStack.__aenter__` returns `typing.Self`
-    # in Python 3.11.
-    async def __aenter__(self) -> T:
+    async def __aenter__(self) -> Self:
         await super().__aenter__()
-        return self  # type: ignore[return-value]
+        return self

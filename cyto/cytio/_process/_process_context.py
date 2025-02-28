@@ -2,12 +2,12 @@ from __future__ import annotations
 
 import logging
 import os
-from collections.abc import Awaitable, Callable, Coroutine, Sequence
+from collections.abc import Awaitable, Callable, Sequence
 from contextlib import AsyncExitStack
 from functools import wraps
 from logging import Logger
 from subprocess import PIPE
-from typing import IO, Any, Generic, TypeVar
+from typing import IO, Any
 
 import anyio
 from anyio.abc import ByteReceiveStream, Process
@@ -15,13 +15,12 @@ from anyio.abc import ByteReceiveStream, Process
 from .._task_context import TaskContext
 from ._open_process import open_process
 
-T = TypeVar("T")
 _LOGGER = logging.getLogger(__name__)
 
 StreamReceiver = Callable[..., Awaitable[Any]]
 
 
-class ProcessContext(TaskContext[T], Generic[T]):
+class ProcessContext(TaskContext):
     """Higher-level features on top of the low-level `open_process`.
 
     Use in a similar fashion as `TaskContext`.

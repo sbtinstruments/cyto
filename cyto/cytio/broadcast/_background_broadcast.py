@@ -18,7 +18,7 @@ MessageMap = dict[Any, Any]
 T = TypeVar("T")
 
 
-class BackgroundBroadcast(AsyncContextStack["BackgroundBroadcast[T]"], Generic[T]):
+class BackgroundBroadcast(AsyncContextStack, Generic[T]):
     """Continuous broadcast emitted by a background task."""
 
     def __init__(self, value: MaybeValue[T] = NoValue) -> None:
