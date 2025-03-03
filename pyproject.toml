@@ -18,7 +18,7 @@ build-backend = "pdm.backend"
 # a `.mypy_cache/.gitignore` file.
 #
 # See: https://github.com/pdm-project/pdm-backend/issues/275
-excludes = ["**/.mypy_cache/**"]
+excludes = ["**/.mypy_cache"]
 
 [project]
 authors = [{ name = "Frederik Peter Aalund", email = "fpa@sbtinstruments.com" }]
