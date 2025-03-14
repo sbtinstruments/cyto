@@ -1,7 +1,7 @@
 import logging
 from collections.abc import Callable
 from threading import Event
-from typing import TypeVar, TypeVarTuple, Unpack
+from typing import TypeVar, TypeVarTuple
 
 import anyio
 import anyio.to_thread
@@ -14,8 +14,8 @@ _LOGGER = logging.getLogger(__name__)
 
 
 async def run_sync_coop(
-    func: Callable[[Event, Unpack[PosArgsT]], T_Retval],
-    *args: Unpack[PosArgsT],
+    func: Callable[[Event, *PosArgsT], T_Retval],
+    *args: *PosArgsT,
     limiter: CapacityLimiter | None = None,
 ) -> T_Retval:
     """Call the given function with the given arguments in a worker thread.
