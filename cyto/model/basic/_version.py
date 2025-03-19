@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import re
-from typing import Annotated, Any, Self
+from typing import Annotated, Any, Self, override
 
 from pydantic import (
     Field,
@@ -33,6 +33,12 @@ class Version(FrozenModel):
     modifiers: Annotated[
         tuple[str, ...], Field(examples=(("beta.0", "36", "f4323354", "dirty"),))
     ] = ()
+    raw: Annotated[str | None, Field(exclude=True)] = None
+    """Used to remember the original representation.
+
+    This ensures that we return a character-by-character accurate in
+    the __repr__ function.
+    """
 
     @model_validator(mode="wrap")
     @classmethod
@@ -44,8 +50,8 @@ class Version(FrozenModel):
     @classmethod
     def _from_string(cls, raw: str) -> Self:
         """Convert raw version string to a parsed instance."""
-        raw = raw.lstrip("v")  # E.g.: "v2024.03g" --> "2024.03g"
-        elements = raw.split("-")
+        stripped = raw.lstrip("v")  # E.g.: "v2024.03g" --> "2024.03g"
+        elements = stripped.split("-")
         parts: list[Any] = elements[0].split(".")
         modifiers = tuple(elements[1:])
         if not 2 <= len(parts) <= 3:  # noqa: PLR2004
@@ -77,7 +83,7 @@ class Version(FrozenModel):
             raise ValueError(
                 f"We expect integer version numbers. We got: {parts}"
             ) from exc
-        return cls(major=major, minor=minor, patch=patch, modifiers=modifiers)
+        return cls(major=major, minor=minor, patch=patch, modifiers=modifiers, raw=raw)
 
     def is_beta(self) -> bool:
         """Is this a "beta" (e.g., not "stable") release."""
@@ -85,14 +91,46 @@ class Version(FrozenModel):
 
     def __repr__(self) -> str:
         """Return string representation of this version."""
+        if self.raw is not None:
+            return self.raw
         mod_suffix = "-" + "-".join(self.modifiers) if self.modifiers else ""
         return f"{self.major}.{self.minor}.{self.patch}{mod_suffix}"
 
-    def __ge__(self, rhs: Version) -> bool:
+    @override
+    def __eq__(self, rhs: object) -> bool:
+        """Is this version equal to the given version.
+
+        Does a pairwise comparison of the version components (including modifiers).
+
+        Per design, this does _not_ test that the original (raw) form of the
+        version is the same. In other words:
+
+         * "1.0" equals "1.0.0"
+         * "v7.5a" equals "7.5.0"
+         * "1989.08-dirty-beta" equals "1989.8.0-dirty-beta"
+
+        """
+        if not isinstance(rhs, Version):
+            return NotImplemented
+        return (
+            self.major,
+            self.minor,
+            self.patch,
+            self.modifiers,
+        ) == (
+            rhs.major,
+            rhs.minor,
+            rhs.patch,
+            rhs.modifiers,
+        )
+
+    def __ge__(self, rhs: object) -> bool:
         """Is this version greater than or equal to the given version.
 
         Does a pairwise comparison of the version components.
         """
+        if not isinstance(rhs, Version):
+            return NotImplemented
         # TODO: Also take the modifiers into account.
         return (self.major, self.minor, self.patch) >= (rhs.major, rhs.minor, rhs.patch)
 

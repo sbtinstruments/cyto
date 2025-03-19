@@ -47,3 +47,26 @@ def test_version_field() -> None:
     assert sysinfo.hardware_ver.minor == 0
     assert sysinfo.hardware_ver.patch == 0
     assert sysinfo.hardware_ver.modifiers == ("alpha.3",)
+
+
+_VALID_VERSION_STRINGS = [
+    "1.0.0",
+    "1.0",
+    "2024.12l",
+    "2024.12l-59-g01f5d819",
+    "v7.5a",
+]
+
+
+@pytest.mark.parametrize("version_string", _VALID_VERSION_STRINGS)
+def test_version_repr(version_string: str) -> None:
+    my_ver = Version.model_validate(version_string)
+    assert repr(my_ver) == version_string
+
+
+def test_version_equals() -> None:
+    assert Version.model_validate("1.0") == Version.model_validate("1.0.0")
+    assert Version.model_validate("v7.5a") == Version.model_validate("7.5.0")
+    assert Version.model_validate("1989.08-dirty-beta") == Version.model_validate(
+        "1989.8.0-dirty-beta"
+    )
