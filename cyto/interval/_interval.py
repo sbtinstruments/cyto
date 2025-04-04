@@ -1,7 +1,5 @@
-from __future__ import annotations
-
 from collections.abc import Callable, Iterable
-from datetime import UTC, datetime
+from datetime import datetime
 from typing import Annotated, Any
 
 import portion
@@ -10,6 +8,7 @@ from pydantic import (
     BaseModel,
     ConfigDict,
     Field,
+    GetPydanticSchema,
     TypeAdapter,
     ValidatorFunctionWrapHandler,
     model_serializer,
@@ -19,7 +18,9 @@ from pydantic import (
 Conv = Callable[[Any], Any]
 
 
-def _create_io_annotation(*, type_: type, conv: Conv | None = None) -> type[BaseModel]:
+def _create_io_annotation(
+    *, type_: type, conv: Conv | None = None
+) -> GetPydanticSchema:
     if conv is None:
         conv = _create_conv(type_)
 
@@ -94,7 +95,16 @@ def _create_io_annotation(*, type_: type, conv: Conv | None = None) -> type[Base
             assert isinstance(result, list)
             return result
 
-    return IntervalAnnotation
+    # This is a fancy way to say: Hey pydantic, ignore other type information
+    # and treat it like `IntervalAnnotation`.
+    #
+    # In essence, `GetPydanticSchema` is like a type override. E.g., in this annotation:
+    #
+    #     my_field: Annotated[int, GetPydanticSchema(lambda _s, handler: handler(str))]
+    #
+    # we have `_s=int`, and we tell pydantic to ignore `_s` and use `str` instead.
+    # In Pydantic's view, `my_field` is a `str` and it validates/serializes it as such.
+    return GetPydanticSchema(lambda _source_type, handler: handler(IntervalAnnotation))
 
 
 def _create_conv(type_: type) -> Conv:

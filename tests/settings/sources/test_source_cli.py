@@ -38,13 +38,12 @@ def test_basic_field(argv: Argv) -> None:
     # It raises an exception when you forget a required field
     with pytest.raises(ValidationError) as exc_info:
         MyTunesSettings()
-    assert exc_info.value.errors() == [
+    assert exc_info.value.errors(include_url=False) == [
         {
             "input": {},
             "loc": ("theme",),
             "msg": "Field required",
             "type": "missing",
-            "url": "https://errors.pydantic.dev/2.10/v/missing",
         },
     ]
     # Set the required field
@@ -193,13 +192,12 @@ def test_list_of_models(argv: Argv) -> None:
     )
     with pytest.raises(ValidationError) as exc_info:
         settings = Zoobar2000Settings()
-    assert exc_info.value.errors() == [
+    assert exc_info.value.errors(include_url=False) == [
         {
             "input": 9,
             "loc": ("playlist", 0, "rating"),
             "msg": "Extra inputs are not permitted",
             "type": "extra_forbidden",
-            "url": "https://errors.pydantic.dev/2.10/v/extra_forbidden",
         },
     ]
     # Invalid JSON is an error as well (note the use of the single quote character)

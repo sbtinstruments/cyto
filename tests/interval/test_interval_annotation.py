@@ -1,6 +1,5 @@
 from datetime import UTC, datetime
 from math import inf
-from types import EllipsisType
 from typing import Annotated
 
 import portion

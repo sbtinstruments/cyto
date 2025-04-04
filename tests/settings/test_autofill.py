@@ -16,20 +16,18 @@ def test_defaults() -> None:
 def test_missing() -> None:
     with pytest.raises(ValidationError) as exc_info:
         PartialSettings()
-    assert exc_info.value.errors() == [
+    assert exc_info.value.errors(include_url=False) == [
         {
             "input": {},
             "loc": ("my_int",),
             "msg": "Field required",
             "type": "missing",
-            "url": "https://errors.pydantic.dev/2.10/v/missing",
         },
         {
             "input": {},
             "loc": ("my_string",),
             "msg": "Field required",
             "type": "missing",
-            "url": "https://errors.pydantic.dev/2.10/v/missing",
         },
     ]
 
