@@ -5,7 +5,10 @@ from collections.abc import Iterable
 from pathlib import Path
 from typing import Literal
 
-LogHandler = Literal["stderr", "syslog"] | str
+# The `Literal` part may seem redundant at first. In theory it _is_ redundant.
+# In practice, however, it offers us a nice development convenience: Our language
+# server offers us the items in the `Literal` as _suggestions_. We like that.
+LogHandler = Literal["stderr", "syslog"] | str  # noqa: PYI051
 
 
 def initialize_logging(
@@ -70,7 +73,7 @@ def _add_syslog_handler(logger: logging.Logger, *, app_name: str | None = None) 
         address="/dev/log", facility=facility
     )
     syslog_handler.setLevel(logging.DEBUG)  # TODO: Can we leave it at NOTSET?
-    _set_formatter(syslog_handler)
+    _set_formatter(syslog_handler, app_name=app_name)
     logger.addHandler(syslog_handler)
 
 
@@ -79,7 +82,7 @@ def _add_file_handler(
 ) -> None:
     file_handler = logging.FileHandler(log_file)
     file_handler.setLevel(logging.DEBUG)  # TODO: Can we leave it at NOTSET?
-    _set_formatter(file_handler)
+    _set_formatter(file_handler, app_name=app_name)
     logger.addHandler(file_handler)
 
 
