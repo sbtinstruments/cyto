@@ -2,7 +2,10 @@ import logging
 import logging.handlers
 import os
 from collections.abc import Iterable
+from pathlib import Path
 from typing import Literal
+
+LogHandler = Literal["stderr", "syslog"] | str
 
 
 def initialize_logging(
@@ -10,7 +13,7 @@ def initialize_logging(
     logger: logging.Logger | None = None,
     app_name: str | None = None,
     level: Literal["debug", "info", "warning", "error", "critical"] | None = None,
-    handlers: Iterable[Literal["stderr", "syslog"]] | None = None,
+    handlers: Iterable[LogHandler] | None = None,
 ) -> None:
     """Configure the global logging framework.
 
@@ -42,6 +45,9 @@ def initialize_logging(
                 _add_stderr_handler(logger)
             case "syslog":
                 _add_syslog_handler(logger, app_name=app_name)
+            case str() if handler_name.startswith("file:"):
+                log_file = Path(handler_name.removeprefix("file:"))
+                _add_file_handler(logger, app_name=app_name, log_file=log_file)
             case other:
                 raise RuntimeError(f"Unknown '{other}' log handler")
 
@@ -64,13 +70,26 @@ def _add_syslog_handler(logger: logging.Logger, *, app_name: str | None = None) 
         address="/dev/log", facility=facility
     )
     syslog_handler.setLevel(logging.DEBUG)  # TODO: Can we leave it at NOTSET?
+    _set_formatter(syslog_handler)
+    logger.addHandler(syslog_handler)
+
+
+def _add_file_handler(
+    logger: logging.Logger, *, log_file: Path, app_name: str | None = None
+) -> None:
+    file_handler = logging.FileHandler(log_file)
+    file_handler.setLevel(logging.DEBUG)  # TODO: Can we leave it at NOTSET?
+    _set_formatter(file_handler)
+    logger.addHandler(file_handler)
+
+
+def _set_formatter(handler: logging.Handler, app_name: str | None = None) -> None:
     # Optional: Use the RFC5424 format
     try:
         from .rfc5424 import RFC5424Formatter
     except ImportError:
         fmt = f"{app_name}" + "[{process}] [{name}] {message}"
         syslog_formatter = logging.Formatter(fmt=fmt, style="{")
-        syslog_handler.setFormatter(syslog_formatter)
+        handler.setFormatter(syslog_formatter)
     else:
-        syslog_handler.setFormatter(RFC5424Formatter(app_name=app_name))
-    logger.addHandler(syslog_handler)
+        handler.setFormatter(RFC5424Formatter(app_name=app_name))
