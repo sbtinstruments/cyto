@@ -6,14 +6,14 @@ _ROOT_APP_NAME: str | None = None
 
 
 def set_root_app_name(
-    app_name: str, *, mode: Literal["set-of-none", "force"] | None = None
+    app_name: str | None, *, mode: Literal["set-if-none", "force"] | None = None
 ) -> None:
     if mode is None:
-        mode = "set-of-none"
+        mode = "set-if-none"
     global _ROOT_APP_NAME  # noqa: PLW0603
 
     match mode:
-        case "set-of-none":
+        case "set-if-none":
             if _ROOT_APP_NAME is None:
                 _ROOT_APP_NAME = app_name
         case "force":

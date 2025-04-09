@@ -15,7 +15,7 @@ T = TypeVar("T", bound=PydanticBaseSettings)
 def cyto_defaults(
     *,
     name: str | None = None,
-    cli_source: Literal["only-if-root-app", "built-in", "disable"] | None = None,
+    cli_source: Literal["only-if-root-app", "always", "disable"] | None = None,
     extra_sources: tuple[type[PydanticBaseSettingsSource], ...] | None = None,
 ) -> Callable[[type[T]], type[T]]:
     if cli_source is None:
@@ -84,7 +84,7 @@ def cyto_defaults(
                     #
                     init_settings,
                 ]
-                if cli_source == "built-in" or (
+                if cli_source == "always" or (
                     cli_source == "only-if-root-app"
                     and get_root_app_name() in (name, None)
                 ):
