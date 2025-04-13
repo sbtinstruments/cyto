@@ -8,12 +8,15 @@ from pydantic import (
     BaseModel,
     ConfigDict,
     Field,
+    GetJsonSchemaHandler,
     GetPydanticSchema,
     TypeAdapter,
     ValidatorFunctionWrapHandler,
     model_serializer,
     model_validator,
 )
+from pydantic.json_schema import JsonSchemaValue
+from pydantic_core import core_schema
 
 Conv = Callable[[Any], Any]
 
@@ -28,6 +31,21 @@ def _create_io_annotation(
         model_config = ConfigDict(frozen=True, extra="forbid")
 
         intervals: tuple[portion.interval.Atomic, ...] = ()
+
+        @classmethod
+        def __get_pydantic_json_schema__(
+            cls, cs: core_schema.CoreSchema, handler: GetJsonSchemaHandler
+        ) -> JsonSchemaValue:
+            return {
+                # Match the `data` type in `_validate`
+                "anyOf": [
+                    handler(cs),
+                    # TODO: We could refine this to match patterns such as
+                    # "[begin,end)". This is too much work right now for
+                    # little gain. We just accept any string instead.
+                    handler(core_schema.str_schema()),
+                ]
+            }
 
         @model_validator(mode="wrap")
         @classmethod

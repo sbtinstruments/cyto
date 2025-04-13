@@ -6,10 +6,12 @@ from typing import Annotated, Any, ClassVar, Literal, Self
 
 from pydantic import (
     AfterValidator,
-    GetCoreSchemaHandler,
+    GetJsonSchemaHandler,
     ValidatorFunctionWrapHandler,
     model_serializer,
+    model_validator,
 )
+from pydantic.json_schema import JsonSchemaValue
 from pydantic_core import core_schema
 
 from cyto.model import FrozenModel
@@ -71,17 +73,18 @@ class Keynote(FrozenModel):
     sections: SectionSeq = ()
 
     @classmethod
-    def __get_pydantic_core_schema__(
-        cls, source: type[Any], handler: GetCoreSchemaHandler
-    ) -> core_schema.CoreSchema:
-        return core_schema.no_info_wrap_validator_function(
-            cls._validate,
-            # Match the input types in `_validate`
-            core_schema.union_schema(
-                [handler(source), handler(KeynoteTokenSeq)],
-            ),
-        )
+    def __get_pydantic_json_schema__(
+        cls, cs: core_schema.CoreSchema, handler: GetJsonSchemaHandler
+    ) -> JsonSchemaValue:
+        return {
+            # Match the `data` type in `_validate`
+            "anyOf": [
+                handler(cs),
+                handler(KeynoteTokenSeq.__pydantic_core_schema__),
+            ]
+        }
 
+    @model_validator(mode="wrap")
     @classmethod
     def _validate(cls, data: Any, handler: ValidatorFunctionWrapHandler) -> Any:
         if isinstance(data, Sequence):
