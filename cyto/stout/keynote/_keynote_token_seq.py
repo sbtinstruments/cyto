@@ -1,14 +1,9 @@
 from __future__ import annotations
 
 from collections.abc import Iterable, Iterator, Sequence
-from typing import Annotated, Any, Self, overload
+from typing import Any, Self, overload
 
-from pydantic import (
-    Field,
-    RootModel,
-    TypeAdapter,
-    model_validator,
-)
+from pydantic import RootModel, TypeAdapter, model_validator
 
 from ._keynote_tokens import SectionBeginToken, TagToken, Token
 
