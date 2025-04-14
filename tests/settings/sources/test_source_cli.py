@@ -1,10 +1,8 @@
-# ruff: noqa: PLR2004
 import pytest
+from cyto.settings import cyto_defaults
 from pydantic import BaseModel, Field, ValidationError
 from pydantic_settings import BaseSettings, SettingsError
 from pytest import MonkeyPatch  # noqa: PT013
-
-from cyto.settings import cyto_defaults
 
 from ...conftest import Argv
 from ..conftest import (

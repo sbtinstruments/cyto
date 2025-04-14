@@ -69,7 +69,7 @@ def sessionmaker(
 ) -> Any:
     session_kwargs = {
         **_SESSION_KWARGS,
-        **(session_kwargs if session_kwargs else {}),
+        **(session_kwargs or {}),
     }
     match bind:
         case ext_asyncio.AsyncEngine():

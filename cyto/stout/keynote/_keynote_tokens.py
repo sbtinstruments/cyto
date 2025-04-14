@@ -1,4 +1,3 @@
-# ruff: noqa: PLR2004
 from __future__ import annotations
 
 from typing import Annotated, Any, ClassVar, Literal, get_args

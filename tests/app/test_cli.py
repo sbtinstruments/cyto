@@ -1,7 +1,5 @@
-# ruff: noqa: PLR2004
-from pydantic import BaseModel
-
 from cyto.app import App, AppBaseSettings
+from pydantic import BaseModel
 
 from ..conftest import Argv
 

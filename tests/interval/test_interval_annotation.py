@@ -1,13 +1,9 @@
 from datetime import UTC, datetime
-from math import inf
+from math import inf, pi
 from typing import Annotated
 
 import portion
 import pytest
-from portion import CLOSED, OPEN
-from portion.interval import Atomic
-from pydantic import BaseModel, Field, ValidationError
-
 from cyto.interval import (
     FloatInterval,
     FloatIntervalAdapter,
@@ -15,14 +11,17 @@ from cyto.interval import (
     IntIntervalAdapter,
     TimeIntervalAdapter,
 )
+from portion import CLOSED, OPEN
+from portion.interval import Atomic
+from pydantic import BaseModel, Field, ValidationError
 
 
 def test_interval_adapter_validate() -> None:
-    ### List of Atomics (named tuples)
+    # List of Atomics (named tuples)
     interval = IntIntervalAdapter.validate_python([Atomic(CLOSED, 1, 3, OPEN)])
     assert interval == portion.closedopen(1, 3)
 
-    ### List of tuples
+    # List of tuples
     interval = IntIntervalAdapter.validate_python([(CLOSED, 1, 3, OPEN)])
     assert interval == portion.closedopen(1, 3)
 
@@ -37,7 +36,7 @@ def test_interval_adapter_validate() -> None:
     interval = IntIntervalAdapter.validate_python([])
     assert interval == portion.empty()
 
-    ### String
+    # String
     interval = IntIntervalAdapter.validate_python("[1, 3)")
     assert interval == portion.closedopen(1, 3)
 
@@ -53,7 +52,7 @@ def test_interval_adapter_validate() -> None:
     with pytest.raises(ValidationError):
         interval = IntIntervalAdapter.validate_python("")
 
-    ### Dict
+    # Dict
     interval = IntIntervalAdapter.validate_python(
         {"intervals": [Atomic(CLOSED, 1, 3, OPEN)]}
     )
@@ -64,13 +63,13 @@ def test_interval_adapter_validate() -> None:
 
     with pytest.raises(ValidationError):
         IntIntervalAdapter.validate_python(
-            {"intervals": [Atomic(CLOSED, 2.72, 3.14, OPEN)]}
+            {"intervals": [Atomic(CLOSED, 2.72, pi, OPEN)]}
         )
 
     with pytest.raises(ValidationError):
         IntIntervalAdapter.validate_python({"hi": "there"})
 
-    ### Instance of portion.Interval
+    # Instance of portion.Interval
     interval = IntIntervalAdapter.validate_python(portion.closedopen(1, 3))
     assert interval == portion.closedopen(1, 3)
 
@@ -79,14 +78,14 @@ def test_interval_adapter_validate() -> None:
     )
     assert interval == portion.closedopen(1, 4)
 
-    ### List of portion.Interval
+    # List of portion.Interval
     # TODO: Allow the user to use lists of `portion.Interval` directly.
     with pytest.raises(ValidationError):
         interval = IntIntervalAdapter.validate_python([portion.closedopen(1, 3)])
 
-    ### Other types
+    # Other types
     with pytest.raises(ValidationError):
-        interval = IntIntervalAdapter.validate_python(3.14)
+        interval = IntIntervalAdapter.validate_python(pi)
 
 
 def test_interval_adapter_serialize() -> None:
@@ -117,22 +116,22 @@ def test_interval_in_model() -> None:
 
 
 def test_type_strictness() -> None:
-    ### Float where int is expected
+    # Float where int is expected
     with pytest.raises(ValidationError):
-        IntIntervalAdapter.validate_python([(CLOSED, 2.72, 3.14, OPEN)])
+        IntIntervalAdapter.validate_python([(CLOSED, 2.72, pi, OPEN)])
     with pytest.raises(ValidationError):
-        IntIntervalAdapter.validate_python(portion.closedopen(2.72, 3.14))
+        IntIntervalAdapter.validate_python(portion.closedopen(2.72, pi))
     with pytest.raises(ValidationError):
         IntIntervalAdapter.validate_python("[2.72, 3.14)")
 
-    ### Floats
-    FloatIntervalAdapter.validate_python([(CLOSED, 2.72, 3.14, OPEN)])
-    FloatIntervalAdapter.validate_python(portion.closedopen(2.72, 3.14))
+    # Floats
+    FloatIntervalAdapter.validate_python([(CLOSED, 2.72, pi, OPEN)])
+    FloatIntervalAdapter.validate_python(portion.closedopen(2.72, pi))
     FloatIntervalAdapter.validate_python("[2.72, 3.14)")
     # An int is fine too (automatically coerced to float).
     FloatIntervalAdapter.validate_python("[2, 3.14)")
 
-    ### Datetime
+    # Datetime
     interval = TimeIntervalAdapter.validate_python(
         [
             (
@@ -189,7 +188,7 @@ def test_datetime_interval_with_inf() -> None:
 
 def test_float_interval_field_with_int_default() -> None:
     class MyModel(BaseModel):
-        bacteria_bounds: FloatInterval = portion.closedopen(0, 3.14)
+        bacteria_bounds: FloatInterval = portion.closedopen(0, pi)
         object_bounds: Annotated[
             FloatInterval,
             Field(default=portion.closedopen(1.5, 3)),
@@ -200,12 +199,12 @@ def test_float_interval_field_with_int_default() -> None:
     assert isinstance(my_model.bacteria_bounds.lower, float)
     assert isinstance(my_model.bacteria_bounds.upper, float)
     assert my_model.bacteria_bounds.lower == 0
-    assert my_model.bacteria_bounds.upper == 3.14  # noqa: PLR2004
+    assert my_model.bacteria_bounds.upper == pi
 
     assert isinstance(my_model.object_bounds.lower, float)
     assert isinstance(my_model.object_bounds.upper, float)
-    assert my_model.object_bounds.lower == 1.5  # noqa: PLR2004
-    assert my_model.object_bounds.upper == 3  # noqa: PLR2004
+    assert my_model.object_bounds.lower == 1.5
+    assert my_model.object_bounds.upper == 3
 
 
 def test_int_interval_field_with_float_default() -> None:
@@ -249,7 +248,7 @@ def test_int_interval_field_with_strings() -> None:
     assert isinstance(my_model_12.my_interval.lower, int)
     assert isinstance(my_model_12.my_interval.upper, int)
     assert my_model_12.my_interval.lower == 1
-    assert my_model_12.my_interval.upper == 2  # noqa: PLR2004
+    assert my_model_12.my_interval.upper == 2
 
     # Bad values: "3.14", "5"
     class MyModelPi5(BaseModel):

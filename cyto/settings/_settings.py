@@ -66,7 +66,6 @@ def cyto_defaults(
             ) -> tuple[PydanticBaseSettingsSource, ...]:
                 assert extra_sources is not None
                 # Many false-positives because we use code in the comments below.
-                # ruff: noqa: ERA001
 
                 # Note that the pydantic_settings-provided default is:
                 #

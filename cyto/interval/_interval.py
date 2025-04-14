@@ -88,7 +88,6 @@ def _create_io_annotation(
             if isinstance(data, Iterable):
                 try:
                     return portion.from_data(data, conv=conv)
-                # ruff: noqa: ERA001
                 #
                 # TypeError: If data contains an item that we can not unpack into
                 # four elements. Inside `portion.from_data`, we have this:

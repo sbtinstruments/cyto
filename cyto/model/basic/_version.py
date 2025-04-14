@@ -54,13 +54,13 @@ class Version(FrozenModel):
         elements = stripped.split("-")
         parts: list[Any] = elements[0].split(".")
         modifiers = tuple(elements[1:])
-        if not 2 <= len(parts) <= 3:  # noqa: PLR2004
+        if not 2 <= len(parts) <= 3:
             raise ValueError(
                 "We only accept versions that consists of"
                 " MAJOR.MINOR[.PATCH]-[MODIFIERS] (where [.PATCH] is optional). We"
                 f" got: {parts}"
             )
-        if len(parts) == 2:  # noqa: PLR2004
+        if len(parts) == 2:
             # Special case: The patch information is encoded as a character.
             #
             # E.g.: "2024.03d" becomes: major=2024, minor=3, patch=4
@@ -74,7 +74,7 @@ class Version(FrozenModel):
             # Fall back: The patch is not present so we set it to zero
             else:
                 parts.append(0)  # `patch` defaults to `0`
-        assert len(parts) == 3  # noqa: PLR2004
+        assert len(parts) == 3
         try:
             major = int(parts[0])
             minor = int(parts[1])
@@ -137,7 +137,6 @@ class Version(FrozenModel):
 
 VersionField = Annotated[
     Version,
-    # ruff: noqa: ERA001
     #
     # Allows us to specify default values using, e.g., strings. Example:
     #

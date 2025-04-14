@@ -1,7 +1,6 @@
+from cyto.settings import cyto_defaults
 from pydantic import BaseModel
 from pydantic_settings import BaseSettings
-
-from cyto.settings import cyto_defaults
 
 
 class Track(BaseModel, extra="forbid"):
@@ -75,8 +74,8 @@ class NoDefaultSettings(BaseSettings):
 
 
 #################################################
-### TODO: Replace the classes below with the
-### classes above.
+# TODO: Replace the classes below with the
+# classes above.
 #################################################
 class Layer(BaseModel):
     name: str

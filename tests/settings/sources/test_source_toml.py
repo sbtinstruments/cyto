@@ -1,4 +1,3 @@
-# ruff: noqa: PLR2004
 from pyfakefs.fake_filesystem import FakeFilesystem
 
 from ..conftest import Album, MyTunesSettings, Track, Zoobar2000Settings

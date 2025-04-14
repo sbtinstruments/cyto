@@ -26,7 +26,9 @@ def get_root_app_name() -> str | None:
     return _ROOT_APP_NAME
 
 
-def get_app_name(main_func: Callable[..., Any] | None = None) -> str:
+def get_app_name(
+    main_func: Callable[..., Any] | None = None, *, default: str = "unknown"
+) -> str:
     """Get the name of the running application.
 
     Optionally, provide the "main" function to help us decide.
@@ -34,7 +36,7 @@ def get_app_name(main_func: Callable[..., Any] | None = None) -> str:
     # Use the function name itself if said name is descriptive
     if (
         main_func is not None
-        and main_func.__name__ not in ("main",)
+        and main_func.__name__ != "main"
         and not main_func.__name__.startswith("_")
     ):
         return main_func.__name__
@@ -78,4 +80,5 @@ def get_app_name(main_func: Callable[..., Any] | None = None) -> str:
         # Remove leading and trailing underscores (if any).
         # All in all, a file name like "_appster.py" becomes "appster".
         return main_file_name.strip("_")
-    raise RuntimeError("Could not deduce application name")
+
+    return default

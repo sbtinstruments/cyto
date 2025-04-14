@@ -1,4 +1,3 @@
-# ruff: noqa: PLR2004
 #
 # We want to keep the tests very explicit and separate the context managers into
 # their own `with` statements. Therefore, we disable:
@@ -10,7 +9,6 @@
 from datetime import datetime
 
 import pytest
-
 from cyto.cytio.tree import fetch, patch
 from cyto.cytio.tree.current_tree import plant_tree
 from cyto.factory import FACTORY

@@ -54,7 +54,7 @@ class KeynoteTokenSeq(RootModel[tuple[Token, ...]], Sequence[Token], frozen=True
 
     @model_validator(mode="after")
     def _validate_sentinels(self) -> Self:
-        ## The `[work-in-progress]` tag
+        # The `[work-in-progress]` tag
         wip_tags = tuple(
             token
             for token in self.root
@@ -67,7 +67,7 @@ class KeynoteTokenSeq(RootModel[tuple[Token, ...]], Sequence[Token], frozen=True
         if len(wip_tags) > 1:
             raise ValueError("There can only be one '[work-in-progress]' tag")
 
-        ## The `# Bonus slides` section
+        # The `# Bonus slides` section
         sections = tuple(
             token for token in self.root if isinstance(token, SectionBeginToken)
         )

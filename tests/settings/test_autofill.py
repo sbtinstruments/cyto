@@ -1,4 +1,3 @@
-# ruff: noqa: PLR2004
 import pytest
 from pydantic import ValidationError
 from pytest import MonkeyPatch  # noqa: PT013

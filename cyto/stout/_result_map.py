@@ -1,10 +1,10 @@
 from collections.abc import Iterator, Mapping
 from typing import Any, ClassVar, override
 
-from pydantic import ConfigDict, Field
+from pydantic import ConfigDict
 
 from ..model import FrozenModel
-from .keynote import Keynote, KeynoteTokenSeq
+from .keynote import Keynote
 
 
 class ResultMap(FrozenModel, Mapping[str, Any]):

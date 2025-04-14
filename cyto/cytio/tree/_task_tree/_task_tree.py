@@ -30,7 +30,7 @@ class TaskTree(AbstractContextManager["TaskTree"]):
     """
 
     def __init__(self, *, root: Node) -> None:
-        self._graph = nx.DiGraph()
+        self._graph: nx.DiGraph[Node] = nx.DiGraph()
         self._graph.add_node(root)
         self._root = root
         self._change_broadcast: BroadcastValue[TaskTree] = BroadcastValue(self)
@@ -39,7 +39,7 @@ class TaskTree(AbstractContextManager["TaskTree"]):
         return self._change_broadcast.subscribe()
 
     @property
-    def graph(self) -> nx.DiGraph:
+    def graph(self) -> nx.DiGraph[Node]:
         return self._graph.copy(as_view=True)
 
     @property
@@ -47,19 +47,21 @@ class TaskTree(AbstractContextManager["TaskTree"]):
         return self._root
 
     @property
-    def name_graph(self) -> nx.DiGraph:
-        return nx.relabel_nodes(self._graph, lambda n: n.name)
+    def name_graph(self) -> nx.DiGraph[str | None]:
+        # NOTE(FPA 2025-04-13): The networkx type stubs do not include
+        # the relabel_nodes overload that we use (with a callable).
+        return nx.relabel_nodes(self._graph, lambda n: n.name)  # type: ignore[no-any-return,call-overload]
 
     def data_for_task(self, node: Node) -> TaskData:
         return TaskData(tree=self, task=node)
 
-    def nodes(self) -> NodeDataView:
+    def nodes(self) -> NodeDataView[Node]:
         """Return immutable view of the nodes in this task tree."""
         # TODO: Actually make the view (faux-) immutable
         return self._graph.nodes.data(data=True)
 
     @contextmanager
-    def mutate_nodes(self) -> Iterator[NodeView]:
+    def mutate_nodes(self) -> Iterator[NodeView[Node]]:
         """Return mutable view of the nodes in this task tree.
 
         Note that while you can't add/delete nodes via the returned `NodeView`,

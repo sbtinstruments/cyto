@@ -20,7 +20,7 @@ _LOGGER = logging.getLogger(__name__)
 T = TypeVar("T")
 
 
-class ProductFactory(Generic[T], Protocol):
+class ProductFactory(Protocol, Generic[T]):
     """Given a produc spec, return the corresponding product."""
 
     def __call__(self, /, __spec: ProductSpec[T]) -> T: ...

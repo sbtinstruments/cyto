@@ -2,24 +2,6 @@
 requires = ["pdm-backend"]
 build-backend = "pdm.backend"
 
-[tool.pdm.build]
-# Sometimes, mypy creates a local .mypy_cache folder within the package directory.
-# E.g., this happens when you have the "baxter" source code open and choose
-# the "go to definition" action on a cyto object.
-#
-# These .mypy_cache files are _huge_. Worse so, they become part of the build!
-# In turn, our (SBT) rootfs image (for green mango devices) become way too large.
-#
-# In any case, the fix is simple: We instruct the build system to exclude
-# .mypy_cache folders wherever they may be.
-#
-# We'll keep this in place until we switch build system, or, until the pdm
-# build backend learns to use .gitignore files. Note that there always is
-# a `.mypy_cache/.gitignore` file.
-#
-# See: https://github.com/pdm-project/pdm-backend/issues/275
-excludes = ["**/.mypy_cache"]
-
 [project]
 authors = [{ name = "Frederik Peter Aalund", email = "fpa@sbtinstruments.com" }]
 license = { text = "MIT" }
@@ -37,7 +19,6 @@ repository = "https://github.com/sbtinstruments/cyto"
 app = ["cyto[settings]", "anyio<5.0.0,>=4.4.0"]
 cytio = ["cyto[model]", "anyio"]
 cytio-tree = ["cyto[cytio]", "networkx<4.0,>=3.3"]
-cytio-tree-outline-redis = ["cyto[cytio]", "redis<6.0.0,>=5.0.8"]
 logging-rfc5424 = ["syslog-rfc5424-formatter<2.0.0,>=1.2.3"]
 interval = ["portion<3.0.0,>=2.4.2"]
 model = ["pydantic<3.0.0,>=2.9.2"]
@@ -50,99 +31,6 @@ dev = [
     "pyfakefs<6.0.0,>=5.6.0",
     "pytest<9.0.0,>=8.3.2",
     "pytest-cov<6.0.0,>=5.0.0",
-    "taskipy<2.0.0,>=1.13.0",
-    "pre-commit<4.0.0,>=3.8.0",
     "ruff<1.0.0,>=0.6.1",
     "mypy<2.0.0,>=1.13.0",
 ]
-
-
-[tool.taskipy.tasks]
-ruff = "ruff check cyto tests"
-mypy = "mypy cyto tests"
-pre-commit = "pre-commit run --all-files"
-
-
-[tool.ruff]
-target-version = "py312"
-line-length = 88
-lint.select = ["ALL"]
-lint.ignore = [
-    # "flake8-annotations". mypy does our type checking.
-    "ANN",
-    # "flake8-commas (COM)". We use black instead.
-    "COM",
-    # "flake8-errmsg (EM)". Three rules that are all about "Exception must not use
-    # a string literal, assign to variable first". Too little gained for the effort.
-    # Maybe later.
-    "EM",
-    # "Boolean default value in function definition". We think it's perfectly okay to
-    # provide a default value for a boolean flag.
-    "FBT002",
-    # "pydocstyle (D)". We *should* do this. It's just a large effort. Maybe later.
-    "D",
-    # Allow ourselves to just import stuff in __init__ files.
-    "F401",
-    # "Use of assert detected". We like `assert`.
-    "S101",
-    # "flake8-type-checking". Too little gained for the effort. Maybe later.
-    "TCH",
-    # We have TODO's and HACK's throughout as reminders for later. That is okay.
-    "FIX002",
-    "FIX004",
-    # useless-import-alias (PLC0414)
-    # The idiomatic way to export things from `__init__` files is:
-    #
-    #     from ._pedb_row import PedbRow as PedbRow
-    #
-    # This, however, does not place nicely together with PLC0414.
-    # See: https://github.com/astral-sh/ruff/issues/6294
-    "PLC0414",
-    # "TD002 Missing author in TODO".
-    # "TD003 Missing issue link on the line following this TODO".
-    # That's not how we use TODO.
-    "TD002",
-    "TD003",
-    # "Relative imports from parent modules are banned". We like relative imports.
-    "TID252",
-    # ISC001 conflicts with ruff's own, built-in formatter.
-    'ISC001',
-    # "Avoid specifying long messages outside the exception class".
-    # Apparently, any string that contains a space is "too long". That's a bit too
-    # strict for us.
-    "TRY003",
-    # We prefer a combination of `error` and debug` to log the error message and
-    # exception (including stack trace), respectively. We do *not* want to use
-    # `exception` since it outputs both at the ERROR log level.
-    "TRY400",
-]
-
-[tool.mypy]
-strict = true
-no_implicit_reexport = false # Enabled by "strict = true"
-show_error_codes = true
-
-plugins = ["pydantic.mypy"]
-# Unfortunately, this does not work for top-level ignores.
-# See: https://github.com/python/mypy/issues/12076
-warn_unused_ignores = false
-
-[[tool.mypy.overrides]]
-module = "redis.*"
-ignore_missing_imports = true
-
-[[tool.mypy.overrides]]
-module = ["networkx.*"]
-ignore_missing_imports = true
-
-[[tool.mypy.overrides]]
-module = ["portion.*"]
-ignore_missing_imports = true
-
-[[tool.mypy.overrides]]
-module = ["syslog_rfc5424_formatter.*"]
-ignore_missing_imports = true
-
-
-[tool.pytest.ini_options]
-testpaths = 'tests'

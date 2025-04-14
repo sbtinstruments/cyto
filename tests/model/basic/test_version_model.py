@@ -1,10 +1,8 @@
-# ruff: noqa: PLR2004
 from typing import Annotated
 
 import pytest
-from pydantic import BaseModel, Field, ValidationError
-
 from cyto.model.basic import Version, VersionField
+from pydantic import BaseModel, Field, ValidationError
 
 
 def test_version_model_validate() -> None:

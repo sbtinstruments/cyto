@@ -1,10 +1,8 @@
-# ruff: noqa: PLR2004, ARG001
 from contextlib import AsyncExitStack
 
 import pytest
 from anyio import sleep
 from anyio.abc import TaskGroup
-
 from cyto.app import App, AppBaseSettings
 
 

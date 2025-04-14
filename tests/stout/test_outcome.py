@@ -1,4 +1,5 @@
-# ruff: noqa: PLR2004
+import math
+
 from cyto.stout import Outcome, ResultMap
 from cyto.stout.keynote import (
     FinalItem,
@@ -17,7 +18,7 @@ def test_outcome_with_keynote() -> None:
     ]
     raw_result = {
         "keynote": raw_keynote,
-        "my_fav_number": 3.14,
+        "my_fav_number": math.pi,
     }
     raw_outcome = {"result": raw_result}
     # Deserialize
@@ -32,13 +33,13 @@ def test_outcome_with_keynote() -> None:
     assert isinstance(section.slides[1], TentativeItem)
     assert isinstance(section.slides[2], FinalItem)
     assert isinstance(section.slides[3], FinalItem)
-    assert outcome.result["my_fav_number"] == 3.14
+    assert outcome.result["my_fav_number"] == math.pi
 
 
 def test_basic_outcome() -> None:
     raw_result = {
         "_report": {"analysis": "...something...", "algResult": {"even more!"}},
-        "my_fav_number": 3.14,
+        "my_fav_number": math.pi,
     }
     raw_outcome = {"result": raw_result}
     # Deserialize
@@ -47,7 +48,7 @@ def test_basic_outcome() -> None:
     assert isinstance(outcome.result.keynote, Keynote)
     assert not outcome.result.keynote, "keynote is empty"
     assert isinstance(outcome.result["_report"], dict)
-    assert outcome.result["my_fav_number"] == 3.14
+    assert outcome.result["my_fav_number"] == math.pi
 
 
 def test_default_outcome() -> None:

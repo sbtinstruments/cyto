@@ -1,19 +1,17 @@
-# ruff: noqa: PLR2004, N806
+# ruff: noqa: N806
 from functools import cached_property
 from typing import Annotated, Any, Literal
 
 import pytest
+from cyto.model import AssignOp, FrozenModel, Patch, PatchError, Stitch
 from pydantic import (
     AfterValidator,
-    ConfigDict,
     Discriminator,
     Field,
     NonNegativeInt,
     RootModel,
     ValidationError,
 )
-
-from cyto.model import AssignOp, FrozenModel, Patch, PatchError, Stitch
 
 
 class Evaluation(FrozenModel):
@@ -159,7 +157,7 @@ def test_frozen_patch_with_mutating_validator() -> None:
         my_first_square: Squared
         my_second_square: Squared = 7
 
-    ### Some fields left at the default value
+    # Some fields left at the default value
     my_model = MyModel(my_int=2, my_first_square=3)
     assert my_model.my_int == 2
     assert my_model.my_first_square == 3**2
@@ -187,7 +185,7 @@ def test_frozen_patch_with_mutating_validator() -> None:
     assert my_model.my_first_square == 3**2
     assert my_model.my_second_square == 7
 
-    ### All fields specified on init
+    # All fields specified on init
     my_model = MyModel(my_int=2, my_first_square=3, my_second_square=8)
     assert my_model.my_int == 2
     assert my_model.my_first_square == 3**2
@@ -276,12 +274,12 @@ def test_frozen_patch_with_set() -> None:
 
     orig_bs = Brainstorm(me_gusta=[Idea(desc="cars"), Idea(desc="tea")])
 
-    ### Patch given as a list of ideas
+    # Patch given as a list of ideas
     patched_bs = orig_bs.frozen_patch({"me_gusta": [Idea(desc="computers")]})
     assert isinstance(patched_bs.me_gusta, frozenset)
     assert patched_bs.me_gusta == {Idea(desc="computers")}
 
-    ### Patch given as a frozenset directly
+    # Patch given as a frozenset directly
     # Note that `BaseModel.model_dump()` raises TypeError.
     # This is a known issue: https://github.com/pydantic/pydantic/issues/8016
     # As of this writing (2024-11-13) there is no plan to fix this
