@@ -15,6 +15,8 @@ from ..conftest import (
     Zoobar2000Settings,
 )
 
+pytestmark = pytest.mark.usefixtures("fs")
+
 
 @cyto_defaults(name="customcli")
 class CustomCliSettings(BaseSettings, extra="forbid"):

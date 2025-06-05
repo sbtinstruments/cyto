@@ -5,6 +5,8 @@ from anyio import sleep
 from anyio.abc import TaskGroup
 from cyto.app import App, AppBaseSettings
 
+pytestmark = pytest.mark.usefixtures("fs")
+
 
 def test_inject_nothing() -> None:
     async def main() -> None:

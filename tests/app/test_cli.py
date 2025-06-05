@@ -1,7 +1,10 @@
+import pytest
 from cyto.app import App, AppBaseSettings
 from pydantic import BaseModel
 
 from ..conftest import Argv
+
+pytestmark = pytest.mark.usefixtures("fs")
 
 
 def test_flat_args(argv: Argv) -> None:

@@ -4,6 +4,8 @@ from pytest import MonkeyPatch  # noqa: PT013
 
 from .conftest import DefaultSettings, Layer, NestedSettings, PartialSettings
 
+pytestmark = pytest.mark.usefixtures("fs")
+
 
 def test_defaults() -> None:
     settings = DefaultSettings()

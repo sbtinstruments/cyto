@@ -1,3 +1,4 @@
+import pytest
 from pyfakefs.fake_filesystem import FakeFilesystem
 from pytest import MonkeyPatch  # noqa: PT013
 
@@ -35,6 +36,7 @@ def test_cwd_vs_env_precedence(fs: FakeFilesystem, monkeypatch: MonkeyPatch) -> 
     assert settings.my_int == 3
 
 
+@pytest.mark.usefixtures("fs")
 def test_env_vs_kwarg_precedence(monkeypatch: MonkeyPatch) -> None:
     monkeypatch.setenv("foobar_my_int", "3")
     settings = DefaultSettings(my_int=4)
