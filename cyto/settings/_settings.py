@@ -26,6 +26,10 @@ def cyto_defaults(
 
     def decorator(cls: type[T]) -> type[T]:
         nonlocal name
+        # First fallback: Use the root app name
+        if name is None:
+            name = get_root_app_name()
+        # Second fallback: Infer the app name from the settings class name
         if name is None:
             # E.g.: "FooBarSettings" -> "foobar"
             name = cls.__name__.removesuffix("Settings").lower()
@@ -96,7 +100,7 @@ def cyto_defaults(
                         #
                         #     $ ./appster --debug --background
                         #
-                        CliSettingsSource[argparse.ArgumentParser](
+                        CliSettingsSource(
                             settings_cls,
                             cli_parse_args=True,
                             parse_args_method=_parse_args_method,
