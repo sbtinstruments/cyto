@@ -97,17 +97,17 @@ def test_basic_field(argv: Argv) -> None:
 def test_model_field(argv: Argv) -> None:
     # The `featured_album` field exists and it's a model. We set the
     # model using JSON.
-    argv.assign("--featured_album", '{"author": "Beethoven"}')
+    argv.assign("--featured-album", '{"author": "Beethoven"}')
     DotifySettings()
     # We can also set the individual fields of the model.
-    argv.assign("--featured_album.author", "Beethoven")
+    argv.assign("--featured-album.author", "Beethoven")
     settings = DotifySettings()
     assert settings.featured_album.author == "Beethoven"
     # The other fields have default values
     assert settings.featured_album.title == "No title"
     assert settings.featured_album.tracks == []
     # You can override the defaults
-    argv.append("--featured_album.title", "The Complete Symphonies")
+    argv.append("--featured-album.title", "The Complete Symphonies")
     settings = DotifySettings()
     assert settings.featured_album.title == "The Complete Symphonies"
 
@@ -117,20 +117,20 @@ def test_list_field(argv: Argv) -> None:
     settings = WinLampSettings()
     assert settings.favourite_genres == ["Classical", "Electronic"]
     # Now we override the defaults
-    argv.append("--favourite_genres", "Pop")
+    argv.append("--favourite-genres", "Pop")
     settings = WinLampSettings()
     assert settings.favourite_genres == ["Pop"]
     # You can specify additional elements as well
-    argv.append("--favourite_genres", "Rock")
-    argv.append("--favourite_genres", "Reggae")
+    argv.append("--favourite-genres", "Rock")
+    argv.append("--favourite-genres", "Reggae")
     settings = WinLampSettings()
     assert settings.favourite_genres == ["Pop", "Rock", "Reggae"]
     # You can't give multiple values at once
-    argv.append("--favourite_genres", "Jazz", "Funk")
+    argv.append("--favourite-genres", "Jazz", "Funk")
     with pytest.raises(SettingsError):
         settings = WinLampSettings()
     # You can use JSON array notation.
-    argv.assign("--favourite_genres", '["Soul", "Techno"]')
+    argv.assign("--favourite-genres", '["Soul", "Techno"]')
     settings = WinLampSettings()
     assert settings.favourite_genres == ["Soul", "Techno"]
 
@@ -140,12 +140,12 @@ def test_tuple_field(argv: Argv) -> None:
     settings = WinLampSettings()
     assert settings.version_info == ("1.2.0", 1, 2, 0)
     # Override the defaults using a JSON list
-    argv.append("--version_info", '["3.0.9", 3, 0, 9]')
+    argv.append("--version-info", '["3.0.9", 3, 0, 9]')
     settings = WinLampSettings()
     assert settings.version_info == ("3.0.9", 3, 0, 9)
     # It's an error to only provide some of the items in the list
     # since we expect a fixed-size tuple
-    argv.assign("--version_info", '["5.0.0", 5]')
+    argv.assign("--version-info", '["5.0.0", 5]')
     with pytest.raises(ValidationError):
         settings = WinLampSettings()
 
@@ -215,9 +215,9 @@ def test_list_of_models(argv: Argv) -> None:
 def test_complex_hierarchy(argv: Argv) -> None:
     # Let's try to change the defaults of a deep hierarchy of
     # lists and models.
-    argv.append("--user_favourites.name", "My top selection")
+    argv.append("--user-favourites.name", "My top selection")
     argv.append(
-        "--user_favourites.albums",
+        "--user-favourites.albums",
         """{
             "author": "Guns N' Roses",
             "title": "Appetite For Destruction",
@@ -229,7 +229,7 @@ def test_complex_hierarchy(argv: Argv) -> None:
         }""",
     )
     argv.append(
-        "--user_favourites.albums",
+        "--user-favourites.albums",
         """{
             "author": "Caribou",
             "title": "Swim",
@@ -241,7 +241,7 @@ def test_complex_hierarchy(argv: Argv) -> None:
         }""",
     )
     argv.append(
-        "--user_favourites.metadata",
+        "--user-favourites.metadata",
         """{
             "created_on": "2019-09-09",
             "last_updated": "2020-01-24"

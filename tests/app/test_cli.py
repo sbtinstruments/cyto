@@ -9,13 +9,13 @@ pytestmark = pytest.mark.usefixtures("fs")
 
 def test_flat_args(argv: Argv) -> None:
     argv.append(
-        "--cream_and_sugar",
+        "--cream-and-sugar",
         "True",
         "--debug",
         "True",
         "--background",
         "False",
-        "--roast_level",
+        "--roast-level",
         "42",
     )
 
