@@ -1,4 +1,5 @@
-from collections.abc import Callable
+import argparse
+from collections.abc import Callable, Sequence
 from pathlib import Path
 from typing import Literal, TypeVar
 
@@ -53,6 +54,10 @@ def cyto_defaults(
                 env_file_encoding="utf-8",
                 env_prefix=f"{name}_",
                 cli_prog_name=name,
+                cli_parse_args=True,
+                cli_exit_on_error=False,
+                cli_kebab_case=True,
+                cli_use_class_docs_for_groups=True,
             )
 
             @classmethod
@@ -92,8 +97,8 @@ def cyto_defaults(
                         #
                         #     $ ./appster --debug --background
                         #
-                        CliSettingsSource(
-                            settings_cls, cli_parse_args=True, cli_exit_on_error=False
+                        CliSettingsSource[argparse.ArgumentParser](
+                            settings_cls, parse_args_method=_parse_args_method
                         )
                     )
                 result.extend(
@@ -147,3 +152,19 @@ def cyto_defaults(
         return _BaseSettings
 
     return decorator
+
+
+def _parse_args_method(
+    root_parser: argparse.ArgumentParser, args: Sequence[str] | None
+) -> argparse.Namespace:
+    # Optionally, add shell auto-completion support
+    try:
+        import argcomplete  # type: ignore[import]
+    except ImportError:
+        pass
+    else:
+        argcomplete.autocomplete(root_parser)
+
+    # pydantic_settings uses `argparse.ArgumentParser.parse_args` per default.
+    # We do the very same here.
+    return argparse.ArgumentParser.parse_args(root_parser, args)
