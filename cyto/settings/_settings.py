@@ -1,7 +1,8 @@
 import argparse
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Iterable, Sequence
+from functools import partial
 from pathlib import Path
-from typing import Literal, TypeVar
+from typing import Any, Literal, TypeVar
 
 from pydantic_settings import BaseSettings as PydanticBaseSettings
 from pydantic_settings import CliSettingsSource, PydanticBaseSettingsSource
@@ -103,7 +104,7 @@ def cyto_defaults(
                         CliSettingsSource(
                             settings_cls,
                             cli_parse_args=True,
-                            parse_args_method=_parse_args_method,
+                            **dict(_get_cli_source_kwargs()),
                         )
                     )
                 result.extend(
@@ -159,17 +160,38 @@ def cyto_defaults(
     return decorator
 
 
-def _parse_args_method(
-    root_parser: argparse.ArgumentParser, args: Sequence[str] | None
-) -> argparse.Namespace:
-    # Optionally, add shell auto-completion support
+def _get_cli_source_kwargs() -> Iterable[tuple[str, Any]]:
+    # Optional: Use rich_argparse to format "--help" messages.
     try:
-        import argcomplete  # type: ignore[import]
+        from rich_argparse import RichHelpFormatter  # type: ignore[import]
     except ImportError:
         pass
     else:
-        argcomplete.autocomplete(root_parser)
+        yield "formatter_class", RichHelpFormatter
+
+    # Optional: Add shell auto-completion support
+    try:
+        from argcomplete import autocomplete  # type: ignore[import]
+    except ImportError:
+        pass
+    else:
+        yield (
+            "parse_args_method",
+            partial(_parse_args_method, autocomplete=autocomplete),
+        )
+
+
+def _parse_args_method(
+    root_parser: argparse.ArgumentParser,
+    args: Sequence[str] | None,
+    *,
+    autocomplete: Callable[[argparse.ArgumentParser], None],
+) -> argparse.Namespace:
+    # `argcomplete.autocomplete` calls `os._exit` if it detects that we are
+    # in "shell completion mode". E.g., if the right environment variables
+    # are present.
+    autocomplete(root_parser)
 
     # pydantic_settings uses `argparse.ArgumentParser.parse_args` per default.
     # We do the very same here.
-    return argparse.ArgumentParser.parse_args(root_parser, args)
+    return root_parser.parse_args(args)
