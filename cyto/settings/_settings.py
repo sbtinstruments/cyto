@@ -73,6 +73,7 @@ def cyto_defaults(
                 dotenv_settings: PydanticBaseSettingsSource,
                 file_secret_settings: PydanticBaseSettingsSource,
             ) -> tuple[PydanticBaseSettingsSource, ...]:
+                assert name is not None
                 assert extra_sources is not None
                 # Many false-positives because we use code in the comments below.
 
@@ -131,6 +132,19 @@ def cyto_defaults(
                         # Note that we apply multiple setting files in alphanumeric
                         # order.
                         GlobSource(settings_cls, Path("./"), f"*{name}.*"),
+                        # Setting files from the current user's settings
+                        # directory. E.g.:
+                        #
+                        #     ~/.config/sbt/my-settings.sbt.toml
+                        #     ~/.config/sbt/sbt.toml
+                        #
+                        # Note that we apply multiple setting files in alphanumeric
+                        # order.
+                        GlobSource(
+                            settings_cls,
+                            Path("~/.config").expanduser() / name,
+                            f"*{name}.*",
+                        ),
                         # Setting files from the system's settings
                         # directory. E.g.:
                         #
