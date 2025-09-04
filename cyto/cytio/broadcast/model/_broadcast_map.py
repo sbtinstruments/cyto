@@ -3,7 +3,6 @@ from __future__ import annotations
 import logging
 from collections.abc import Iterator, MutableMapping
 from contextlib import contextmanager
-from typing import TypeVar
 
 from anyio.streams.memory import MemoryObjectReceiveStream
 
@@ -11,11 +10,8 @@ from .._broadcast_value import BroadcastValue
 
 _LOGGER = logging.getLogger(__name__)
 
-KT = TypeVar("KT")
-VT = TypeVar("VT")
 
-
-class BroadcastMap(MutableMapping[KT, VT]):
+class BroadcastMap[KT, VT](MutableMapping[KT, VT]):
     def __init__(self) -> None:
         self._data: dict[KT, VT] = {}
         self._broadcast = BroadcastValue(self)

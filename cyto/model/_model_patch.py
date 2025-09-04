@@ -1,11 +1,9 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Literal, Self, TypeVar
+from typing import Any, Literal, Self
 
 from pydantic import BaseModel
-
-T = TypeVar("T", bound=BaseModel)
 
 
 class PatchError(ValueError):
@@ -36,7 +34,7 @@ class Stitch:
         path, value = item
         return cls(path=path, operation=AssignOp(value=value))
 
-    def apply(self, model: T) -> T:
+    def apply[T: BaseModel](self, model: T) -> T:
         """Apply the given patch and return the result.
 
         Does *not* validate the model. Uses `model_copy(update=...)` underneath,
@@ -45,7 +43,7 @@ class Stitch:
         fields = self.path.split(".")
         return self._apply(model, fields=fields)
 
-    def _apply(self, model: T, *, fields: list[str]) -> T:
+    def _apply[T: BaseModel](self, model: T, *, fields: list[str]) -> T:
         first_field, rest = fields[0], fields[1:]
 
         # Give a nice error message if the field is not present in the model
@@ -80,7 +78,9 @@ class Patch:
         stitches = (Stitch.from_item(item) for item in dict_patch.items())
         return cls(stitches=tuple(stitches))
 
-    def apply(self, model: T, *, validation: ValidationMode | None = None) -> T:
+    def apply[T: BaseModel](
+        self, model: T, *, validation: ValidationMode | None = None
+    ) -> T:
         """Apply this patch on the given model.
 
         See the docstring for `FrozenModel.frozen_patch` for details about

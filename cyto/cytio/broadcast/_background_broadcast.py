@@ -3,7 +3,7 @@ from __future__ import annotations
 import abc
 import logging
 from contextlib import AsyncExitStack
-from typing import Any, TypeVar
+from typing import Any
 
 import anyio
 from anyio.streams.memory import MemoryObjectReceiveStream
@@ -15,7 +15,6 @@ _LOGGER = logging.getLogger(__name__)
 
 
 MessageMap = dict[Any, Any]
-T = TypeVar("T")
 
 
 class BackgroundBroadcast[T](AsyncContextStack):

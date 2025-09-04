@@ -1,13 +1,9 @@
 from __future__ import annotations
 
-from typing import TypeVar
-
 import anyio
 
 from ._task_tree import InstanceMapping, Node, TaskData
 from .current_tree import add_root_path
-
-T = TypeVar("T")
 
 __all__ = ["data", "instances"]
 

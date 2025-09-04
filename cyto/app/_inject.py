@@ -1,5 +1,5 @@
 import inspect
-from collections.abc import Callable, Coroutine
+from collections.abc import Awaitable, Callable
 from contextlib import (
     AbstractAsyncContextManager,
     AbstractContextManager,
@@ -7,20 +7,18 @@ from contextlib import (
     suppress,
 )
 from functools import wraps
-from typing import Any, Protocol, TypeVar
+from typing import Any, Protocol
 
 from anyio import create_task_group
 from anyio.abc import TaskGroup
 
-ReturnT_co = TypeVar("ReturnT_co", covariant=True)
-
-Func = Callable[..., Coroutine[Any, Any, ReturnT_co]]
+type Func[ReturnT] = Callable[..., Awaitable[ReturnT]]
 
 
-class InjectedFunc(Protocol[ReturnT_co]):
+class InjectedFunc[ReturnT](Protocol):
     """`Func` after we apply `inject` to it."""
 
-    async def __call__(self) -> ReturnT_co: ...
+    async def __call__(self) -> ReturnT: ...
 
 
 class Factory(Protocol):
@@ -35,15 +33,15 @@ async def _basic_factory(annotation: type[Any]) -> Any:
     raise ValueError
 
 
-def inject(
+def inject[ReturnT](
     *,
     extra_factory: Factory | None = None,
-) -> Callable[[Func[ReturnT_co]], InjectedFunc[ReturnT_co]]:
+) -> Callable[[Func[ReturnT]], InjectedFunc[ReturnT]]:
     """Inject instances of the given function's argument types."""
 
-    def _inject(coro: Func[ReturnT_co]) -> InjectedFunc[ReturnT_co]:
+    def _inject(coro: Func[ReturnT]) -> InjectedFunc[ReturnT]:
         @wraps(coro)
-        async def _wrapper() -> ReturnT_co:  # type: ignore[return]
+        async def _wrapper() -> ReturnT:  # type: ignore[return]
             spec = inspect.getfullargspec(coro)
             args: Any = []
             async with AsyncExitStack() as stack:

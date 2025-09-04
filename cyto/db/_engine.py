@@ -1,5 +1,5 @@
 import logging
-from typing import Any, TypedDict, TypeVar
+from typing import Any, TypedDict
 
 import sqlalchemy
 import sqlalchemy.ext.asyncio as ext_asyncio
@@ -7,8 +7,6 @@ from pydantic_core import from_json, to_json
 from sqlalchemy.engine.url import make_url
 
 _LOGGER = logging.getLogger(__name__)
-
-EngineT = TypeVar("EngineT")
 
 
 class EngineKwargs(TypedDict, total=False):

@@ -1,17 +1,15 @@
 from __future__ import annotations
 
 import logging
-from typing import Any, TypeVar
+from typing import Any
 
 from ....model import FrozenModel, ValidationMode
 from .._broadcast_value import BroadcastValue, MaybeValue, NoValue
 
 _LOGGER = logging.getLogger(__name__)
 
-T = TypeVar("T", bound=FrozenModel)
 
-
-class BroadcastModel(BroadcastValue[T]):
+class BroadcastModel[T: FrozenModel](BroadcastValue[T]):
     """Broadcast of a model that publishes on each change to said model."""
 
     def __init__(self, value: MaybeValue[T] = NoValue) -> None:

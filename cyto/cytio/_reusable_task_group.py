@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from collections.abc import Callable, Coroutine
+from collections.abc import Awaitable, Callable
 from contextlib import AbstractAsyncContextManager
 from types import TracebackType
 from typing import Any, Self
@@ -17,7 +17,7 @@ class ReusableTaskGroup(AbstractAsyncContextManager["ReusableTaskGroup"]):
         self._lock = anyio.Lock()
 
     def start_soon(
-        self, func: Callable[..., Coroutine[Any, Any, Any]], *args: Any, **kwargs: Any
+        self, func: Callable[..., Awaitable[Any]], *args: Any, **kwargs: Any
     ) -> None:
         if self._tg is None:
             raise RuntimeError("Call ReusableTaskGroup.__aenter__first")

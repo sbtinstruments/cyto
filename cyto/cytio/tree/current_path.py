@@ -3,12 +3,10 @@ from __future__ import annotations
 import logging
 from collections.abc import Iterable, Iterator
 from contextlib import suppress
-from typing import Any, TypeVar
+from typing import Any
 
 from ._task_tree import InstanceMapping, Node, TaskTree
 from .current_tree import add_root_path
-
-T = TypeVar("T")
 
 _LOGGER = logging.getLogger(__name__)
 

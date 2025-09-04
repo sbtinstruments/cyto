@@ -3,20 +3,9 @@ from __future__ import annotations
 import logging
 from collections.abc import Iterable
 from dataclasses import dataclass, replace
-from typing import (
-    Annotated,
-    Any,
-    Literal,
-    Protocol,
-    TypeVar,
-    get_args,
-    get_origin,
-)
+from typing import Annotated, Any, Literal, Protocol, get_args, get_origin
 
 _LOGGER = logging.getLogger(__name__)
-
-
-T = TypeVar("T")
 
 
 class ProductFactory[T](Protocol):
@@ -50,7 +39,7 @@ class ProductRegistry:
             source: index for index, source in enumerate(get_args(ProductSource))
         }
 
-    def register_product(
+    def register_product[T](
         self,
         *,
         source: ProductSource,
@@ -66,7 +55,7 @@ class ProductRegistry:
         )
         self._specs.add(spec)
 
-    def produce(
+    def produce[T](
         self,
         *,
         annotation: type[T],
@@ -86,7 +75,7 @@ class ProductRegistry:
             f"Context: {errors}"
         )
 
-    def _get_specs(
+    def _get_specs[T](
         self,
         *,
         annotation: type[T],

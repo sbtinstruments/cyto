@@ -46,7 +46,7 @@ class PydanticJson(TypeDecorator):  # type: ignore[type-arg]
     def __init__(
         self,
         # `type_` is anything supported by `pydantic.TypeAdapter`. This includes
-        # special forms (e.g., `Union`s), which is why we need to use `Any` and
+        # special forms (e.g., unions), which is why we need to use `Any` and
         # not `type[Any]` (the latter does not accept special forms).
         type_: Any,
         *,

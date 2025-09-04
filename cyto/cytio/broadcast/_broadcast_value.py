@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from types import TracebackType
-from typing import Literal, TypeVar, Union, cast
+from typing import Literal, cast
 
 from anyio import BrokenResourceError, WouldBlock, create_memory_object_stream
 from anyio.streams.memory import MemoryObjectReceiveStream, MemoryObjectSendStream
@@ -10,16 +10,14 @@ from anyio.streams.memory import MemoryObjectReceiveStream, MemoryObjectSendStre
 Seed = Literal["latest-value", "first-value", "nothing"]
 
 
-T = TypeVar("T")
-StreamPair = tuple[MemoryObjectSendStream[T], MemoryObjectReceiveStream[T]]
+type StreamPair[T] = tuple[MemoryObjectSendStream[T], MemoryObjectReceiveStream[T]]
 
 
 class NoValue:
     pass
 
 
-# TODO: Figure out why mypy can't use the pipe syntax for unions in this case.
-MaybeValue = Union[T, type[NoValue]]  # noqa: UP007
+type MaybeValue[T] = T | type[NoValue]
 
 
 @dataclass(frozen=True)

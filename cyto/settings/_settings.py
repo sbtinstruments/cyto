@@ -2,7 +2,7 @@ import argparse
 from collections.abc import Callable, Iterable, Sequence
 from functools import partial
 from pathlib import Path
-from typing import Any, Literal, TypeVar
+from typing import Any, Literal
 
 from pydantic_settings import BaseSettings as PydanticBaseSettings
 from pydantic_settings import CliSettingsSource, PydanticBaseSettingsSource
@@ -11,10 +11,8 @@ from pydantic_settings import SettingsConfigDict as PydanticSettingsConfigDict
 from ..basic import get_root_app_name
 from .sources.glob import GlobSource
 
-T = TypeVar("T", bound=PydanticBaseSettings)
 
-
-def cyto_defaults(
+def cyto_defaults[T: PydanticBaseSettings](
     *,
     name: str | None = None,
     cli_source: Literal["only-if-root-app", "always", "disable"] | None = None,

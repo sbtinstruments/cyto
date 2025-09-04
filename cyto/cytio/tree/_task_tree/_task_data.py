@@ -2,14 +2,12 @@ from __future__ import annotations
 
 from collections.abc import Hashable, Iterator, MutableMapping
 from contextlib import contextmanager
-from typing import TYPE_CHECKING, Any, TypeVar
+from typing import TYPE_CHECKING, Any
 
 from ._models import Node
 
 if TYPE_CHECKING:
     from ._task_tree import TaskTree
-
-T = TypeVar("T")
 
 
 class TaskData(MutableMapping[Any, Any]):

@@ -1,11 +1,8 @@
 import sys
-from typing import TypeVar
 
 from pydantic import TypeAdapter
 
 from ._product_registry import CanNotProduce, ProductSpec
-
-T = TypeVar("T")
 
 
 def cli_factory[T](spec: ProductSpec[T]) -> T:

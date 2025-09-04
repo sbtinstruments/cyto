@@ -1,16 +1,13 @@
 """Various ReactiveX-inspired functions."""
 
 from collections.abc import AsyncIterable, AsyncIterator
-from typing import TypeVar
-
-T = TypeVar("T")
 
 
 class _Sentinel:
     pass
 
 
-async def start_with(iterable: AsyncIterable[T], value: T) -> AsyncIterable[T]:
+async def start_with[T](iterable: AsyncIterable[T], value: T) -> AsyncIterable[T]:
     """Return the given iterable but preceeded by the given value."""
     yield value
     async for datum in iterable:

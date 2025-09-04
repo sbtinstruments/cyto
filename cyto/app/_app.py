@@ -4,7 +4,7 @@ import inspect
 import logging
 from contextlib import AbstractContextManager, ExitStack
 from types import TracebackType
-from typing import Any, Self, TypeVar, cast
+from typing import Any, Self, cast
 
 from anyio import run
 
@@ -13,9 +13,6 @@ from ._inject import Func, inject
 from ._settings import AppBaseSettings
 
 _LOGGER = logging.getLogger(__name__)
-
-
-ReturnT = TypeVar("ReturnT")
 
 
 class App(AbstractContextManager["App"]):
@@ -37,7 +34,7 @@ class App(AbstractContextManager["App"]):
         return self._settings
 
     @classmethod
-    def launch(
+    def launch[ReturnT](
         cls,
         func: Func[ReturnT],
         *,
@@ -56,7 +53,7 @@ class App(AbstractContextManager["App"]):
         with cls(name, settings) as app:
             return app.run(func)
 
-    def run(self, func: Func[ReturnT]) -> ReturnT:
+    def run[ReturnT](self, func: Func[ReturnT]) -> ReturnT:
         """Execute the coroutine function and return the result."""
         # Inject dependencies (e.g., a task group, settings, stack, etc.)
         injected_func = inject(extra_factory=self._factory)(func)

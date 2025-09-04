@@ -1,12 +1,10 @@
 from __future__ import annotations
 
-from typing import Any, ClassVar, Self, TypeVar
+from typing import Any, ClassVar, Self
 
 from pydantic import BaseModel, ConfigDict
 
 from ._model_patch import Patch, ValidationMode
-
-Derived = TypeVar("Derived", bound=BaseModel)
 
 
 class FrozenModel(BaseModel):
