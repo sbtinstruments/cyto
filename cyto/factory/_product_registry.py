@@ -6,7 +6,6 @@ from dataclasses import dataclass, replace
 from typing import (
     Annotated,
     Any,
-    Generic,
     Literal,
     Protocol,
     TypeVar,
@@ -20,7 +19,7 @@ _LOGGER = logging.getLogger(__name__)
 T = TypeVar("T")
 
 
-class ProductFactory(Protocol, Generic[T]):
+class ProductFactory[T](Protocol):
     """Given a produc spec, return the corresponding product."""
 
     def __call__(self, /, __spec: ProductSpec[T]) -> T: ...
@@ -35,7 +34,7 @@ ProductSource = Literal["cli", "env", "file", "db", "default"]
 
 
 @dataclass(frozen=True)
-class ProductSpec(Generic[T]):
+class ProductSpec[T]:
     source: ProductSource
     factory: ProductFactory[T]
     annotation: type[T] | Any = (

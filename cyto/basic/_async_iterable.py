@@ -17,7 +17,7 @@ async def start_with(iterable: AsyncIterable[T], value: T) -> AsyncIterable[T]:
         yield datum
 
 
-async def distinct_until_changed(iterable: AsyncIterable[T]) -> AsyncIterator[T]:
+async def distinct_until_changed[T](iterable: AsyncIterable[T]) -> AsyncIterator[T]:
     """Yield only whenever the data in the given iterable changes."""
     previous_value: T | _Sentinel = _Sentinel()
     async for value in iterable:

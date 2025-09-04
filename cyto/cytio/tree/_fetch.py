@@ -1,16 +1,13 @@
 from collections.abc import Iterator
 from contextlib import contextmanager
-from typing import Any, TypeVar
+from typing import Any
 
 from ...factory import FACTORY, CanNotProduce, ProductRegistry
 from ...model import FrozenModel
 from . import current_path, current_task
 
-T = TypeVar("T")
-FM = TypeVar("FM", bound=FrozenModel)
 
-
-def fetch(
+def fetch[T](
     type_: type[T],
     *,
     factory: ProductRegistry | None = None,
@@ -48,7 +45,7 @@ def fetch(
 
 
 @contextmanager
-def patch(type_: type[FM], *args: Any, **kwargs: Any) -> Iterator[FM]:
+def patch[FM: FrozenModel](type_: type[FM], *args: Any, **kwargs: Any) -> Iterator[FM]:
     """Patch the model for the lifetime of this context manager.
 
     We call `fetch` to get the original model. This means that we'll attempt
@@ -66,7 +63,7 @@ def patch(type_: type[FM], *args: Any, **kwargs: Any) -> Iterator[FM]:
 
 
 @contextmanager
-def override(type_: type[T], value: T) -> Iterator[T]:
+def override[T](type_: type[T], value: T) -> Iterator[T]:
     """Override the instance for the lifetime of this context manager.
 
     We call `fetch` to get the original instance. This means that we'll attempt

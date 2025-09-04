@@ -13,7 +13,7 @@ T = TypeVar("T")
 _LOGGER = logging.getLogger(__name__)
 
 
-def get_first_instance(type_: type[T]) -> T:
+def get_first_instance[T](type_: type[T]) -> T:
     """Get the first instance (if any) of the given type for the current task path.
 
     Traverses the task path from the current task to the root task. Returns the first
@@ -26,7 +26,7 @@ def get_first_instance(type_: type[T]) -> T:
     raise LookupError
 
 
-def get_instances(type_: type[T]) -> Iterable[T]:
+def get_instances[T](type_: type[T]) -> Iterable[T]:
     """Get all instances (if any) of the given type for the current task path.
 
     Traverses the task path from the current task to the root task. Returns instances
@@ -39,7 +39,9 @@ def get_instances(type_: type[T]) -> Iterable[T]:
     return reversed(instances)
 
 
-def _path_instances(path_data: Iterable[dict[Any, Any]], type_: type[T]) -> Iterator[T]:
+def _path_instances[T](
+    path_data: Iterable[dict[Any, Any]], type_: type[T]
+) -> Iterator[T]:
     for node_data in path_data:
         node_instances = InstanceMapping(node_data)
         with suppress(KeyError):

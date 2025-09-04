@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from types import TracebackType
-from typing import Generic, Literal, TypeVar, Union, cast
+from typing import Literal, TypeVar, Union, cast
 
 from anyio import BrokenResourceError, WouldBlock, create_memory_object_stream
 from anyio.streams.memory import MemoryObjectReceiveStream, MemoryObjectSendStream
@@ -23,12 +23,12 @@ MaybeValue = Union[T, type[NoValue]]  # noqa: UP007
 
 
 @dataclass(frozen=True)
-class Subscription(Generic[T]):
+class Subscription[T]:
     send_stream: MemoryObjectSendStream[T]
     receive_stream: MemoryObjectReceiveStream[T]
 
 
-class BroadcastValue(Generic[T]):
+class BroadcastValue[T]:
     """Like a "behaviour subject" from reactive functional programming.
 
     Use this when you want a stream of something but you're only interested in

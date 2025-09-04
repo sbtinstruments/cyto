@@ -8,7 +8,7 @@ from ._product_registry import CanNotProduce, ProductSpec
 T = TypeVar("T")
 
 
-def cli_factory(spec: ProductSpec[T]) -> T:
+def cli_factory[T](spec: ProductSpec[T]) -> T:
     """Create an instance according to the given specification."""
     if spec.name is None:
         raise CanNotProduce

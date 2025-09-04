@@ -99,7 +99,7 @@ class App(AbstractContextManager["App"]):
         return suppress_exc
 
 
-def get_settings_class(func: Func[ReturnT]) -> type[AppBaseSettings]:
+def get_settings_class[ReturnT](func: Func[ReturnT]) -> type[AppBaseSettings]:
     """Try to get the settings class from the function signature."""
     spec = inspect.getfullargspec(func)
     for arg_name in spec.args:

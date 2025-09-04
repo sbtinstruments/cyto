@@ -247,7 +247,7 @@ def test_frozen_patch_with_discriminated_union() -> None:
 
 
 def test_frozen_patch_with_new_dict_item() -> None:
-    from cyto.stout import Message, Outcome
+    from cyto.stout import Message, Outcome  # noqa: PLC0415
 
     # Empty outcome
     outcome = Outcome()

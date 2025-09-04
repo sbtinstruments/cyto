@@ -15,7 +15,7 @@ class EngineKwargs(TypedDict, total=False):
     db_url: str
 
 
-def create_engine(engine_type: type[EngineT], *, db_url: str) -> EngineT:
+def create_engine[EngineT](engine_type: type[EngineT], *, db_url: str) -> EngineT:
     url = make_url(db_url)
     connect_args: dict[str, Any] = {}
 
@@ -68,7 +68,7 @@ def create_engine(engine_type: type[EngineT], *, db_url: str) -> EngineT:
             engine = sqlalchemy.create_engine(url, **engine_kwargs)
 
         case _:
-            raise TypeError(f"Unknown engine type '{engine_type.__name__}'")
+            raise TypeError(f"Unknown engine type '{engine_type.__name__}'")  # type: ignore[union-attr]
 
     if url.drivername == "sqlite":
         if not isinstance(engine, sqlalchemy.Engine):

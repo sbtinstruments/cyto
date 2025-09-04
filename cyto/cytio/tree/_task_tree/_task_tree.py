@@ -58,7 +58,9 @@ class TaskTree(AbstractContextManager["TaskTree"]):
     def nodes(self) -> NodeDataView[Node]:
         """Return immutable view of the nodes in this task tree."""
         # TODO: Actually make the view (faux-) immutable
-        return self._graph.nodes.data(data=True)
+        result = self._graph.nodes.data(data=True)
+        assert isinstance(result, NodeDataView)
+        return result
 
     @contextmanager
     def mutate_nodes(self) -> Iterator[NodeView[Node]]:

@@ -89,7 +89,7 @@ def _add_file_handler(
 def _set_formatter(handler: logging.Handler, app_name: str | None = None) -> None:
     # Optional: Use the RFC5424 format
     try:
-        from .rfc5424 import RFC5424Formatter
+        from .rfc5424 import RFC5424Formatter  # noqa: PLC0415
     except ImportError:
         fmt = f"{app_name}" + "[{process}] [{name}] {message}"
         syslog_formatter = logging.Formatter(fmt=fmt, style="{")

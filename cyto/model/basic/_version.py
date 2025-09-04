@@ -134,6 +134,9 @@ class Version(FrozenModel):
         # TODO: Also take the modifiers into account.
         return (self.major, self.minor, self.patch) >= (rhs.major, rhs.minor, rhs.patch)
 
+    def __hash__(self) -> int:
+        return super().__hash__()
+
 
 VersionField = Annotated[
     Version,

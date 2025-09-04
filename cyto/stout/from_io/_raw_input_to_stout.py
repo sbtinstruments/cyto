@@ -21,6 +21,7 @@ RawInput = TextIOBase | AsyncIterable[str] | TextReceiveStream | ByteReceiveStre
 
 async def raw_input_to_stout(
     raw_input: RawInput,
+    *,
     line_limit: int | None = None,  # [bytes]
     ignore_empty_lines: bool | None = None,
 ) -> Stout:

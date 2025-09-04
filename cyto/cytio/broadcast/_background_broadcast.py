@@ -3,7 +3,7 @@ from __future__ import annotations
 import abc
 import logging
 from contextlib import AsyncExitStack
-from typing import Any, Generic, TypeVar
+from typing import Any, TypeVar
 
 import anyio
 from anyio.streams.memory import MemoryObjectReceiveStream
@@ -18,7 +18,7 @@ MessageMap = dict[Any, Any]
 T = TypeVar("T")
 
 
-class BackgroundBroadcast(AsyncContextStack, Generic[T]):
+class BackgroundBroadcast[T](AsyncContextStack):
     """Continuous broadcast emitted by a background task."""
 
     def __init__(self, value: MaybeValue[T] = NoValue) -> None:

@@ -1,19 +1,15 @@
 import logging
 from collections.abc import Callable
 from threading import Event
-from typing import TypeVar, TypeVarTuple
 
 import anyio
 import anyio.to_thread
 from anyio.abc import CapacityLimiter
 
-T_Retval = TypeVar("T_Retval")
-PosArgsT = TypeVarTuple("PosArgsT")
-
 _LOGGER = logging.getLogger(__name__)
 
 
-async def run_sync_coop(
+async def run_sync_coop[*PosArgsT, T_Retval](
     func: Callable[[Event, *PosArgsT], T_Retval],
     *args: *PosArgsT,
     limiter: CapacityLimiter | None = None,
@@ -49,6 +45,8 @@ async def run_sync_coop(
             # When `func` returns, we cancel the `_set_event_on_exit` task so
             # that it doesn't block the execution from returning.
             tg.cancel_scope.cancel()
+
+    raise RuntimeError("anyio.create_task_group() erroneously suppressed an exception")
 
 
 async def _set_event_on_exit(stop_event: Event) -> None:

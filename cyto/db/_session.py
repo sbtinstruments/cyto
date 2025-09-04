@@ -1,4 +1,4 @@
-from typing import Any, TypedDict, TypeVar, Unpack, overload
+from typing import Any, TypedDict, Unpack, overload
 
 import sqlalchemy.ext.asyncio as ext_asyncio
 from sqlalchemy import Engine, orm
@@ -27,9 +27,6 @@ _SESSION_KWARGS: SessionKwargs = {
     "close_resets_only": False,
 }
 
-SessionT = TypeVar("SessionT", bound=orm.Session)
-AsyncSessionT = TypeVar("AsyncSessionT", bound=ext_asyncio.AsyncSession)
-
 
 @overload
 def sessionmaker(
@@ -39,7 +36,7 @@ def sessionmaker(
 
 
 @overload
-def sessionmaker(  # type: ignore[misc]
+def sessionmaker[SessionT: orm.Session](  # type: ignore[misc]
     bind: Engine,
     *,
     class_: SessionT,
@@ -55,7 +52,7 @@ def sessionmaker(
 
 
 @overload
-def sessionmaker(  # type: ignore[misc]
+def sessionmaker[AsyncSessionT: ext_asyncio.AsyncSession](  # type: ignore[misc]
     bind: ext_asyncio.AsyncEngine,
     *,
     class_: AsyncSessionT,

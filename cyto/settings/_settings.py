@@ -177,7 +177,9 @@ def cyto_defaults(
 def _get_cli_source_kwargs() -> Iterable[tuple[str, Any]]:
     # Optional: Use rich_argparse to format "--help" messages.
     try:
-        from rich_argparse import RichHelpFormatter  # type: ignore[import]
+        from rich_argparse import (  # type: ignore[import]  # noqa: PLC0415
+            RichHelpFormatter,
+        )
     except ImportError:
         pass
     else:
@@ -185,7 +187,7 @@ def _get_cli_source_kwargs() -> Iterable[tuple[str, Any]]:
 
     # Optional: Add shell auto-completion support
     try:
-        from argcomplete import autocomplete  # type: ignore[import]
+        from argcomplete import autocomplete  # type: ignore[import]  # noqa: PLC0415
     except ImportError:
         pass
     else:
