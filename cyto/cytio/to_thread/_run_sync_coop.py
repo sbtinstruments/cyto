@@ -46,7 +46,9 @@ async def run_sync_coop[*PosArgsT, T_Retval](
             # that it doesn't block the execution from returning.
             tg.cancel_scope.cancel()
 
-    raise RuntimeError("anyio.create_task_group() erroneously suppressed an exception")
+    # If we get here, it means that the task group was cancelled by
+    # the stop event.
+    raise anyio.get_cancelled_exc_class()("Cancelled by stop event")
 
 
 async def _set_event_on_exit(stop_event: Event) -> None:
