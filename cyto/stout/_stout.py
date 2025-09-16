@@ -38,12 +38,20 @@ from ..model import FrozenModel
 from ._outcome import Outcome
 from ._outline import Outline
 
-Status = Literal["pending", "running", "completed", "failed", "cancelled", "abandoned"]
+Status = Literal[
+    "pending",
+    "running",
+    "completed",
+    "failed",
+    "cancelling",
+    "cancelled",
+    "abandoned",
+]
 
 
 def is_status_current(status: Status) -> bool:
-    """Is this a current (i.e., not stopped) execution."""
-    return status in ("pending", "running")
+    """Is this a current (i.e., not past) execution."""
+    return status in ("pending", "running", "cancelling")
 
 
 class _SwigBase(FrozenModel):
