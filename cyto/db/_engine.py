@@ -28,7 +28,12 @@ def create_engine[EngineT](engine_type: type[EngineT], *, db_url: str) -> Engine
         # locked).
         #
         # Note that the default timeout seems to be zero (or close to it).
-        connect_args["timeout"] = 60  # [s]
+        #
+        # Why 120 seconds? That may seem excessive at first glance. Hopefully,
+        # that is also often the case. However, it is a common practice to
+        # create the database in the `on_connect` hook if it does not already
+        # exist. That may be very slow.
+        connect_args["timeout"] = 120  # [s]
 
     # Unfortunately, SQLAlchemy does not provide a direct way to specify,
     # which *database driver* that we want (e.g., `psycopg2` or `asyncpg`).
