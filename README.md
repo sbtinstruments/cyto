@@ -90,7 +90,7 @@ Run the QA basic tools manually with:
 ```shell
 uv run ruff format --check
 uv run ruff check
-uv run mypy
+uv run mypy .
 ```
 
 #### QA Test Tools
@@ -102,6 +102,13 @@ The QA test tools are:
 
 - `pytest` (the test framework itself)
 - `pytest-cov` (for test coverage percentage)
+
+Run the QA basic tools manually with:
+
+```shell
+uv run pytest
+uv run pytest --cov=cyto
+```
 
 ### Visual Studio Code
 
