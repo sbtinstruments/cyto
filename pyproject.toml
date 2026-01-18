@@ -39,3 +39,126 @@ dev = [
     "ruff<1.0.0,>=0.6.1",
     "mypy<2.0.0,>=1.13.0",
 ]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 88
+lint.select = ["ALL"]
+lint.ignore = [
+    # "flake8-annotations". mypy does our type checking.
+    "ANN",
+    # "flake8-commas (COM)". We use black instead.
+    "COM",
+    # "flake8-errmsg (EM)". Three rules that are all about "Exception must not use
+    # a string literal, assign to variable first". Too little gained for the effort.
+    # Maybe later.
+    "EM",
+    # "Boolean default value in function definition". We think it's perfectly okay to
+    # provide a default value for a boolean flag.
+    "FBT002",
+    # We have TODO's and HACK's throughout as reminders for later. That is okay.
+    "FIX002",
+    "FIX004",
+    # "pydocstyle (D)". We *should* do this. It's just a large effort. Maybe later.
+    "D",
+    # commented-out-code (ERA001)
+    # Too many false-positives.
+    # See: https://github.com/astral-sh/ruff/issues/4845
+    "ERA001",
+    # ISC001 conflicts with ruff's own, built-in formatter.
+    "ISC001",
+    # useless-import-alias (PLC0414)
+    # The idiomatic way to export things from `__init__` files is:
+    #
+    #     from ._pedb_row import PedbRow as PedbRow
+    #
+    # This, however, does not place nicely together with PLC0414.
+    # See: https://github.com/astral-sh/ruff/issues/6294
+    "PLC0414",
+    # magic-value-comparison (PLR2004)
+    # We would like to get rid of magic values but there are simply too many
+    # to tackle right now,
+    "PLR2004",
+    # "Use of assert detected". We like `assert`.
+    "S101",
+    # "flake8-type-checking". Too little gained for the effort. Maybe later.
+    "TCH",
+    # "TD002 Missing author in TODO".
+    # "TD003 Missing issue link on the line following this TODO".
+    # That's not how we use TODO.
+    "TD002",
+    "TD003",
+    # "Relative imports from parent modules are banned". We like relative imports.
+    "TID252",
+    # "Avoid specifying long messages outside the exception class".
+    # Apparently, any string that contains a space is "too long". That's a bit too
+    # strict for us.
+    "TRY003",
+    # We prefer a combination of `error` and debug` to log the error message and
+    # exception (including stack trace), respectively. We do *not* want to use
+    # `exception` since it outputs both at the ERROR log level.
+    "TRY400",
+]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+implicit_reexport = true    # disabled by default when in strict mode
+pretty = true
+show_error_codes = true
+plugins = ["pydantic.mypy"]
+# Unfortunately, this does not work for top-level ignores.
+# See: https://github.com/python/mypy/issues/12076
+warn_unused_ignores = false
+
+### Typeless packages
+# We provide our own type stubs for a few packages. The official way to tell mypy
+# where these stubs files are is via the oddly-named "mypy_path" setting. I (FPA)
+# expected something like "stubs_dir" but oh well.
+# See: https://mypy.readthedocs.io/en/stable/stubs.html
+mypy_path = "$MYPY_CONFIG_FILE_DIR/stubs"
+
+# For the packages below, we simply use them without type information. It's too
+# much work to create type stubs for these.
+
+# Seems like portion is intentionally untyped
+[[tool.mypy.overrides]]
+module = ["portion"]
+ignore_missing_imports = true
+
+# Pending:
+#
+#  * https://github.com/MagicStack/asyncpg/issues/809
+#  * https://github.com/MagicStack/asyncpg/pull/577
+#
+[[tool.mypy.overrides]]
+module = ["asyncpg.*"]
+ignore_missing_imports = true
+
+# Seems like python-daemon is intentionally untyped
+[[tool.mypy.overrides]]
+module = ["daemon.*"]
+ignore_missing_imports = true
+
+# Seems like portion is intentionally untyped
+[[tool.mypy.overrides]]
+module = ["portion.*"]
+ignore_missing_imports = true
+
+# Seems like syslog_rfc5424_formatter is intentionally untyped
+[[tool.mypy.overrides]]
+module = ["syslog_rfc5424_formatter.*"]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+log_cli = true
+log_cli_level = "DEBUG"
+log_cli_format = "%(asctime)s [%(levelname)8s] [%(name)40s] %(message)s (%(filename)s:%(lineno)s)"
+log_cli_date_format = "%Y-%m-%d %H:%M:%S"
+# By default, pytest collects files matching both `test_*.py` and `*_test.py`.
+# We only want the former to apply. This way, we avoid errors due to, e.g.,
+# files named "electronics_test.py".
+python_files = "test_*.py"
+# The OpenEmbedded devtool creates an "oe-workdir" directory with temporary
+# build files.
+addopts = "--ignore oe-workdir"
