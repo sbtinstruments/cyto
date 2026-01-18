@@ -4,6 +4,10 @@ from typing import Annotated
 
 import portion
 import pytest
+from portion import CLOSED, OPEN
+from portion.interval import Atomic
+from pydantic import BaseModel, Field, ValidationError
+
 from cyto.interval import (
     FloatInterval,
     FloatIntervalAdapter,
@@ -11,9 +15,6 @@ from cyto.interval import (
     IntIntervalAdapter,
     TimeIntervalAdapter,
 )
-from portion import CLOSED, OPEN
-from portion.interval import Atomic
-from pydantic import BaseModel, Field, ValidationError
 
 
 def test_interval_adapter_validate() -> None:

@@ -1,8 +1,9 @@
 from typing import Annotated
 
 import pytest
-from cyto.model.basic import Version, VersionField
 from pydantic import BaseModel, Field, ValidationError
+
+from cyto.model.basic import Version, VersionField
 
 
 def test_version_model_validate() -> None:

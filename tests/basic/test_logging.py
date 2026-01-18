@@ -1,6 +1,7 @@
 import logging
 
 import pytest
+
 from cyto.logging import log_duration
 
 

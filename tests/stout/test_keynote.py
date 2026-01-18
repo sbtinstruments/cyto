@@ -1,4 +1,6 @@
 import pytest
+from pydantic import ValidationError
+
 from cyto.stout.keynote import (
     FinalItem,
     Keynote,
@@ -9,7 +11,6 @@ from cyto.stout.keynote import (
 )
 from cyto.stout.keynote._keynote_token_seq import WIP_TAG
 from cyto.stout.keynote._keynote_tokens import SectionBeginToken, TagToken
-from pydantic import ValidationError
 
 _RAW_KEYNOTE = [
     "[work-in-progress]",

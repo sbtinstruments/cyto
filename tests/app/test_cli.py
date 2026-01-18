@@ -1,6 +1,7 @@
 import pytest
-from cyto.app import App, AppBaseSettings
 from pydantic import BaseModel
+
+from cyto.app import App, AppBaseSettings
 
 from ..conftest import Argv
 

@@ -3,7 +3,6 @@ from functools import cached_property
 from typing import Annotated, Any, Literal
 
 import pytest
-from cyto.model import AssignOp, FrozenModel, Patch, PatchError, Stitch
 from pydantic import (
     AfterValidator,
     Discriminator,
@@ -12,6 +11,8 @@ from pydantic import (
     RootModel,
     ValidationError,
 )
+
+from cyto.model import AssignOp, FrozenModel, Patch, PatchError, Stitch
 
 
 class Evaluation(FrozenModel):
